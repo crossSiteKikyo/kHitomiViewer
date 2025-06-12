@@ -85,10 +85,10 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         prettyPrint = true
     }
     val b = mutableStateOf<String?>("1 or 2")
-    val mDefaultThumbChar = mutableStateOf<String?>("a or b")
-    val mNextThumbChar = mutableStateOf<String?>("b or a")
-    val mDefaultO = mutableStateOf<String?>("0 or 1")
-    val mNextO = mutableStateOf<String?>("1 or 0")
+    val mDefaultThumbChar = mutableStateOf<String?>("a") // a or b
+    val mNextThumbChar = mutableStateOf<String?>("b") // b or a
+    val mDefaultO = mutableStateOf<String?>("0") // 0 or 1
+    val mNextO = mutableStateOf<String?>("1") // 1 or 0
     val mList = mutableStateListOf<String>()
     val gIdList = mutableListOf<Int>()
 
@@ -99,11 +99,13 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     var galleries by mutableStateOf<List<GalleryFullDto>>(emptyList())
         private set
     var lastTag = mutableStateOf<Tag?>(null)
+    var loading = mutableStateOf(true)
 
     // 세팅 화면에 사용되는 변수
     val tagLikeCheck = mutableStateOf(prefs.getBoolean("tagLikeCheck", false))
     val galleryLikeCheck = mutableStateOf(prefs.getBoolean("galleryLikeCheck", false))
     var tagSearchList by mutableStateOf<List<Tag>>(emptyList())
+    var lastTagSearchKeyword = mutableStateOf<String>("artist:try")
 
     // 다이얼로그. 태그 (싫어요,기본,좋아요,구독) 갤러리 DISLIKE, NONE, LIKE선택하는것.
     val selectedTagNameOrGalleryId = mutableStateOf("")
@@ -167,10 +169,14 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         if(dbExportImportStr.value == "백업중" || dbExportImportStr.value == "불러오기중")
             crawlOn.value = false
 
-        if(crawlOn.value)
+        if(crawlOn.value) {
             crawlOn.value = false
-        else
+            prefs.edit().putBoolean("crawlOn", false).apply()
+        }
+        else {
             crawlOn.value = true
+            prefs.edit().putBoolean("crawlOn", true).apply()
+        }
     }
 
     fun setTagLikeCheck(bool: Boolean) {
@@ -180,7 +186,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
 
     fun setGalleryLikeCheck(bool: Boolean) {
         galleryLikeCheck.value = bool
-        prefs.edit().putBoolean("tagLikeCheck", bool).apply()
+        prefs.edit().putBoolean("galleryLikeCheck", bool).apply()
     }
 
     fun settingPageSize(i: Int) {
@@ -238,6 +244,10 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
 //        gIdList.removeIf { it in gIds }
         crawling.value = false
         crawlStatusStr.value = "${getCurrentFormattedTime()}: 크롤링 끝"
+        if(gIdList.isEmpty()) {
+            crawlOn.value = false
+            crawlStatusStr.value = "${getCurrentFormattedTime()}: 모든 크롤링을 마쳤습니다"
+        }
     }
 
     suspend fun getGIds() = withContext(Dispatchers.IO) {
@@ -298,6 +308,9 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch(Dispatchers.IO) {
             // 중복실행 방지
 //            if (lastPage == page) return@launch
+            if(lastPage != page || lastTagId != tagId || lastTitleKeyword != titleKeyword) {
+                loading.value = true
+            }
             lastPage = page
             lastTagId = tagId
             lastTitleKeyword = titleKeyword
@@ -333,6 +346,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
                     tags = galleryTagDao.findByGid(g.gId).map { gt -> tagDao.findById(gt.tagId) }
                 )
             }
+            loading.value = false
         }
     }
 
@@ -352,7 +366,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun changeLike(like: Int) {
+    fun changeLike(like: Int, screen: String) {
         viewModelScope.launch(Dispatchers.IO) {
             if(whatStr.value == "tag") {
                 val findByName = tagDao.findByName(selectedTagNameOrGalleryId.value)
@@ -363,7 +377,12 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
                 galleryDao.update(Gallery(g.gId, g.title, g.thumb1, g.thumb2, g.date, g.filecount, like, g.download, g.typeId))
             }
             // ui 재로딩을 위해 갤러리 다시 세팅
-            setGalleryList(lastPage, lastTagId, lastTitleKeyword)
+            if(screen == "ListScreen") {
+                setGalleryList(lastPage, lastTagId, lastTitleKeyword)
+            }
+            else if(screen == "MainSettingScreen") {
+                searchTagsFromDb(lastTagSearchKeyword.value)
+            }
         }
     }
 
@@ -409,6 +428,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             tagSearchList = emptyList()
             return@launch
         }
+        lastTagSearchKeyword.value = keyword
         tagSearchList = tagDao.findByKeyword("%${keyword}%")
     }
 

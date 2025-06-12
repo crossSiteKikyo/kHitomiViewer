@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                     MyNav(mainViewModel)
                 }
                 else {
-                    FirstScreen(prefs)
+                    FirstScreen()
                 }
             }
         }

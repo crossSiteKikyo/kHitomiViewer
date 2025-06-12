@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -76,8 +77,9 @@ fun DatabaseExportImportSettingScreen(mainViewModel: KHitomiViewerViewModel) {
                         color = Color.Black,
                         fontSize = 50.sp
                     )
+                    CircularProgressIndicator()
                     Text(
-                        text = "시간이 걸릴 수 있습니다",
+                        text = "시간이 오래 걸립니다",
                         color = Color.Black,
                         fontSize = 30.sp
                     )

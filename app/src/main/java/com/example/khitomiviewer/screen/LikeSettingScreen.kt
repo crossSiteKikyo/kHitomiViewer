@@ -169,7 +169,7 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                             }
                         }
                         if(viewModel.tags.isEmpty())
-                            Text("싫어요, 좋아요, 구독 태그가 없습니다", style = TextStyle(fontSize = 50.sp))
+                            Text("싫어요, 좋아요 태그가 없습니다", style = TextStyle(fontSize = 50.sp))
                     }
                 }
                 else {

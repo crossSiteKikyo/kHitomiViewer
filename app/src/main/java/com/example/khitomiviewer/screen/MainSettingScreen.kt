@@ -106,7 +106,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                                     else
                                         Button(onClick = {
                                             // db에 상태 변경
-                                            mainViewModel.changeLike(x)
+                                            mainViewModel.changeLike(x, "MainSettingScreen")
                                             // 다이얼로그 닫기
                                             showDialog.value = false
                                         }) { Text(likeStatusIntToStr[x])}
