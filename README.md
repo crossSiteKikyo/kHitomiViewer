@@ -1,6 +1,6 @@
 # kHitomiViewer
 
-### kHitomiView는 한국어 히토미 뷰어입니다.
+### kHitomiViewer는 한국어 히토미 뷰어입니다.
 
 ![Image](https://github.com/user-attachments/assets/0cf487cc-1f90-49cf-8a8a-e914c293848e)
 
@@ -19,3 +19,7 @@
 ### 설치 & 사용법
 
 [위키](https://github.com/crossSiteKikyo/kHitomiViewer/wiki)를 클릭해 자세히 알아보세요
+
+### 에러 or 문의사항
+
+[issue](https://github.com/crossSiteKikyo/kHitomiViewer/issues)에 남겨주세요
