@@ -16,6 +16,8 @@
 
 - 히토미와 유사한 ui
 
+- 크롤링으로 서버에서 받은 정보를 db에 입력합니다. 모든 정보를 크롤링하기 전까지는 자료가 없을 수 있습니다.
+
 ### 설치 & 사용법
 
 [위키](https://github.com/crossSiteKikyo/kHitomiViewer/wiki)를 클릭해 자세히 알아보세요
