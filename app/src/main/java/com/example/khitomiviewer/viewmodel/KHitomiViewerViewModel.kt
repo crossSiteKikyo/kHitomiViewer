@@ -232,7 +232,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
                     // 갤러리 저장. 갤러리 저장과 갤러리토큰 저장을 하나의 트랜잭션에 묶는다.
                     repository.insertGalleryInfo(ginfo, thumb1, thumb2)
                     // 저장한 것은 리스트에서 제외
-                    gIdList.removeIf{it == ginfo.id.toInt()}
+//                    gIdList.removeIf{it == ginfo.id.toInt()}
                 } catch (e: Exception) {
                     Log.i("썸네일 크롤링 오류", "${e.message}")
                     crawlErrorStr.value = "${getCurrentFormattedTime()}: 썸네일 크롤링 오류: ${e.message}"
@@ -240,7 +240,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             }
         }
         // 크롤링 한 것들은 리스트에서 제외
-//        gIdList.removeIf { it in gIds }
+        gIdList.removeIf { it in gIds }
         crawling.value = false
         crawlStatusStr.value = "${getCurrentFormattedTime()}: 크롤링 끝"
         if(gIdList.isEmpty()) {

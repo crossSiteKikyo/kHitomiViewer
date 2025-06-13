@@ -258,6 +258,8 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 Text(mainViewModel.crawlErrorStr.value, color = Color.Gray)
                 Text("크롤링 상황")
                 Text(mainViewModel.crawlStatusStr.value, color = Color.Gray)
+                Text("남은 크롤링 개수")
+                Text("${mainViewModel.gIdList.size}", color = Color.Gray)
                 HorizontalDivider(thickness = 2.dp)
 
                 // 캐시 설정
