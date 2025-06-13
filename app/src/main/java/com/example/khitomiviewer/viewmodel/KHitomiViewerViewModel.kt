@@ -116,7 +116,6 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     private var lastGid: Long? = null
     var imageUrls = mutableStateListOf<String>()
         private set
-    var cachePolicy = mutableStateOf(CachePolicy.DISABLED)
     
     // db 내보내기 불러오기에 사용되는 변수
     val dbExportImportStr = mutableStateOf("db 내보내기 및 불러오기를 할 수 있습니다")
@@ -256,11 +255,10 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             val response = hitomiClient.get(url)
             val array = response.bodyAsBytes()
             gIdList.addAll(byteArrayToIntList(array))
-            Log.i("결과", gIdList.toString())
-            Log.i("결과", "${gIdList.size}")
+            Log.i("서버에 있는 갤러리 총 수", "${gIdList.size}")
             // 이중에서 있는것들은 제외한다.
             gIdList.removeIf { galleryDao.existsById(it.toLong()) }
-            Log.i("없는 갤러리 결과", "${gIdList.size}")
+            Log.i("없는 갤러리 수", "${gIdList.size}")
         } catch (e: Exception) {
             Log.i("갤러리 gId 리스트 얻기 오류", "${e.message}")
             crawlErrorStr.value = "${getCurrentFormattedTime()}: 갤러리 gId 리스트 얻기 오류: ${e.message}"
@@ -392,20 +390,6 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         lastGid = gId
 
         imageUrls.clear()
-        val gallery = galleryDao.findById(gId)
-
-        // 디스크 캐시를 사용할건지 말건지
-        cachePolicy.value = CachePolicy.DISABLED
-        if(gallery.likeStatus == 2)
-            cachePolicy.value = CachePolicy.ENABLED
-        else {
-            for (tag in galleryTagDao.findByGid(gId).map { gt -> tagDao.findById(gt.tagId) }) {
-                if(tag.likeStatus >= 2) {
-                    cachePolicy.value = CachePolicy.ENABLED
-                    break
-                }
-            }
-        }
 
         val b = b.value
         val mDefault = mDefaultO.value
@@ -413,11 +397,13 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         if(mDefault != null && mNext != null) {
             imageUrls.addAll(imageUrlDao.findByGId(gId).map { imageUrl ->
                 // 여러가지 정보를 조합해 이미지 url을 만든다.
+                // 구형폰에서는 avif 디코딩을 지원하지 않는거 같다. webp로 하자.어쩔 수 없다.
                 val hash = imageUrl.hash
                 val s = "${hash[hash.length-1]}${hash[hash.length-3]}${hash[hash.length-2]}".toInt(16).toString(10)
                 val subdomainNum = (if(s in mList) mNext.toInt() else mDefault.toInt()) + 1
-                val subdomainChar = if(imageUrl.extension == "avif") "a" else "w"
-                "https://${subdomainChar}${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.${imageUrl.extension}"
+//                val subdomainChar = if(imageUrl.extension == "avif") "a" else "w"
+//                "https://${subdomainChar}${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.${imageUrl.extension}"
+                "https://w${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.webp"
             })
         }
     }

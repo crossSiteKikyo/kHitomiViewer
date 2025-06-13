@@ -17,7 +17,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,12 +33,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.network.HttpException
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.collections.get
 
@@ -62,17 +69,26 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
         ) {
             HorizontalPager(
                 state = pagerState,
-                beyondViewportPageCount = 10,
+                beyondViewportPageCount = 15,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
+
+                var retryCount by remember { mutableIntStateOf(0) }
+                var shouldRetry by remember { mutableStateOf(false) }
+
                 AsyncImage(
-                    model = ImageRequest.Builder(context).data(mainViewModel.imageUrls[page]).httpHeaders(hitomiHeaders)
-                        .diskCachePolicy(mainViewModel.cachePolicy.value).build(),
+                    model = ImageRequest.Builder(context).data(mainViewModel.imageUrls[page] + "?retry=$retryCount").httpHeaders(hitomiHeaders)
+                        .diskCacheKey(mainViewModel.imageUrls[page]).build(),
                     contentDescription = "img",
                     contentScale = ContentScale.Fit,
                     placeholder = painterResource(R.drawable.loading),
                     error = painterResource(R.drawable.errorimg),
-                    onError = {e -> Log.i("이미지 불러오기 에러", e.toString())},
+                    onError = { e->
+                        if((e.result.throwable as? HttpException)?.response?.code == 503) {
+                            shouldRetry = true
+                        }
+                        Log.i("이미지 로드 에러", e.result.throwable.toString())
+                    },
                     modifier = Modifier
                         .width(maxWidth)
                         .height(maxHeight)
@@ -82,6 +98,14 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
                             }
                         })
                 )
+
+                LaunchedEffect(shouldRetry) {
+                    if (shouldRetry) {
+                        delay(50) // 딜레이 추가
+                        retryCount++
+                        shouldRetry = false
+                    }
+                }
             }
             // 아래 슬라이더
             if (mainViewModel.imageUrls.isNotEmpty()) {

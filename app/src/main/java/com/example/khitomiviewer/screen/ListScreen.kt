@@ -302,7 +302,7 @@ fun ListScreen(
                                         AsyncImage(
 //                                    model = "https://tn.gold-usergeneratedcontent.net/webpbigtn/6/67/9a7943d3898b3f275ef4d5f6c9f012ee806e043f3c52fdc292caffbb9b988676.webp",
                                             model = ImageRequest.Builder(context).data(realHitomiThumbnailUrl(g.thumb1))
-                                                .httpHeaders(hitomiHeaders).build(),
+                                                .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders).build(),
                                             contentDescription = "thumbnail",
                                             placeholder = painterResource(R.drawable.loading),
                                             error = painterResource(R.drawable.errorimg),
@@ -315,7 +315,7 @@ fun ListScreen(
                                         )
                                         AsyncImage(
                                             model = ImageRequest.Builder(context).data(realHitomiThumbnailUrl(g.thumb2))
-                                                .httpHeaders(hitomiHeaders).build(),
+                                                .diskCacheKey(g.thumb2).httpHeaders(hitomiHeaders).build(),
                                             contentDescription = "thumbnail",
                                             placeholder = painterResource(R.drawable.loading),
                                             error = painterResource(R.drawable.errorimg),

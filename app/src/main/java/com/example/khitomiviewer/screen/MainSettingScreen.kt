@@ -262,10 +262,9 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
 
                 // 캐시 설정
                 Text("캐시 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
-                Text("썸네일은 캐시에 저장됩니다", color = Color.Gray)
-                Text("좋아요 태그가 있는 갤러리는 만화 감상시 캐시에 저장됩니다", color = Color.Gray)
-                Text("좋아요 갤러리는 만화 감상시 캐시에 저장됩니다", color = Color.Gray)
+                Text("한번이라도 본 이미지는 캐시에 저장됩니다", color = Color.Gray)
                 Text("앱 용량이 너무 커질시 캐시(임시파일)를 설정에서 삭제하세요", color = Color.Gray)
+                Text("데이터베이스 (데이터)는 절대 삭제하시면 안됩니다.", color = Color.Gray)
                 HorizontalDivider(thickness = 2.dp)
 
                 // 데이터베이스 내보내기/불러오기
