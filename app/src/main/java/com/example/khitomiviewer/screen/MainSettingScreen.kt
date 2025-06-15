@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.serialization.json.Json
 
 @Composable
-fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiViewerViewModel) {
+fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiViewerViewModel, isDark: MutableState<Boolean>) {
     val context = LocalContext.current
     val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     var tagLikeCheck = mainViewModel.tagLikeCheck
@@ -73,10 +73,6 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
     val typeBgColor = Color(titleColorLong + 0x333333)
     val textColor = Color(titleColorLong - 0x666666)
 
-    // 텍스트 배경 색
-    val mainTextColor = mainViewModel.textColor.value
-    val mainBgColor = mainViewModel.bgColor.value
-
     LaunchedEffect(tagSearchKeyword.value) {
         snapshotFlow { tagSearchKeyword.value }
             .debounce(200)
@@ -90,7 +86,6 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
-            color = mainBgColor,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -102,15 +97,14 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("검색", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text("검색", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
                 OutlinedTextField(
                     value = titleSearchKeyword,
                     onValueChange = {
                         titleSearchKeyword = it
                     },
-                    label = {Text("제목검색", color = mainTextColor)},
+                    label = {Text("제목검색")},
                     maxLines = 1,
-                    colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                     modifier = Modifier.fillMaxWidth()
                 )
                 // 태그검색으로 선택한 태그들을 보여준다.
@@ -171,9 +165,9 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     onValueChange = {
                         tagSearchKeyword.value = it
                     },
-                    label = {Text("태그검색", color = mainTextColor)},
+                    label = {Text("태그검색")},
                     maxLines = 1,
-                    colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
+//                    colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                     modifier = Modifier.fillMaxWidth().onFocusChanged{isTagSearchFocused = it.isFocused}
                 )
                 Button(
@@ -233,8 +227,8 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 }
                 HorizontalDivider(thickness = 2.dp)
 
-                Text("UI 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
-                Text("한번에 로드할 갤러리 수: ${mainViewModel.pageSize}", color = mainTextColor)
+                Text("UI 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text("한번에 로드할 갤러리 수: ${mainViewModel.pageSize}")
                 Slider(
                     value = mainViewModel.pageSize.toFloat(),
                     valueRange = 5f..50f,
@@ -247,22 +241,24 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 )
                 // 태그 NONE을 보일지 말지 선택
                 Row (verticalAlignment = Alignment.CenterVertically){
-                    Text("좋아요 태그가 있는 갤러리만 보이기", color = mainTextColor)
+                    Text("좋아요 태그가 있는 갤러리만 보이기")
                     Checkbox(checked = tagLikeCheck.value, onCheckedChange = { mainViewModel.setTagLikeCheck(it) })
                 }
                 Row (verticalAlignment = Alignment.CenterVertically){
-                    Text("좋아요 갤러리만 보이기", color = mainTextColor)
+                    Text("좋아요 갤러리만 보이기")
                     Checkbox(checked = galleryLikeCheck.value, onCheckedChange = { mainViewModel.setGalleryLikeCheck(it) })
                 }
                 Text("싫어요는 보이지 않습니다", color = Color.Gray)
                 Button(
-                    onClick = {mainViewModel.toggleDarkMode()}
+                    onClick = {
+                        mainViewModel.toggleDarkMode(isDark)
+                    }
                 ) {
                     Text("다크모드 토클")
                 }
                 HorizontalDivider(thickness = 2.dp)
 
-                Text("태그/갤러리 좋아요/싫어요 관리", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text("태그/갤러리 좋아요/싫어요 관리", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
                 Row (
                     horizontalArrangement = Arrangement.SpaceAround,
                     modifier = Modifier.fillMaxWidth()
@@ -286,12 +282,12 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 }
                 HorizontalDivider(thickness = 2.dp)
 
-                Text("크롤링 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
-                Text("크롤링 상태: ${mainViewModel.crawlOn.value}", color = mainTextColor)
+                Text("크롤링 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text("크롤링 상태: ${if(mainViewModel.crawlOn.value) "켜짐" else "꺼짐"}")
                 Button(onClick = {
                     mainViewModel.toggleCrawlOn()
                 }) { Text("크롤링 켜기/끄기") }
-                Text("크롤링 간격: ${mainViewModel.delayS.longValue}초", color = mainTextColor)
+                Text("크롤링 간격: ${mainViewModel.delayS.longValue}초")
                 Slider(
                     value = mainViewModel.delayS.longValue.toFloat(),
                     valueRange = 40f..120f,
@@ -302,23 +298,23 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
                 )
-                Text("마지막 크롤링 에러", color = mainTextColor)
+                Text("마지막 크롤링 에러")
                 Text(mainViewModel.crawlErrorStr.value, color = Color.Gray)
-                Text("크롤링 상황", color = mainTextColor)
+                Text("크롤링 상황")
                 Text(mainViewModel.crawlStatusStr.value, color = Color.Gray)
-                Text("남은 크롤링 개수", color = mainTextColor)
+                Text("남은 크롤링 개수")
                 Text("${mainViewModel.gIdList.size}", color = Color.Gray)
                 HorizontalDivider(thickness = 2.dp)
 
                 // 캐시 설정
-                Text("캐시 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text("캐시 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
                 Text("한번이라도 본 이미지는 캐시에 저장됩니다", color = Color.Gray)
                 Text("앱 용량이 너무 커질시 캐시(임시파일)를 설정에서 삭제하세요", color = Color.Gray)
                 Text("데이터베이스 (데이터)는 절대 삭제하시면 안됩니다.", color = Color.Gray)
                 HorizontalDivider(thickness = 2.dp)
 
                 // 데이터베이스 내보내기/불러오기
-                Text("내보내기/불러오기 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text("내보내기/불러오기 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
                 Button(
                     shape = RoundedCornerShape(7.dp),
                     onClick = { navController.navigate("DatabaseExportImportSettingScreen") }

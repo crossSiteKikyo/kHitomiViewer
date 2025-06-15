@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,13 +29,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -73,7 +69,6 @@ import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Composable
@@ -109,11 +104,6 @@ fun ListScreen(
         }
     }
 
-    // 텍스트 배경 색
-    val mainTextColor = mainViewModel.textColor.value
-    val mainBgColor = mainViewModel.bgColor.value
-    val mainCardColor = mainViewModel.cardColor.value
-
     LaunchedEffect(page, tagIdListJson, titleKeyword) {
         if (page != null) {
             mainViewModel.setGalleryList(page.toLong(), tagIdListJson, titleKeyword)
@@ -131,7 +121,6 @@ fun ListScreen(
         }
     ) { innerPadding ->
         Surface(
-            color = mainBgColor,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -151,14 +140,13 @@ fun ListScreen(
                     if(showDialog.value) {
                         val likeStatusIntToStr = listOf("싫어요 \uD83C\uDD96", "기본", "좋아요 ♥")
                         AlertDialog(
-                            containerColor = mainBgColor,
                             onDismissRequest = {},
                             confirmButton = {TextButton(onClick = { showDialog.value = false }) {
                                 Text("닫기")
                             }},
                             title = {
                                 val what = if(mainViewModel.whatStr.value == "tag") "태그" else "갤러리"
-                                Text("${what} - ${mainViewModel.selectedTagNameOrGalleryId.value}", color = mainTextColor)
+                                Text("${what} - ${mainViewModel.selectedTagNameOrGalleryId.value}")
                             },
                             text = {
                                 Column (
@@ -179,16 +167,34 @@ fun ListScreen(
                                 }
                             })
                     }
-                    // 제목검색일경우
-                    if(!titleKeyword.isNullOrBlank()) {
-                        Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                            Text("제목 - ${mainViewModel.lastTitleKeyword}", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 25.sp), color = mainTextColor)
-                        }
-                    }
-                    // 태그검색일경우
-                    if(mainViewModel.lastTags.isNotEmpty()) {
-                        Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                            Text("태그 - ${mainViewModel.lastTags.joinToString(", ") { tag -> tag.name }}", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 25.sp), color = mainTextColor)
+                    SelectionContainer {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            // 제목검색일경우
+                            if(!titleKeyword.isNullOrBlank()) {
+                                Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                                    Text(
+                                        "제목 - ${mainViewModel.lastTitleKeyword}",
+                                        fontWeight = FontWeight.Bold,
+                                        style = TextStyle(
+                                            shadow = Shadow(Color.Cyan, blurRadius = 5f),
+                                            fontSize = 25.sp
+                                        )
+                                    )
+                                }
+                            }
+                            // 태그검색일경우
+                            if(mainViewModel.lastTags.isNotEmpty()) {
+                                Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                                    Text(
+                                        "태그 - ${mainViewModel.lastTags.joinToString(", ") { tag -> tag.name }}",
+                                        fontWeight = FontWeight.Bold,
+                                        style = TextStyle(
+                                            shadow = Shadow(Color.Cyan, blurRadius = 5f),
+                                            fontSize = 25.sp
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
                     if(galleries.isEmpty())
@@ -201,9 +207,6 @@ fun ListScreen(
                                 else -> Color.Black
                             }
                             Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = mainCardColor
-                                ),
                                 shape = RoundedCornerShape(5.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -407,7 +410,7 @@ fun ListScreen(
                                 PageButton(navController, true, 1, tagIdListJson, titleKeyword)
                             // ...은 현재 페이지가 4 이상이면 보임
                             if (p >= 4)
-                                Text("...", color = mainTextColor)
+                                Text("...")
                             // 전 페이지는 현재페이지가 3이상이면 보임
                             if (p >= 3)
                                 PageButton(navController, true, p - 1, tagIdListJson, titleKeyword)
@@ -418,7 +421,7 @@ fun ListScreen(
                                 PageButton(navController, true, p + 1, tagIdListJson, titleKeyword)
                             // ...은 마지막페이지 - 현페이지가 3 이상일경우 보임
                             if ((pageCount - p) >= 3)
-                                Text("...", color = mainTextColor)
+                                Text("...")
                             // 마지막 페이지는 현재 페이지가 마지막이 아니면 보임
                             if (p != pageCount && pageCount >= 2)
                                 PageButton(navController, true, pageCount, tagIdListJson, titleKeyword)
@@ -443,7 +446,6 @@ fun ListScreen(
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             maxLines = 1,
-                            colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                             modifier = Modifier.width(200.dp)
                         )
                         Button(
@@ -546,11 +548,5 @@ fun PageButton(navController: NavController, enable: Boolean, page: Long, tagIdL
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp), // 패딩 축소
         modifier = Modifier.height(36.dp), // 버튼 높이도 줄일 수 있음
         enabled = enable,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xff273f70),
-            contentColor = Color.White,
-            disabledContentColor = Color.DarkGray,
-            disabledContainerColor = Color.LightGray
-        )
     ) { Text("$page") }
 }

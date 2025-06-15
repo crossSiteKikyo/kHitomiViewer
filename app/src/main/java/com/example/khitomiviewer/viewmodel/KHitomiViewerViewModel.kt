@@ -6,6 +6,7 @@ import android.content.Context.MODE_PRIVATE
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -104,9 +105,6 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         private set
     var lastTags = mutableStateListOf<Tag>()
     var loading = mutableStateOf(true)
-    val textColor = mutableStateOf(Color(0xff000000 + prefs.getInt("textColor", 0x000000)))
-    val bgColor = mutableStateOf(Color(0xff000000 + prefs.getInt("bgColor", 0xeeeeee)))
-    val cardColor = mutableStateOf(Color(0xff000000 + prefs.getInt("cardColor", 0xdfdfe7)))
 
     // 세팅 화면에 사용되는 변수
     val tagLikeCheck = mutableStateOf(prefs.getBoolean("tagLikeCheck", false))
@@ -185,22 +183,14 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun toggleDarkMode() {
-        if(bgColor.value == Color(0xFFFFFBFE)) {
-            bgColor.value = Color(0xff111111)
-            prefs.edit { putInt("bgColor", 0x111111) }
-            textColor.value = Color(0xfff0f0f0)
-            prefs.edit { putInt("textColor", 0xf0f0f0) }
-            cardColor.value = Color(0xffcfcfd7)
-            prefs.edit { putInt("cardColor", 0xcfcfd7) }
+    fun toggleDarkMode(isDark: MutableState<Boolean>) {
+        if(isDark.value) {
+            isDark.value = false
+            prefs.edit { putBoolean("isDark", false) }
         }
         else {
-            bgColor.value = Color(0xFFFFFBFE)
-            prefs.edit { putInt("bgColor", 0xFFFBFE) }
-            textColor.value = Color(0xff0f0f0f)
-            prefs.edit { putInt("textColor", 0x0f0f0f) }
-            cardColor.value = Color(0xffdfdfe7)
-            prefs.edit { putInt("cardColor", 0xdfdfe7) }
+            isDark.value = true
+            prefs.edit { putBoolean("isDark", true) }
         }
     }
 

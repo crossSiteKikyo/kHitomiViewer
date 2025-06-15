@@ -1,13 +1,18 @@
 package com.example.khitomiviewer
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,18 +28,23 @@ import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
-            KHitomiViewerTheme {
+            enableEdgeToEdge()
+            val prefs = getSharedPreferences("MySettings", MODE_PRIVATE)
+            var isDark = remember { mutableStateOf(prefs.getBoolean("isDark", false)) }
+            KHitomiViewerTheme(
+                darkTheme = isDark.value
+            ) {
                 val mainViewModel: KHitomiViewerViewModel = viewModel()
-                MyNav(mainViewModel)
+                MyNav(mainViewModel, isDark)
             }
         }
     }
 }
 
 @Composable
-fun MyNav(mainViewModel: KHitomiViewerViewModel) {
+fun MyNav(mainViewModel: KHitomiViewerViewModel, isDark: MutableState<Boolean>) {
     val navController = rememberNavController()
     NavHost(
         navController = navController, startDestination = "ListScreen/1//",
@@ -57,7 +67,7 @@ fun MyNav(mainViewModel: KHitomiViewerViewModel) {
         composable("MangaViewScreen/{gidStr}") { bse ->
             MangaViewScreen(navController, mainViewModel, bse.arguments?.getString("gidStr"))
         }
-        composable("MainSettingScreen") { MainSettingScreen(navController, mainViewModel) }
+        composable("MainSettingScreen") { MainSettingScreen(navController, mainViewModel, isDark) }
         composable("LikeSettingScreen/{tagOrGallery}") { bse ->
             LikeSettingScreen(navController, mainViewModel, bse.arguments?.getString("tagOrGallery"))
         }

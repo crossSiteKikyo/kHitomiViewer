@@ -80,4 +80,6 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.1.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    // 시스템 ui
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
 }

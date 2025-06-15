@@ -31,9 +31,6 @@ import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
 
 @Composable
 fun DatabaseExportImportSettingScreen(mainViewModel: KHitomiViewerViewModel) {
-    // 텍스트 배경 색
-    val mainTextColor = mainViewModel.textColor.value
-    val mainBgColor = mainViewModel.bgColor.value
 
     val context = LocalContext.current
     val exportLauncher = rememberLauncherForActivityResult(
@@ -55,7 +52,6 @@ fun DatabaseExportImportSettingScreen(mainViewModel: KHitomiViewerViewModel) {
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
-            color = mainBgColor,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -67,23 +63,20 @@ fun DatabaseExportImportSettingScreen(mainViewModel: KHitomiViewerViewModel) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("좋아요/싫어요 정보 내보내기/불러오기", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp), color = mainTextColor)
+                Text("좋아요/싫어요 정보 내보내기/불러오기", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
                 HorizontalDivider(thickness = 2.dp)
                 if(mainViewModel.dbExportImportStr.value == "내보내기중" || mainViewModel.dbExportImportStr.value == "불러오기중") {
                     Text(
                         text = mainViewModel.dbExportImportStr.value,
-                        color = mainTextColor,
                         fontSize = 50.sp
                     )
                     CircularProgressIndicator()
                     Text(
                         text = "시간이 오래 걸릴 수 있습니다",
-                        color = mainTextColor,
                         fontSize = 30.sp
                     )
                     Text(
                         text = "이 화면을 벗어나지 마세요",
-                        color = mainTextColor,
                         fontSize = 30.sp
                     )
                 }

@@ -62,11 +62,6 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
     val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
 
-    // 텍스트 배경 색
-    val mainTextColor = mainViewModel.textColor.value
-    val mainBgColor = mainViewModel.bgColor.value
-    val mainCardColor = mainViewModel.cardColor.value
-
     LaunchedEffect(tagOrGallery) {
         if (tagOrGallery != null) {
             viewModel.setTagOrGalleryList(tagOrGallery)
@@ -77,7 +72,6 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
-            color = mainBgColor,
             modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             Column(
@@ -87,20 +81,19 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(title, fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text(title, fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
                 HorizontalDivider(thickness = 2.dp)
                 // 다이얼로그
                 if(showDialog.value) {
                     val likeStatusIntToStr = listOf("싫어요 \uD83C\uDD96", "기본", "좋아요 ♥")
                     AlertDialog(
-                        containerColor = mainBgColor,
                         onDismissRequest = {},
                         confirmButton = {TextButton(onClick = { showDialog.value = false }) {
                             Text("닫기")
                         }},
                         title = {
                             val what = if(viewModel.whatStr.value == "tag") "태그" else "갤러리"
-                            Text("${what} - ${viewModel.selectedTagNameOrGalleryId.value}", color = mainTextColor)
+                            Text("${what} - ${viewModel.selectedTagNameOrGalleryId.value}")
                         },
                         text = {
                             Column (
@@ -220,9 +213,6 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                                 else -> 0.25f
                             }
                             Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = mainCardColor
-                                ),
                                 shape = RoundedCornerShape(5.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()

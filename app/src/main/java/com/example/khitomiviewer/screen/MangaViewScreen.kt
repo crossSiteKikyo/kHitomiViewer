@@ -2,7 +2,6 @@ package com.example.khitomiviewer.screen
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -32,18 +30,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.network.HttpException
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
-import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.collections.get
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -55,10 +50,6 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
         .set("Referer", "https://hitomi.la/")
         .build()
 
-    // 텍스트 배경 색
-    val mainTextColor = mainViewModel.textColor.value
-    val mainBgColor = mainViewModel.bgColor.value
-
     LaunchedEffect(gIdStr) {
         val gId = gIdStr?.toLong()
         if (gId != null) {
@@ -69,7 +60,7 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         BoxWithConstraints(
             modifier = Modifier
-                .fillMaxSize().background(mainBgColor)
+                .fillMaxSize()
                 .padding(innerPadding)
         ) {
             HorizontalPager(
