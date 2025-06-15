@@ -23,6 +23,12 @@ interface TagDao {
     @Query("select * from tag where tagId = :tagId")
     fun findById(tagId: Long): Tag
 
+    @Query("select * from tag where tagId = :tagId")
+    fun findByIdNullable(tagId: Long): Tag?
+
+    @Query("select * from tag where tagId in (:tagIdList)")
+    fun findByIds(tagIdList: List<Long>): List<Tag>
+
     @Query("select * from tag where name = :name")
     fun findByName(name: String): Tag
 
@@ -32,6 +38,6 @@ interface TagDao {
     @Query("select * from tag where likeStatus != 1 order by likeStatus desc")
     fun findNotNone(): List<Tag>
 
-    @Query("select * from tag where name like :keyword limit 10")
-    fun findByKeyword(keyword: String): List<Tag>
+    @Query("select * from tag where name like :keyword and tagId not in (:tagIds) limit 10")
+    fun findByKeyword(keyword: String, tagIds: List<Long>): List<Tag>
 }

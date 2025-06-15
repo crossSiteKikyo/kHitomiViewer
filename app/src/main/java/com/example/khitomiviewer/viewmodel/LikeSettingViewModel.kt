@@ -64,7 +64,7 @@ class LikeSettingViewModel(application: Application) : AndroidViewModel(applicat
             }
             else {
                 val g = galleryDao.findById(selectedTagNameOrGalleryId.value.toLong())
-                galleryDao.update(Gallery(g.gId, g.title, g.thumb1, g.thumb2, g.date, g.filecount, like, g.download, g.typeId))
+                galleryDao.update(Gallery(g.gId, g.title, g.thumb1, g.thumb2, g.date, g.filecount, like, g.typeId))
             }
             // ui 재로딩을 위해 다시 세팅
             setTagOrGalleryList(lastTagOrGallery)

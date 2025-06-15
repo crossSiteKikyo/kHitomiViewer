@@ -10,7 +10,6 @@ data class GalleryFullDto (
     val date: String,
     val filecount: Int,
     val likeStatus: Int,
-    val download: Boolean,
     val typeId: Long,
     val typeName: String,
     val tags: List<Tag>

@@ -20,6 +20,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -52,13 +53,19 @@ import com.example.khitomiviewer.R
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
 import com.example.khitomiviewer.viewmodel.LikeSettingViewModel
+import kotlinx.serialization.json.Json
 
 @Composable
 fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiViewerViewModel, tagOrGallery:String?) {
-    val title = if(tagOrGallery == "tag") "태그 좋아요 관리" else "갤러리 좋아요 관리"
+    val title = if(tagOrGallery == "tag") "태그 좋아요/싫어요 관리" else "갤러리 좋아요/싫어요 관리"
     val viewModel: LikeSettingViewModel = viewModel()
     val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
+
+    // 텍스트 배경 색
+    val mainTextColor = mainViewModel.textColor.value
+    val mainBgColor = mainViewModel.bgColor.value
+    val mainCardColor = mainViewModel.cardColor.value
 
     LaunchedEffect(tagOrGallery) {
         if (tagOrGallery != null) {
@@ -70,9 +77,8 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            color = mainBgColor,
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             Column(
                 modifier = Modifier
@@ -81,19 +87,20 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(title, fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text(title, fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
                 HorizontalDivider(thickness = 2.dp)
                 // 다이얼로그
                 if(showDialog.value) {
                     val likeStatusIntToStr = listOf("싫어요 \uD83C\uDD96", "기본", "좋아요 ♥")
                     AlertDialog(
+                        containerColor = mainBgColor,
                         onDismissRequest = {},
                         confirmButton = {TextButton(onClick = { showDialog.value = false }) {
                             Text("닫기")
                         }},
                         title = {
                             val what = if(viewModel.whatStr.value == "tag") "태그" else "갤러리"
-                            Text("${what} - ${viewModel.selectedTagNameOrGalleryId.value}")
+                            Text("${what} - ${viewModel.selectedTagNameOrGalleryId.value}", color = mainTextColor)
                         },
                         text = {
                             Column (
@@ -213,6 +220,9 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                                 else -> 0.25f
                             }
                             Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = mainCardColor
+                                ),
                                 shape = RoundedCornerShape(5.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -311,7 +321,7 @@ fun LikeSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
 @Composable
 fun MainTagText2(tag: Tag, textColor:Color, bgColor:Color, viewModel: LikeSettingViewModel, showDialog: MutableState<Boolean>, navController: NavHostController) {
     fun tagClick() {
-        navController.navigate("ListScreen/1/${tag.tagId}/")
+        navController.navigate("ListScreen/1/${Json.encodeToString(listOf(tag.tagId))}/")
     }
     var name = when(tag.likeStatus) {
         0 -> tag.name + " \uD83C\uDD96"
@@ -351,7 +361,7 @@ fun MainTagText2(tag: Tag, textColor:Color, bgColor:Color, viewModel: LikeSettin
 @Composable
 fun TagText2(tag: Tag, mainViewModel: LikeSettingViewModel, showDialog: MutableState<Boolean>, navController: NavHostController) {
     fun tagClick() {
-        navController.navigate("ListScreen/1/${tag.tagId}/")
+        navController.navigate("ListScreen/1/${Json.encodeToString(listOf(tag.tagId))}/")
     }
     var name = when(tag.likeStatus) {
         0 -> tag.name + " \uD83C\uDD96"

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,23 +13,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,22 +53,35 @@ import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.serialization.json.Json
 
 @Composable
 fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiViewerViewModel) {
+    val context = LocalContext.current
+    val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     var tagLikeCheck = mainViewModel.tagLikeCheck
     var galleryLikeCheck = mainViewModel.galleryLikeCheck
-    val showDialog = remember { mutableStateOf(false) }
 
-    var tagSearchKeyword by remember { mutableStateOf("") }
+    var tagSearchKeyword = remember { mutableStateOf("") }
     var titleSearchKeyword by remember { mutableStateOf("") }
     var isTagSearchFocused by remember { mutableStateOf(false) }
 
-    LaunchedEffect(tagSearchKeyword) {
-        snapshotFlow { tagSearchKeyword }
-            .debounce(300)
+    var selectedTagList = remember { mutableStateListOf<Tag>() }
+
+    // 태그 색깔
+    val titleColorLong = 0xFFCC9999
+    val typeBgColor = Color(titleColorLong + 0x333333)
+    val textColor = Color(titleColorLong - 0x666666)
+
+    // 텍스트 배경 색
+    val mainTextColor = mainViewModel.textColor.value
+    val mainBgColor = mainViewModel.bgColor.value
+
+    LaunchedEffect(tagSearchKeyword.value) {
+        snapshotFlow { tagSearchKeyword.value }
+            .debounce(200)
             .collectLatest { keyword ->
-                mainViewModel.searchTagsFromDb(keyword)
+                mainViewModel.searchTagsFromDb(keyword, selectedTagList)
             }
     }
 
@@ -72,6 +90,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
+            color = mainBgColor,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -83,61 +102,89 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // 다이얼로그
-                if(showDialog.value) {
-                    val likeStatusIntToStr = listOf("싫어요 \uD83C\uDD96", "기본", "좋아요 ♥")
-                    AlertDialog(
-                        onDismissRequest = {},
-                        confirmButton = {TextButton(onClick = { showDialog.value = false }) {
-                            Text("닫기")
-                        }},
-                        title = {
-                            val what = if(mainViewModel.whatStr.value == "tag") "태그" else "갤러리"
-                            Text("${what} - ${mainViewModel.selectedTagNameOrGalleryId.value}")
-                        },
-                        text = {
-                            Column (
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ){
-                                for (x in 0..2) {
-                                    if(x == mainViewModel.likeStatus.intValue)
-                                        Button(onClick = {}, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) { Text(likeStatusIntToStr[x])}
-                                    else
-                                        Button(onClick = {
-                                            // db에 상태 변경
-                                            mainViewModel.changeLike(x, "MainSettingScreen")
-                                            // 다이얼로그 닫기
-                                            showDialog.value = false
-                                        }) { Text(likeStatusIntToStr[x])}
-                                }
-                            }
-                        })
-                }
-                Text("검색", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text("검색", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
                 OutlinedTextField(
                     value = titleSearchKeyword,
                     onValueChange = {
                         titleSearchKeyword = it
                     },
-                    label = {Text("제목검색")},
+                    label = {Text("제목검색", color = mainTextColor)},
                     maxLines = 1,
+                    colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Button(
-                    onClick = { navController.navigate("ListScreen/1//${titleSearchKeyword}")}
-                ) {
-                    Text("제목검색하기")
+                // 태그검색으로 선택한 태그들을 보여준다.
+                if(selectedTagList.isNotEmpty()) {
+                    val artists = selectedTagList.filter { tag -> tag.name.startsWith("artist:") }
+                    val groups = selectedTagList.filter { tag -> tag.name.startsWith("group:") }
+                    val parodies = selectedTagList.filter { tag -> tag.name.startsWith("parody:") }
+                    val characters = selectedTagList.filter { tag -> tag.name.startsWith("character:") }
+                    val males = selectedTagList.filter { tag -> tag.name.startsWith("male:") }
+                    val females = selectedTagList.filter { tag -> tag.name.startsWith("female:") }
+                    val others = selectedTagList.filter { tag -> (!tag.name.startsWith("artist:") && !tag.name.startsWith("group:") && !tag.name.startsWith("parody:")
+                            && !tag.name.startsWith("character:") && !tag.name.startsWith("male:") && !tag.name.startsWith("female:"))}
+
+                    FlowRow(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.padding(3.dp)
+                    ) {
+                        if(artists.isNotEmpty()) {
+                            for (i in artists.indices) {
+                                MainTagRow(artists[i], textColor, typeBgColor, selectedTagList)
+                            }
+                        }
+                        if(groups.isNotEmpty()) {
+                            for (i in groups.indices) {
+                                MainTagRow(groups[i], textColor, typeBgColor, selectedTagList)
+                            }
+                        }
+                        if(parodies.isNotEmpty()) {
+                            for (i in parodies.indices) {
+                                MainTagRow(parodies[i], textColor, typeBgColor, selectedTagList)
+                            }
+                        }
+                        if(characters.isNotEmpty()) {
+                            for (i in characters.indices) {
+                                MainTagRow(characters[i], textColor, typeBgColor, selectedTagList)
+                            }
+                        }
+                        if(males.isNotEmpty()) {
+                            for (tag in males) {
+                                TagTextRow(tag, selectedTagList)
+                            }
+                        }
+                        if(females.isNotEmpty()) {
+                            for (tag in females) {
+                                TagTextRow(tag, selectedTagList)
+                            }
+                        }
+                        if(others.isNotEmpty()) {
+                            for (tag in others) {
+                                TagTextRow(tag, selectedTagList)
+                            }
+                        }
+                    }
                 }
                 OutlinedTextField(
-                    value = tagSearchKeyword,
+                    value = tagSearchKeyword.value,
                     onValueChange = {
-                        tagSearchKeyword = it
+                        tagSearchKeyword.value = it
                     },
-                    label = {Text("태그검색")},
+                    label = {Text("태그검색", color = mainTextColor)},
                     maxLines = 1,
+                    colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                     modifier = Modifier.fillMaxWidth().onFocusChanged{isTagSearchFocused = it.isFocused}
                 )
+                Button(
+                    onClick = {
+                        val tagIdListJson = Json.encodeToString(selectedTagList.map { tag -> tag.tagId })
+                        navController.navigate("ListScreen/1/$tagIdListJson/${titleSearchKeyword}")
+                    }
+                ) {
+                    Text("종합 검색")
+                }
+                // 태그검색에 입력된 키워드가 포함되어있는 태그 10개를 보여준다.
                 if(isTagSearchFocused) {
                     val artists = mainViewModel.tagSearchList.filter { tag -> tag.name.startsWith("artist:") }
                     val groups = mainViewModel.tagSearchList.filter { tag -> tag.name.startsWith("group:") }
@@ -148,50 +195,46 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     val others = mainViewModel.tagSearchList.filter { tag -> (!tag.name.startsWith("artist:") && !tag.name.startsWith("group:") && !tag.name.startsWith("parody:")
                             && !tag.name.startsWith("character:") && !tag.name.startsWith("male:") && !tag.name.startsWith("female:"))}
 
-                    val titleColorLong = 0xFFCC9999
-                    val typeBgColor = Color(titleColorLong + 0x333333)
-                    val textColor = Color(titleColorLong - 0x666666)
-
                     if(artists.isNotEmpty()) {
                         for (i in artists.indices) {
-                            MainTagText3(artists[i], textColor, typeBgColor, mainViewModel, showDialog, navController)
+                            MainTagText3(artists[i], textColor, typeBgColor, selectedTagList, tagSearchKeyword)
                         }
                     }
                     if(groups.isNotEmpty()) {
                         for (i in groups.indices) {
-                            MainTagText3(groups[i], textColor, typeBgColor, mainViewModel, showDialog, navController)
+                            MainTagText3(groups[i], textColor, typeBgColor, selectedTagList, tagSearchKeyword)
                         }
                     }
                     if(parodies.isNotEmpty()) {
                         for (i in parodies.indices) {
-                            MainTagText3(parodies[i], textColor, typeBgColor, mainViewModel, showDialog, navController)
+                            MainTagText3(parodies[i], textColor, typeBgColor, selectedTagList, tagSearchKeyword)
                         }
                     }
                     if(characters.isNotEmpty()) {
                         for (i in characters.indices) {
-                            MainTagText3(characters[i], textColor, typeBgColor, mainViewModel, showDialog, navController)
-                        }
-                    }
-                    if(males.isNotEmpty()) {
-                        for (tag in males) {
-                            TagText(tag, mainViewModel, showDialog, navController)
+                            MainTagText3(characters[i], textColor, typeBgColor, selectedTagList, tagSearchKeyword)
                         }
                     }
                     if(females.isNotEmpty()) {
                         for (tag in females) {
-                            TagText(tag, mainViewModel, showDialog, navController)
+                            TagText3(tag, selectedTagList, tagSearchKeyword)
+                        }
+                    }
+                    if(males.isNotEmpty()) {
+                        for (tag in males) {
+                            TagText3(tag, selectedTagList, tagSearchKeyword)
                         }
                     }
                     if(others.isNotEmpty()) {
                         for (tag in others) {
-                            TagText(tag, mainViewModel, showDialog, navController)
+                            TagText3(tag, selectedTagList, tagSearchKeyword)
                         }
                     }
                 }
                 HorizontalDivider(thickness = 2.dp)
 
-                Text("UI 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
-                Text("한번에 로드할 갤러리 수: ${mainViewModel.pageSize}")
+                Text("UI 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text("한번에 로드할 갤러리 수: ${mainViewModel.pageSize}", color = mainTextColor)
                 Slider(
                     value = mainViewModel.pageSize.toFloat(),
                     valueRange = 5f..50f,
@@ -204,17 +247,22 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 )
                 // 태그 NONE을 보일지 말지 선택
                 Row (verticalAlignment = Alignment.CenterVertically){
-                    Text("좋아요 태그가 있는 갤러리만 보이기")
+                    Text("좋아요 태그가 있는 갤러리만 보이기", color = mainTextColor)
                     Checkbox(checked = tagLikeCheck.value, onCheckedChange = { mainViewModel.setTagLikeCheck(it) })
                 }
                 Row (verticalAlignment = Alignment.CenterVertically){
-                    Text("좋아요 갤러리만 보이기")
+                    Text("좋아요 갤러리만 보이기", color = mainTextColor)
                     Checkbox(checked = galleryLikeCheck.value, onCheckedChange = { mainViewModel.setGalleryLikeCheck(it) })
                 }
                 Text("싫어요는 보이지 않습니다", color = Color.Gray)
+                Button(
+                    onClick = {mainViewModel.toggleDarkMode()}
+                ) {
+                    Text("다크모드 토클")
+                }
                 HorizontalDivider(thickness = 2.dp)
 
-                Text("태그/갤러리 좋아요 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text("태그/갤러리 좋아요/싫어요 관리", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
                 Row (
                     horizontalArrangement = Arrangement.SpaceAround,
                     modifier = Modifier.fillMaxWidth()
@@ -225,7 +273,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                         onClick = { navController.navigate("LikeSettingScreen/tag") }
                     ) {
                         Icon(Icons.Filled.Settings, "setting")
-                        Text("태그 좋아요 관리")
+                        Text("태그  관리")
                     }
                     // 작품 좋아요 관리 ui – DISLIKE, LIKE 작품 리스트 보여준다.
                     Button(
@@ -233,17 +281,17 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                         onClick = { navController.navigate("LikeSettingScreen/gallery") }
                     ) {
                         Icon(Icons.Filled.Settings, "setting")
-                        Text("갤러리 좋아요 관리")
+                        Text("갤러리  관리")
                     }
                 }
                 HorizontalDivider(thickness = 2.dp)
 
-                Text("크롤링 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
-                Text("크롤링 상태: ${mainViewModel.crawlOn.value}")
+                Text("크롤링 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
+                Text("크롤링 상태: ${mainViewModel.crawlOn.value}", color = mainTextColor)
                 Button(onClick = {
                     mainViewModel.toggleCrawlOn()
                 }) { Text("크롤링 켜기/끄기") }
-                Text("크롤링 간격: ${mainViewModel.delayS.longValue}초")
+                Text("크롤링 간격: ${mainViewModel.delayS.longValue}초", color = mainTextColor)
                 Slider(
                     value = mainViewModel.delayS.longValue.toFloat(),
                     valueRange = 40f..120f,
@@ -254,40 +302,42 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
                 )
-                Text("마지막 크롤링 에러")
+                Text("마지막 크롤링 에러", color = mainTextColor)
                 Text(mainViewModel.crawlErrorStr.value, color = Color.Gray)
-                Text("크롤링 상황")
+                Text("크롤링 상황", color = mainTextColor)
                 Text(mainViewModel.crawlStatusStr.value, color = Color.Gray)
-                Text("남은 크롤링 개수")
+                Text("남은 크롤링 개수", color = mainTextColor)
                 Text("${mainViewModel.gIdList.size}", color = Color.Gray)
                 HorizontalDivider(thickness = 2.dp)
 
                 // 캐시 설정
-                Text("캐시 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text("캐시 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
                 Text("한번이라도 본 이미지는 캐시에 저장됩니다", color = Color.Gray)
                 Text("앱 용량이 너무 커질시 캐시(임시파일)를 설정에서 삭제하세요", color = Color.Gray)
                 Text("데이터베이스 (데이터)는 절대 삭제하시면 안됩니다.", color = Color.Gray)
                 HorizontalDivider(thickness = 2.dp)
 
                 // 데이터베이스 내보내기/불러오기
-                Text("데이터베이스 내보내기/불러오기 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                Text("내보내기/불러오기 설정", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp, color = mainTextColor))
                 Button(
                     shape = RoundedCornerShape(7.dp),
                     onClick = { navController.navigate("DatabaseExportImportSettingScreen") }
                 ) {
                     Icon(Icons.Filled.Settings, "setting")
-                    Text("데이터베이스 내보내기/불러오기")
+                    Text("좋아요/싫어요 정보 내보내기/불러오기")
                 }
                 HorizontalDivider(thickness = 2.dp)
+                Text("kHitomiViewer 버전: ${versionName}", color = Color.Gray)
             }
         }
     }
 }
 
 @Composable
-fun MainTagText3(tag: Tag, textColor:Color, bgColor:Color, mainViewModel: KHitomiViewerViewModel, showDialog: MutableState<Boolean>, navController: NavHostController) {
+fun MainTagText3(tag: Tag, textColor:Color, bgColor:Color, selectedTagList: MutableList<Tag>, tagSearchKeyword: MutableState<String>) {
     fun tagClick() {
-        navController.navigate("ListScreen/1/${tag.tagId}/")
+        selectedTagList.add(tag)
+        tagSearchKeyword.value = ""
     }
     var name = when(tag.likeStatus) {
         2 -> tag.name + "♥"
@@ -313,13 +363,118 @@ fun MainTagText3(tag: Tag, textColor:Color, bgColor:Color, mainViewModel: KHitom
         modifier = Modifier
             .combinedClickable(
                 onClick = { tagClick() },
-                onLongClick = {
-                    mainViewModel.setDialog("tag", tag.name)
-                    showDialog.value = true
-                }
             )
             .background(color = bgColor)
             .clip(RoundedCornerShape(5.dp))
             .padding(horizontal = 2.dp)
     )
+}
+
+@Composable
+fun MainTagRow(tag: Tag, textColor:Color, bgColor:Color, selectedTagList: MutableList<Tag>) {
+    fun removeTagFromList() {
+        selectedTagList.remove(tag)
+    }
+    var name = when(tag.likeStatus) {
+        2 -> tag.name + "♥"
+        else -> tag.name
+    }
+    var color: Color = textColor
+    if(name.startsWith("parody:")) {
+        name = name.replace("parody:", "시리즈:")
+    }
+    else if(name.startsWith("character:")) {
+        name = name.replace("character:", "캐릭터:")
+    }
+    else if(name.startsWith("group:")) {
+        name = name.replace("group:", "그룹:")
+    }
+    else if(name.startsWith("artist:")) {
+        name = name.replace("artist:", "작가:")
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.background(color = bgColor, RoundedCornerShape(5.dp))
+    ) {
+        Text(
+            name,
+            color = color,
+            modifier = Modifier.padding(start = 5.dp)
+        )
+        IconButton (
+            onClick = {removeTagFromList()}
+        ){
+            Icon(imageVector = Icons.Default.Close, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+fun TagText3(tag: Tag, selectedTagList: MutableList<Tag>, tagSearchKeyword: MutableState<String>) {
+    fun tagClick() {
+        selectedTagList.add(tag)
+        tagSearchKeyword.value = ""
+    }
+    var name = when(tag.likeStatus) {
+        2 -> tag.name + "♥"
+        else -> tag.name
+    }
+    var bgColor: Color = Color.Gray
+    if(name.startsWith("male:")) {
+        name = name.replace("male:", "")
+        bgColor = Color(0xFF0080FF)
+    }
+    else if(name.startsWith("female:")) {
+        name = name.replace("female:", "")
+        bgColor = Color(0xFFFF66B2)
+    }
+
+    Text(
+        name,
+        color = Color.White,
+        modifier = Modifier
+            .combinedClickable(
+                onClick = { tagClick() },
+            )
+            .clip(RoundedCornerShape(5.dp))
+            .background(bgColor)
+            .padding(horizontal = 2.dp)
+    )
+}
+
+@Composable
+fun TagTextRow(tag: Tag, selectedTagList: MutableList<Tag>) {
+    fun removeTagFromList() {
+        selectedTagList.remove(tag)
+    }
+    var name = when(tag.likeStatus) {
+        2 -> tag.name + "♥"
+        else -> tag.name
+    }
+    var bgColor: Color = Color.Gray
+    if(name.startsWith("male:")) {
+        name = name.replace("male:", "")
+        bgColor = Color(0xFF0080FF)
+    }
+    else if(name.startsWith("female:")) {
+        name = name.replace("female:", "")
+        bgColor = Color(0xFFFF66B2)
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.background(color = bgColor, RoundedCornerShape(5.dp))
+    ) {
+        Text(
+            name,
+            color = Color.White,
+            modifier = Modifier.padding(start = 5.dp)
+        )
+        IconButton (
+            onClick = {removeTagFromList()}
+        ){
+            Icon(imageVector = Icons.Default.Close, contentDescription = null)
+        }
+    }
 }

@@ -1,7 +1,7 @@
 package com.example.khitomiviewer.room
 
 import androidx.room.Transaction
-import com.example.khitomiviewer.json.AllData
+import com.example.khitomiviewer.json.TagsAndGalleries
 import com.example.khitomiviewer.json.GalleryInfo
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.GalleryTag
@@ -50,7 +50,7 @@ class MyRepository(private val db: KHitomiDatabase) {
         }
         // 갤러리 저장.
         db.galleryDao().insert(Gallery(ginfo.id.toLong(), ginfo.title, thumb1, thumb2, ginfo.date, ginfo.files.size,
-            1, false, db.typeDao().findByName(ginfo.type).typeId))
+            1, db.typeDao().findByName(ginfo.type).typeId))
         // 갤러리토큰 저장.
         // artist, group, parody가 없다면 null tag를 넣어준다.
         if(ginfo.artists == null) {
@@ -97,28 +97,30 @@ class MyRepository(private val db: KHitomiDatabase) {
         }
     }
 
+    // 삭제된 갤러리 삭제할때 사용
     @Transaction
-    suspend fun restoreDatabase(allData: AllData) {
-        db.galleryDao().deleteAll()
-        db.galleryTagDao().deleteAll()
-        db.imageUrlDao().deleteAll()
-        db.tagDao().deleteAll()
-        db.typeDao().deleteAll()
+    suspend fun removeGalleryInfo(gId: Long) {
+        // 갤러리 삭제
+        val g = db.galleryDao().findById(gId)
+        db.galleryDao().delete(g)
+        // 갤러리 태그 삭제
+        db.galleryTagDao().deleteByGid(gId)
+        // 이미지 삭제
+        db.imageUrlDao().deleteByGid(gId)
+    }
 
-        for (type in allData.types) {
-            db.typeDao().insert(type)
+    @Transaction
+    suspend fun updateLikeDislikeInfo(tagsAndGalleries: TagsAndGalleries) {
+
+        for (gallery in tagsAndGalleries.galleries) {
+            val g = db.galleryDao().findByIdNullable(gallery.gId)
+            if(g != null && g.likeStatus != gallery.likeStatus)
+                db.galleryDao().update(Gallery(g.gId, g.title, g.thumb1, g.thumb2, g.date, g.filecount, gallery.likeStatus, g.typeId))
         }
-        for (gallery in allData.galleries) {
-            db.galleryDao().insert(gallery)
-        }
-        for (galleryTag in allData.galleryTags) {
-            db.galleryTagDao().insert(galleryTag)
-        }
-        for (imageUrl in allData.imageUrls) {
-            db.imageUrlDao().insert(imageUrl)
-        }
-        for (tag in allData.tags) {
-            db.tagDao().insert(tag)
+        for (tag in tagsAndGalleries.tags) {
+            val t = db.tagDao().findByIdNullable(tag.tagId)
+            if(t != null && t.likeStatus != tag.likeStatus)
+                db.tagDao().update(Tag(t.tagId, t.name, tag.likeStatus))
         }
     }
 }

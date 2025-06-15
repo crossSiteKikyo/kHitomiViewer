@@ -13,8 +13,11 @@ interface GalleryTagDao {
     @Query("delete from gallery_tag")
     suspend fun deleteAll()
 
-    @Query("select * from gallery_tag where gid = :gid")
-    suspend fun findByGid(gid: Long): List<GalleryTag>
+    @Query("delete from gallery_tag where gId = :gId")
+    suspend fun deleteByGid(gId: Long)
+
+    @Query("select * from gallery_tag where gId = :gId")
+    suspend fun findByGid(gId: Long): List<GalleryTag>
 
     @Query("select * from gallery_tag")
     fun findAll(): List<GalleryTag>

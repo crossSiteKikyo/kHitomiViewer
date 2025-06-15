@@ -2,6 +2,7 @@ package com.example.khitomiviewer.screen
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +55,10 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
         .set("Referer", "https://hitomi.la/")
         .build()
 
+    // 텍스트 배경 색
+    val mainTextColor = mainViewModel.textColor.value
+    val mainBgColor = mainViewModel.bgColor.value
+
     LaunchedEffect(gIdStr) {
         val gId = gIdStr?.toLong()
         if (gId != null) {
@@ -64,7 +69,7 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         BoxWithConstraints(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize().background(mainBgColor)
                 .padding(innerPadding)
         ) {
             HorizontalPager(

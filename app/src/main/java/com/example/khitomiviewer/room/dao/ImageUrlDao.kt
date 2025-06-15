@@ -13,6 +13,9 @@ interface ImageUrlDao {
     @Query("delete from imageurl")
     suspend fun deleteAll()
 
+    @Query("delete from imageurl where gId = :gId")
+    suspend fun deleteByGid(gId: Long)
+
     @Query("select * from imageurl where gId = :gId order by idx")
     suspend fun findByGId(gId: Long): List<ImageUrl>
 

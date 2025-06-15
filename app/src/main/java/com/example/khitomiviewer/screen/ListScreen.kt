@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -28,11 +30,13 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,12 +73,14 @@ import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Composable
 fun ListScreen(
     navController: NavHostController,
     mainViewModel: KHitomiViewerViewModel,
-    page: String?, tagId: String?, titleKeyword: String?
+    page: String?, tagIdListJson: String?, titleKeyword: String?
 ) {
     val context = LocalContext.current
     val hitomiHeaders = NetworkHeaders.Builder().set("Referer", "https://hitomi.la/").build()
@@ -103,9 +109,14 @@ fun ListScreen(
         }
     }
 
-    LaunchedEffect(page, tagId, titleKeyword) {
+    // 텍스트 배경 색
+    val mainTextColor = mainViewModel.textColor.value
+    val mainBgColor = mainViewModel.bgColor.value
+    val mainCardColor = mainViewModel.cardColor.value
+
+    LaunchedEffect(page, tagIdListJson, titleKeyword) {
         if (page != null) {
-            mainViewModel.setGalleryList(page.toLong(), tagId?.toLongOrNull(), titleKeyword)
+            mainViewModel.setGalleryList(page.toLong(), tagIdListJson, titleKeyword)
         }
     }
 
@@ -120,6 +131,7 @@ fun ListScreen(
         }
     ) { innerPadding ->
         Surface(
+            color = mainBgColor,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -139,13 +151,14 @@ fun ListScreen(
                     if(showDialog.value) {
                         val likeStatusIntToStr = listOf("싫어요 \uD83C\uDD96", "기본", "좋아요 ♥")
                         AlertDialog(
+                            containerColor = mainBgColor,
                             onDismissRequest = {},
                             confirmButton = {TextButton(onClick = { showDialog.value = false }) {
                                 Text("닫기")
                             }},
                             title = {
                                 val what = if(mainViewModel.whatStr.value == "tag") "태그" else "갤러리"
-                                Text("${what} - ${mainViewModel.selectedTagNameOrGalleryId.value}")
+                                Text("${what} - ${mainViewModel.selectedTagNameOrGalleryId.value}", color = mainTextColor)
                             },
                             text = {
                                 Column (
@@ -166,15 +179,17 @@ fun ListScreen(
                                 }
                             })
                     }
-                    // 태그검색일경우
-                    if(!tagId.isNullOrBlank()) {
-                        Text("태그 검색 - ${mainViewModel.lastTag.value?.name}", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 30.sp))
-                        HorizontalDivider(thickness = 2.dp)
-                    }
                     // 제목검색일경우
                     if(!titleKeyword.isNullOrBlank()) {
-                        Text("제목 검색 - ${mainViewModel.lastTitleKeyword}", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 30.sp))
-                        HorizontalDivider(thickness = 2.dp)
+                        Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                            Text("제목 - ${mainViewModel.lastTitleKeyword}", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 25.sp), color = mainTextColor)
+                        }
+                    }
+                    // 태그검색일경우
+                    if(mainViewModel.lastTags.isNotEmpty()) {
+                        Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                            Text("태그 - ${mainViewModel.lastTags.joinToString(", ") { tag -> tag.name }}", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 25.sp), color = mainTextColor)
+                        }
                     }
                     if(galleries.isEmpty())
                         Text("결과가 없습니다", style = TextStyle(fontSize = 50.sp))
@@ -186,6 +201,9 @@ fun ListScreen(
                                 else -> Color.Black
                             }
                             Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = mainCardColor
+                                ),
                                 shape = RoundedCornerShape(5.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -200,16 +218,18 @@ fun ListScreen(
                                     val typeBgColor = Color(titleColorLong + 0x333333)
                                     val textColor = Color(titleColorLong - 0x666666)
                                     // 제목
-                                    Text(
-                                        g.title,
-                                        maxLines = 6,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(titleColor)
-                                            .padding(2.dp),
-                                        color = Color.White,
-                                        style = TextStyle(shadow = Shadow(Color(0xFF000000), blurRadius = 7f), fontSize = 21.sp)
-                                    )
+                                    SelectionContainer {
+                                        Text(
+                                            g.title,
+                                            maxLines = 6,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(titleColor)
+                                                .padding(2.dp),
+                                            color = Color.White,
+                                            style = TextStyle(shadow = Shadow(Color(0xFF000000), blurRadius = 7f), fontSize = 21.sp)
+                                        )
+                                    }
                                     // 타입
                                     Text(
                                         "종류: ${g.typeName}",
@@ -348,26 +368,28 @@ fun ListScreen(
                                         }
                                     }
                                     // 갤러리id   포스트 시간   페이지 수
-                                    Row(
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        // 갤러리 id
-                                        Text("${g.gId}",
-                                            color = Color.Gray,
-                                            modifier = Modifier.padding(horizontal = 5.dp)
-                                        )
-                                        // 포스트 시간
-                                        Text(
-                                            g.date,
-                                            color = titleColor,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                        // 페이지 수
-                                        Text("${g.filecount}p",
-                                            color = Color.Gray,
-                                            modifier = Modifier.padding(horizontal = 5.dp)
-                                        )
+                                    SelectionContainer {
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            // 갤러리 id
+                                            Text("${g.gId}",
+                                                color = Color.Gray,
+                                                modifier = Modifier.padding(horizontal = 5.dp)
+                                            )
+                                            // 포스트 시간
+                                            Text(
+                                                g.date,
+                                                color = titleColor,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                            // 페이지 수
+                                            Text("${g.filecount}p",
+                                                color = Color.Gray,
+                                                modifier = Modifier.padding(horizontal = 5.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -382,24 +404,24 @@ fun ListScreen(
                             val p = page.toLong()
                             // 1페이지는 현재 페이지가 2이상이면 보임
                             if (p >= 2)
-                                PageButton(navController, true, 1, tagId)
+                                PageButton(navController, true, 1, tagIdListJson, titleKeyword)
                             // ...은 현재 페이지가 4 이상이면 보임
                             if (p >= 4)
-                                Text("...")
+                                Text("...", color = mainTextColor)
                             // 전 페이지는 현재페이지가 3이상이면 보임
                             if (p >= 3)
-                                PageButton(navController, true, p - 1, tagId)
+                                PageButton(navController, true, p - 1, tagIdListJson, titleKeyword)
                             // 현재 페이지는 항상 보임
-                            PageButton(navController, false, p, tagId)
+                            PageButton(navController, false, p, tagIdListJson, titleKeyword)
                             // 후 페이지는 마지막페이지 - 현재페이지가 2이상일경우 보임
                             if ((pageCount - p) >= 2)
-                                PageButton(navController, true, p + 1, tagId)
+                                PageButton(navController, true, p + 1, tagIdListJson, titleKeyword)
                             // ...은 마지막페이지 - 현페이지가 3 이상일경우 보임
                             if ((pageCount - p) >= 3)
-                                Text("...")
+                                Text("...", color = mainTextColor)
                             // 마지막 페이지는 현재 페이지가 마지막이 아니면 보임
                             if (p != pageCount && pageCount >= 2)
-                                PageButton(navController, true, pageCount, tagId)
+                                PageButton(navController, true, pageCount, tagIdListJson, titleKeyword)
                         }
                     }
                     // 숫자로 페이지 이동
@@ -421,6 +443,7 @@ fun ListScreen(
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             maxLines = 1,
+                            colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                             modifier = Modifier.width(200.dp)
                         )
                         Button(
@@ -429,7 +452,7 @@ fun ListScreen(
                             modifier = Modifier.height(56.dp), // 버튼 높이도 줄일 수 있음
                             onClick = {
                                 if(pageNum.isNotEmpty() && (pageNum != page))
-                                    navController.navigate("ListScreen/$pageNum/${tagId}/")
+                                    navController.navigate("ListScreen/$pageNum/${tagIdListJson}/${titleKeyword}")
                             }
                         ) { Text("페이지 이동") }
                     }
@@ -443,7 +466,7 @@ fun ListScreen(
 @Composable
 fun MainTagText(tag: Tag, textColor:Color, mainViewModel: KHitomiViewerViewModel, showDialog: MutableState<Boolean>, navController: NavHostController) {
     fun tagClick() {
-        navController.navigate("ListScreen/1/${tag.tagId}/")
+        navController.navigate("ListScreen/1/${Json.encodeToString(listOf(tag.tagId))}/")
     }
     var name = when(tag.likeStatus) {
         2 -> tag.name + "♥"
@@ -482,7 +505,7 @@ fun MainTagText(tag: Tag, textColor:Color, mainViewModel: KHitomiViewerViewModel
 @Composable
 fun TagText(tag: Tag, mainViewModel: KHitomiViewerViewModel, showDialog: MutableState<Boolean>, navController: NavHostController) {
     fun tagClick() {
-        navController.navigate("ListScreen/1/${tag.tagId}/")
+        navController.navigate("ListScreen/1/${Json.encodeToString(listOf(tag.tagId))}/")
     }
     var name = when(tag.likeStatus) {
         2 -> tag.name + "♥"
@@ -516,12 +539,18 @@ fun TagText(tag: Tag, mainViewModel: KHitomiViewerViewModel, showDialog: Mutable
 }
 
 @Composable
-fun PageButton(navController: NavController, enable: Boolean, page: Long, tagId: String?) {
+fun PageButton(navController: NavController, enable: Boolean, page: Long, tagIdListJson: String?, titleKeyword: String?) {
     Button(
-        onClick = { navController.navigate("ListScreen/$page/${tagId}/") },
+        onClick = { navController.navigate("ListScreen/$page/${tagIdListJson}/${titleKeyword}") },
         shape = RoundedCornerShape(8.dp), // 덜 둥글게 (기본은 20.dp 이상)
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp), // 패딩 축소
         modifier = Modifier.height(36.dp), // 버튼 높이도 줄일 수 있음
-        enabled = enable
+        enabled = enable,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xff273f70),
+            contentColor = Color.White,
+            disabledContentColor = Color.DarkGray,
+            disabledContainerColor = Color.LightGray
+        )
     ) { Text("$page") }
 }
