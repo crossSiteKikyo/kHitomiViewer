@@ -13,7 +13,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.sqlite.db.SimpleSQLiteQuery
@@ -51,7 +50,6 @@ import java.nio.ByteOrder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.min
-import kotlin.system.exitProcess
 import androidx.core.content.edit
 import kotlinx.serialization.ExperimentalSerializationApi
 
@@ -105,12 +103,15 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         private set
     var lastTags = mutableStateListOf<Tag>()
     var loading = mutableStateOf(true)
+    var lastPageSize: Int = pageSize
+    var lastShowTypeIdList: MutableList<Long> = mutableListOf()
 
     // 세팅 화면에 사용되는 변수
     val tagLikeCheck = mutableStateOf(prefs.getBoolean("tagLikeCheck", false))
     val galleryLikeCheck = mutableStateOf(prefs.getBoolean("galleryLikeCheck", false))
     var tagSearchList by mutableStateOf<List<Tag>>(emptyList())
     var lastTagSearchKeyword = mutableStateOf<String>("artist:try")
+    var showTypeIdList = Json.decodeFromString<List<Long>>(prefs.getString("showTypeIdList", "[1,2,3,4,5]").toString()).toMutableList()
 
     // 다이얼로그. 태그 (싫어요,기본,좋아요,구독) 갤러리 DISLIKE, NONE, LIKE선택하는것.
     val selectedTagNameOrGalleryId = mutableStateOf("")
@@ -123,7 +124,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         private set
     
     // db 내보내기 불러오기에 사용되는 변수
-    val dbExportImportStr = mutableStateOf("db 내보내기 및 불러오기를 할 수 있습니다")
+    val dbExportImportStr = mutableStateOf("내보내기 및 불러오기를 할 수 있습니다")
 
     private var lastPage: Long = 98765
     private var lastTagIdListJson: String? = null
@@ -155,6 +156,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    // 크롤링 관련 함수들
     suspend fun crawlLoop() {
         // 처음에는 서버에서 gId리스트를 가져오자.
         getGIds()
@@ -183,38 +185,14 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun toggleDarkMode(isDark: MutableState<Boolean>) {
-        if(isDark.value) {
-            isDark.value = false
-            prefs.edit { putBoolean("isDark", false) }
-        }
-        else {
-            isDark.value = true
-            prefs.edit { putBoolean("isDark", true) }
-        }
-    }
-
-    fun setTagLikeCheck(bool: Boolean) {
-        tagLikeCheck.value = bool
-        prefs.edit { putBoolean("tagLikeCheck", bool) }
-    }
-
-    fun setGalleryLikeCheck(bool: Boolean) {
-        galleryLikeCheck.value = bool
-        prefs.edit { putBoolean("galleryLikeCheck", bool) }
-    }
-
-    fun settingPageSize(i: Int) {
-        pageSize = i
-        prefs.edit { putInt("pageSize", i) }
-    }
-
     fun setDelayS(l: Long) {
         delayS.longValue = l
         prefs.edit { putLong("delayS", l) }
     }
 
     suspend fun crawlList() = withContext(Dispatchers.IO) {
+        if(gIdList.isEmpty())
+            return@withContext
         crawling.value = true
         crawlStatusStr.value = "${getCurrentFormattedTime()}: 크롤링 중"
         val gIds = gIdList.subList(0, min(gIdList.size, crawlAmount))
@@ -327,14 +305,22 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     // 메인 리스트 페이지에서 실행하는 함수
     fun setGalleryList(page: Long, tagIdListJson: String?, titleKeyword: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            // 중복실행 방지
-//            if (lastPage == page) return@launch
+            var sameCount = false
+            // 같은 조건이라면 count는 다시 쿼리할 필요가 없다.
+            // tagIdListJson, titleKeyword, pageSize, showTypeIdList
+            if(lastTagIdListJson == tagIdListJson && lastTitleKeyword == titleKeyword &&
+                lastPageSize == pageSize && lastShowTypeIdList == showTypeIdList) {
+                sameCount = true
+            }
+
             if(lastPage != page || lastTagIdListJson != tagIdListJson || lastTitleKeyword != titleKeyword) {
                 loading.value = true
             }
             lastPage = page
             lastTagIdListJson = tagIdListJson
             lastTitleKeyword = titleKeyword
+            lastPageSize = pageSize
+            lastShowTypeIdList = showTypeIdList.toMutableList()
 
             val tagIdList = mutableListOf<Long>()
             lastTags.clear()
@@ -346,11 +332,31 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             val galleryLikeList = if(galleryLikeCheck.value) listOf(2) else listOf(1, 2)
             val tagLikeList = if(tagLikeCheck.value) listOf(2) else listOf(1, 2)
 
-            // 갤러리 필터
-            val galleryList = galleryDao.findByCondition2(buildFindByConditionQuery(page, galleryLikeList, tagLikeList, tagIdList, titleKeyword))
-            val count = galleryDao.countByCondition2(buildCountByConditionQuery(galleryLikeList, tagLikeList, tagIdList, titleKeyword))
+            // 갤러리 필터. db 크기가 커지니까 너무 오래걸리는데?
+            var galleryList: List<Gallery>
+            var count: Long
+            if(tagIdList.isEmpty()) {
+                if(titleKeyword.isNullOrBlank())
+                    galleryList = galleryDao.findByCondition(pageSize, (page - 1) * pageSize, galleryLikeList, tagLikeList, showTypeIdList)
+                else
+                    galleryList = galleryDao.findByConditionTitleKeyword(pageSize, (page - 1) * pageSize, galleryLikeList, tagLikeList, showTypeIdList, "%${titleKeyword}%")
+            }
+            else {
+                galleryList = galleryDao.findByConditionQuery(buildFindByConditionQuery(page, galleryLikeList, tagLikeList, tagIdList, titleKeyword))
+            }
 
-            _pageCount.value = count / pageSize + if (count % pageSize > 0) 1 else 0
+            if(!sameCount) {
+                if(tagIdList.isEmpty()) {
+                    if(titleKeyword.isNullOrBlank())
+                        count = galleryDao.countByCondition(galleryLikeList, tagLikeList, showTypeIdList)
+                    else
+                        count = galleryDao.countByConditionTitleKeyword(galleryLikeList, tagLikeList, showTypeIdList, "%${titleKeyword}%")
+                }
+                else {
+                    count = galleryDao.countByConditionQuery(buildCountByConditionQuery(galleryLikeList, tagLikeList, tagIdList, titleKeyword))
+                }
+                _pageCount.value = count / pageSize + if (count % pageSize > 0) 1 else 0
+            }
 
             galleries = galleryList.map { g ->
                 GalleryFullDto(
@@ -371,12 +377,12 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
 
         // 쿼리를 만든다.
         val queryBuilder = StringBuilder("""
-                select g.* from gallery g
-                join gallery_tag gt on gt.gId = g.gId
-                join tag t on t.tagId = gt.tagId
+                select * from gallery g
                 where g.likeStatus in (${galleryLikeList.joinToString(","){"?"}})
+                and g.typeId in (${showTypeIdList.joinToString(","){"?"}})
             """.trimIndent())
         args.addAll(galleryLikeList)
+        args.addAll(showTypeIdList)
 
         // 특정 titleKeyword가 포함돼야 함
         if(titleKeyword != null && titleKeyword.isNotEmpty()) {
@@ -385,18 +391,25 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
 
         queryBuilder.append("""
-                group by g.gId
-                    having
-                    -- t.likeStatus가 0인 태그가 없어야함 --
-                    sum(case when t.likeStatus = 0 then 1 else 0 end) = 0
-                    -- tagLikeList에 있는 태그가 포함되어야함 --
-                    and sum(case when t.likeStatus in (${tagLikeList.joinToString(","){"?"}}) then 1 else 0 end) > 0
+                and not exists (
+                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                    where gt.gId = g.gId and t.likeStatus = 0
+                )
+                and exists (
+                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                    where gt.gId = g.gId and t.likeStatus in (${tagLikeList.joinToString(","){"?"}}) 
+                )
         """.trimIndent())
         args.addAll(tagLikeList)
 
         // 특정 tagId들이 포함돼야 함
         if(tagIdList.isNotEmpty()) {
-            queryBuilder.append(""" and sum(case when t.tagId in (${tagIdList.joinToString(","){"?"}}) then 1 else 0 end) = ${tagIdList.size} """)
+            queryBuilder.append("""
+                and exists (
+                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                    where gt.gId = g.gId and t.tagId in (${tagIdList.joinToString(","){"?"}}) 
+                )
+            """.trimIndent())
             args.addAll(tagIdList)
         }
 
@@ -413,12 +426,12 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         // 쿼리를 만든다.
         val queryBuilder = StringBuilder("""
             select count(*) from (
-                select g.* from gallery g
-                join gallery_tag gt on gt.gId = g.gId
-                join tag t on t.tagId = gt.tagId
+                select g.gId from gallery g
                 where g.likeStatus in (${galleryLikeList.joinToString(","){"?"}})
+                and g.typeId in (${showTypeIdList.joinToString(","){"?"}})
             """.trimIndent())
         args.addAll(galleryLikeList)
+        args.addAll(showTypeIdList)
 
         // 특정 titleKeyword가 포함돼야 함
         titleKeyword?.let {
@@ -427,18 +440,25 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
 
         queryBuilder.append("""
-                group by g.gId
-                    having
-                    -- t.likeStatus가 0인 태그가 없어야함 --
-                    sum(case when t.likeStatus = 0 then 1 else 0 end) = 0
-                    -- tagLikeList에 있는 태그가 포함되어야함 --
-                    and sum(case when t.likeStatus in (${tagLikeList.joinToString(","){"?"}}) then 1 else 0 end) > 0
+                and not exists (
+                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                    where gt.gId = g.gId and t.likeStatus = 0
+                )
+                and exists (
+                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                    where gt.gId = g.gId and t.likeStatus in (${tagLikeList.joinToString(","){"?"}}) 
+                )
         """.trimIndent())
         args.addAll(tagLikeList)
 
         // 특정 tagId들이 포함돼야 함
         if(tagIdList.isNotEmpty()) {
-            queryBuilder.append(""" and sum(case when t.tagId in (${tagIdList.joinToString(","){"?"}}) then 1 else 0 end) = ${tagIdList.size} """)
+            queryBuilder.append("""
+                and exists (
+                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                    where gt.gId = g.gId and t.tagId in (${tagIdList.joinToString(","){"?"}}) 
+                )
+            """.trimIndent())
             args.addAll(tagIdList)
         }
 
@@ -480,6 +500,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    // 만화 보기 화면 함수들
     fun setGalleryImages(gId: Long, context: Context) = viewModelScope.launch(Dispatchers.IO) {
         // 중복실행 방지
         if (lastGid == gId) return@launch
@@ -514,7 +535,48 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         tagSearchList = tagDao.findByKeyword("%${keyword}%", selectedTagList.map { tag -> tag.tagId })
     }
 
-    // db 내보내기 불러오기 함수들
+    fun setTagLikeCheck(bool: Boolean) {
+        tagLikeCheck.value = bool
+        prefs.edit { putBoolean("tagLikeCheck", bool) }
+    }
+
+    fun setGalleryLikeCheck(bool: Boolean) {
+        galleryLikeCheck.value = bool
+        prefs.edit { putBoolean("galleryLikeCheck", bool) }
+    }
+
+    fun settingPageSize(i: Int) {
+        pageSize = i
+        prefs.edit { putInt("pageSize", i) }
+    }
+
+    fun toggleDarkMode(isDark: MutableState<Boolean>) {
+        if(isDark.value) {
+            isDark.value = false
+            prefs.edit { putBoolean("isDark", false) }
+        }
+        else {
+            isDark.value = true
+            prefs.edit { putBoolean("isDark", true) }
+        }
+    }
+
+    fun typeOnOff(typeId: Long, flag: Boolean) {
+        if(flag) {
+            if(typeId !in showTypeIdList) {
+                showTypeIdList.add(typeId)
+                prefs.edit { putString("showTypeIdList", Json.encodeToString(showTypeIdList)) }
+            }
+        }
+        else {
+            if(typeId in showTypeIdList) {
+                showTypeIdList.remove(typeId)
+                prefs.edit { putString("showTypeIdList", Json.encodeToString(showTypeIdList)) }
+            }
+        }
+    }
+
+    // 내보내기 불러오기 함수들
     @OptIn(ExperimentalSerializationApi::class)
     fun backupDatabaseToFolder(context: Context, folderUri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {

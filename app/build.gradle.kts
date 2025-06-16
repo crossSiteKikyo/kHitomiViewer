@@ -8,6 +8,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0-RC"
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     namespace = "com.example.khitomiviewer"
     compileSdk = 35
@@ -16,9 +20,10 @@ android {
         applicationId = "com.example.khitomiviewer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
+        versionCode = 4
         // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
-        versionName = "2.0.0"
+        // 2.0.0 - 3, 2.0.1 - 4
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

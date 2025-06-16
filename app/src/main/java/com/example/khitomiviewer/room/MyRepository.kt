@@ -111,14 +111,15 @@ class MyRepository(private val db: KHitomiDatabase) {
 
     @Transaction
     suspend fun updateLikeDislikeInfo(tagsAndGalleries: TagsAndGalleries) {
-
+        // gId는 항상 고정이다. 그러므로 gId를 기준으로 하면 됨.
         for (gallery in tagsAndGalleries.galleries) {
             val g = db.galleryDao().findByIdNullable(gallery.gId)
             if(g != null && g.likeStatus != gallery.likeStatus)
                 db.galleryDao().update(Gallery(g.gId, g.title, g.thumb1, g.thumb2, g.date, g.filecount, gallery.likeStatus, g.typeId))
         }
+        // tagId는 고정이 아니기 때문에 tagName을 기준으로 찾아야한다.
         for (tag in tagsAndGalleries.tags) {
-            val t = db.tagDao().findByIdNullable(tag.tagId)
+            val t = db.tagDao().findByNameNullable(tag.name)
             if(t != null && t.likeStatus != tag.likeStatus)
                 db.tagDao().update(Tag(t.tagId, t.name, tag.likeStatus))
         }

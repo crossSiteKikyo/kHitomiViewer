@@ -1,5 +1,6 @@
 package com.example.khitomiviewer.room
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.example.khitomiviewer.room.dao.GalleryDao
@@ -13,7 +14,8 @@ import com.example.khitomiviewer.room.entity.ImageUrl
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.room.entity.Type
 
-@Database(entities = [Type::class, Gallery::class, Tag::class, GalleryTag::class, ImageUrl::class], version = 1, exportSchema = false)
+@Database(entities = [Type::class, Gallery::class, Tag::class, GalleryTag::class, ImageUrl::class],
+    version = 2, exportSchema = false)
 abstract class KHitomiDatabase: RoomDatabase() {
     abstract fun typeDao(): TypeDao
     abstract fun tagDao(): TagDao

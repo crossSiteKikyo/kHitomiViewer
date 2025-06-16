@@ -52,12 +52,14 @@ interface GalleryDao {
 
     // 동적으로 쿼리를 만든다.
     @RawQuery
-    fun findByCondition2(query: SupportSQLiteQuery): List<Gallery>
+    fun findByConditionQuery(query: SupportSQLiteQuery): List<Gallery>
 
     // 동적으로 쿼리를 만든다.
     @RawQuery
-    fun countByCondition2(query: SupportSQLiteQuery): Long
+    fun countByConditionQuery(query: SupportSQLiteQuery): Long
 
+    // 이렇게 group by로 하면 인덱스가 없을때보다는 빠르다.
+    // 복합인덱스가 있다면 select가 빠르다.
     @Query("""
         select g.* from gallery g
         join gallery_tag gt on gt.gId = g.gId
@@ -71,7 +73,7 @@ interface GalleryDao {
             and sum(case when t.likeStatus in (:tagLikeList) then 1 else 0 end) > 0
         order by gId desc limit :limit offset :offset
         """)
-    fun findByCondition(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>): List<Gallery>
+    fun findByCondition10(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>): List<Gallery>
 
     @Query("""
         select count(*) 
@@ -88,5 +90,71 @@ interface GalleryDao {
                 and sum(case when t.likeStatus in (:tagLikeList) then 1 else 0 end) > 0
         )
     """)
-    fun countByCondition(galleryLikeList: List<Int>, tagLikeList: List<Int>): Long
+    fun countByCondition10(galleryLikeList: List<Int>, tagLikeList: List<Int>): Long
+
+    @Query("""
+        select * from gallery g
+        where g.likeStatus in (:galleryLikeList)
+        and g.typeId in (:showTypeIdList)
+        and not exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus = 0
+        )
+        and exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
+        )
+        
+        order by gId desc limit :limit offset :offset
+        """)
+    fun findByCondition(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>): List<Gallery>
+
+    @Query("""
+        select count(g.gId) from gallery g
+        where g.likeStatus in (:galleryLikeList)
+        and g.typeId in (:showTypeIdList)
+        and not exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus = 0
+        )
+        and exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
+        )
+    """)
+    fun countByCondition(galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>): Long
+
+    @Query("""
+        select * from gallery g
+        where g.likeStatus in (:galleryLikeList)
+        and g.typeId in (:showTypeIdList)
+        and g.title like :titleKeyword
+        and not exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus = 0
+        )
+        and exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
+        )
+        
+        order by gId desc limit :limit offset :offset
+        """)
+    fun findByConditionTitleKeyword(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>, titleKeyword: String): List<Gallery>
+
+    @Query("""
+        select count(g.gId) from gallery g
+        where g.likeStatus in (:galleryLikeList)
+        and g.typeId in (:showTypeIdList)
+        and g.title like :titleKeyword
+        and not exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus = 0
+        )
+        and exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
+        )
+    """)
+    fun countByConditionTitleKeyword(galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>, titleKeyword: String): Long
 }

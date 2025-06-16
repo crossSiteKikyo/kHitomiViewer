@@ -1,0 +1,269 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "22f0c412d69be8e7edff12209665842f",
+    "entities": [
+      {
+        "tableName": "type",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`typeId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "typeId",
+            "columnName": "typeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "typeId"
+          ]
+        }
+      },
+      {
+        "tableName": "gallery",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`gId` INTEGER NOT NULL, `title` TEXT NOT NULL, `thumb1` TEXT NOT NULL, `thumb2` TEXT NOT NULL, `date` TEXT NOT NULL, `filecount` INTEGER NOT NULL, `likeStatus` INTEGER NOT NULL, `typeId` INTEGER NOT NULL, PRIMARY KEY(`gId`))",
+        "fields": [
+          {
+            "fieldPath": "gId",
+            "columnName": "gId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumb1",
+            "columnName": "thumb1",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumb2",
+            "columnName": "thumb2",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filecount",
+            "columnName": "filecount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "likeStatus",
+            "columnName": "likeStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "typeId",
+            "columnName": "typeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "gId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_gallery_likeStatus",
+            "unique": false,
+            "columnNames": [
+              "likeStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gallery_likeStatus` ON `${TABLE_NAME}` (`likeStatus`)"
+          },
+          {
+            "name": "index_gallery_gId",
+            "unique": false,
+            "columnNames": [
+              "gId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gallery_gId` ON `${TABLE_NAME}` (`gId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "tag",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tagId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `likeStatus` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "tagId",
+            "columnName": "tagId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "likeStatus",
+            "columnName": "likeStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "tagId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tag_tagId",
+            "unique": false,
+            "columnNames": [
+              "tagId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tag_tagId` ON `${TABLE_NAME}` (`tagId`)"
+          },
+          {
+            "name": "index_tag_likeStatus",
+            "unique": false,
+            "columnNames": [
+              "likeStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tag_likeStatus` ON `${TABLE_NAME}` (`likeStatus`)"
+          }
+        ]
+      },
+      {
+        "tableName": "gallery_tag",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`galleryTagId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gId` INTEGER NOT NULL, `tagId` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "galleryTagId",
+            "columnName": "galleryTagId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gId",
+            "columnName": "gId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagId",
+            "columnName": "tagId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "galleryTagId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_gallery_tag_gId_tagId",
+            "unique": false,
+            "columnNames": [
+              "gId",
+              "tagId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gallery_tag_gId_tagId` ON `${TABLE_NAME}` (`gId`, `tagId`)"
+          },
+          {
+            "name": "index_gallery_tag_gId",
+            "unique": false,
+            "columnNames": [
+              "gId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gallery_tag_gId` ON `${TABLE_NAME}` (`gId`)"
+          },
+          {
+            "name": "index_gallery_tag_tagId",
+            "unique": false,
+            "columnNames": [
+              "tagId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gallery_tag_tagId` ON `${TABLE_NAME}` (`tagId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "imageurl",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`imageurlId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gId` INTEGER NOT NULL, `idx` INTEGER NOT NULL, `hash` TEXT NOT NULL, `extension` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "imageurlId",
+            "columnName": "imageurlId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gId",
+            "columnName": "gId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idx",
+            "columnName": "idx",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hash",
+            "columnName": "hash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "extension",
+            "columnName": "extension",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "imageurlId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '22f0c412d69be8e7edff12209665842f')"
+    ]
+  }
+}

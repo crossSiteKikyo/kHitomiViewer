@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "gallery", indices = [Index(value = ["gId"]), Index(value = ["likeStatus"])])
+@Entity(tableName = "gallery", indices = [Index(value = ["likeStatus"]), Index(value = ["gId"])])
 data class Gallery(
     @PrimaryKey
     val gId: Long,

@@ -16,18 +16,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -72,6 +71,26 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
     val titleColorLong = 0xFFCC9999
     val typeBgColor = Color(titleColorLong + 0x333333)
     val textColor = Color(titleColorLong - 0x666666)
+
+    // 타입 선택 관련 변수들
+    val containerColor = MaterialTheme.colorScheme.primary
+    val contentColor = MaterialTheme.colorScheme.onPrimary
+    val disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    val disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    val typeColor: Map<Int, Long> = remember { mapOf<Int, Long>(
+        1 to 0xFFCC9999,  // c99 "doujinshi"
+        2 to 0xFFCC99CC,  // c9c "manga"
+        3 to 0xFF99CCCC,  // 9cc "artistcg"
+        4 to 0xFF9999CC,  // 99c "gamecg"
+        5 to 0xFF999999,  // 999 "imageset"
+        // CC보다 크면 안되고 66보다 작으면 안된다.
+    ) }
+    var flagDoujinshi by remember { mutableStateOf(1 in mainViewModel.showTypeIdList) }
+    var flagManga by remember { mutableStateOf(2 in mainViewModel.showTypeIdList) }
+    var flagArtistcg by remember { mutableStateOf(3 in mainViewModel.showTypeIdList) }
+    var flagGamecg by remember { mutableStateOf(4 in mainViewModel.showTypeIdList) }
+    var flagImageset by remember { mutableStateOf(5 in mainViewModel.showTypeIdList) }
+
 
     LaunchedEffect(tagSearchKeyword.value) {
         snapshotFlow { tagSearchKeyword.value }
@@ -170,14 +189,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
 //                    colors = OutlinedTextFieldDefaults.colors(mainTextColor, mainTextColor),
                     modifier = Modifier.fillMaxWidth().onFocusChanged{isTagSearchFocused = it.isFocused}
                 )
-                Button(
-                    onClick = {
-                        val tagIdListJson = Json.encodeToString(selectedTagList.map { tag -> tag.tagId })
-                        navController.navigate("ListScreen/1/$tagIdListJson/${titleSearchKeyword}")
-                    }
-                ) {
-                    Text("종합 검색")
-                }
+
                 // 태그검색에 입력된 키워드가 포함되어있는 태그 10개를 보여준다.
                 if(isTagSearchFocused) {
                     val artists = mainViewModel.tagSearchList.filter { tag -> tag.name.startsWith("artist:") }
@@ -225,9 +237,78 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                         }
                     }
                 }
+                Button(
+                    onClick = {
+                        val tagIdListJson = Json.encodeToString(selectedTagList.map { tag -> tag.tagId })
+                        navController.navigate("ListScreen/1/$tagIdListJson/${titleSearchKeyword}")
+                    }
+                ) {
+                    Text("종합 검색")
+                }
                 HorizontalDivider(thickness = 2.dp)
 
                 Text("UI 세팅", fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Cyan, blurRadius = 5f), fontSize = 21.sp))
+                // 보일 타입 선택
+                FlowRow(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = {
+                            flagDoujinshi = !flagDoujinshi
+                            mainViewModel.typeOnOff(1, flagDoujinshi)
+                                  },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (flagDoujinshi) Color(0xFFCC9999 + 0x333333) else disabledContainerColor,
+                            contentColor = if (flagDoujinshi) Color(0xFFCC9999 - 0x666666) else disabledContentColor
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.33f)
+                    ) { Text("doujinshi") }
+                    Button(
+                        onClick = {
+                            flagManga = !flagManga
+                            mainViewModel.typeOnOff(2, flagManga)
+                                  },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (flagManga) Color(0xFFCC99CC + 0x333333) else disabledContainerColor,
+                            contentColor = if (flagManga) Color(0xFFCC99CC - 0x666666) else disabledContentColor
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.33f)
+                    ) { Text("manga") }
+                    Button(
+                        onClick = {
+                            flagArtistcg = !flagArtistcg
+                            mainViewModel.typeOnOff(3, flagArtistcg)
+                                  },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (flagArtistcg) Color(0xFF99CCCC + 0x333333) else disabledContainerColor,
+                            contentColor = if (flagArtistcg) Color(0xFF99CCCC - 0x666666) else disabledContentColor
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.33f)
+                    ) { Text("artistcg") }
+                    Button(
+                        onClick = {
+                            flagGamecg = !flagGamecg
+                            mainViewModel.typeOnOff(4, flagGamecg)
+                                  },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (flagGamecg) Color(0xFF9999CC + 0x333333) else disabledContainerColor,
+                            contentColor = if (flagGamecg) Color(0xFF9999CC - 0x666666) else disabledContentColor
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.5f)
+                    ) { Text("gamecg") }
+                    Button(
+                        onClick = {
+                            flagImageset = !flagImageset
+                            mainViewModel.typeOnOff(5, flagImageset)
+                                  },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (flagImageset) Color(0xFF999999 + 0x333333) else disabledContainerColor,
+                            contentColor = if (flagImageset) Color(0xFF999999 - 0x666666) else disabledContentColor
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.5f)
+                    ) { Text("imageset") }
+                }
                 Text("한번에 로드할 갤러리 수: ${mainViewModel.pageSize}")
                 Slider(
                     value = mainViewModel.pageSize.toFloat(),
