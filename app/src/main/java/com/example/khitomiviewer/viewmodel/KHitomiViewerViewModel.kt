@@ -405,12 +405,13 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         // 특정 tagId들이 포함돼야 함
         if(tagIdList.isNotEmpty()) {
             queryBuilder.append("""
-                and exists (
-                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+                and (
+                    select count(gt.galleryTagId) from gallery_tag gt join tag t on gt.tagId = t.tagId
                     where gt.gId = g.gId and t.tagId in (${tagIdList.joinToString(","){"?"}}) 
-                )
+                ) = ?
             """.trimIndent())
             args.addAll(tagIdList)
+            args.add(tagIdList.size)
         }
 
         queryBuilder.append(""" order by gId desc limit ? offset ? """)

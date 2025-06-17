@@ -20,10 +20,10 @@ android {
         applicationId = "com.example.khitomiviewer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
+        versionCode = 5
         // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
-        // 2.0.0 - 3, 2.0.1 - 4
-        versionName = "2.0.1"
+        // 2.0.0 - 3, 2.0.1 - 4, 2.0.2 - 5
+        versionName = "2.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
