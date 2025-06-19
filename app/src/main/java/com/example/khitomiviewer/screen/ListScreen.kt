@@ -3,10 +3,13 @@ package com.example.khitomiviewer.screen
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,16 +27,21 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,8 +51,10 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,12 +62,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -69,8 +83,12 @@ import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
     navController: NavHostController,
@@ -104,9 +122,27 @@ fun ListScreen(
         }
     }
 
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState: ScrollState = rememberScrollState()
+    val interactionSource = remember { MutableInteractionSource() }
+    var visible by remember { mutableStateOf(true) }
+    var isDragging = interactionSource.collectIsDraggedAsState()
+
     LaunchedEffect(page, tagIdListJson, titleKeyword) {
         if (page != null) {
             mainViewModel.setGalleryList(page.toLong(), tagIdListJson, titleKeyword)
+        }
+    }
+
+    // 값이 변할 때마다 타이머 재시작
+    LaunchedEffect(scrollState.value, isDragging.value) {
+        if(!isDragging.value) {
+            visible = true
+            delay(1000L) // 1초 후 자동 숨김
+            visible = false
+        }
+        else {
+            visible = true
         }
     }
 
@@ -134,7 +170,7 @@ fun ListScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(scrollState),
                 ) {
                     // 다이얼로그
                     if(showDialog.value) {
@@ -458,6 +494,59 @@ fun ListScreen(
                             }
                         ) { Text("페이지 이동") }
                     }
+                }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Slider(
+                        value = scrollState.value.toFloat(),
+                        valueRange = 0f..scrollState.maxValue.toFloat(),
+                        onValueChange = { v ->
+                            coroutineScope.launch {
+                                scrollState.scrollTo(v.toInt())
+                            }
+                        },
+                        interactionSource = interactionSource,
+                        colors = SliderDefaults.colors(
+                            activeTrackColor  = Color.Transparent,
+                            inactiveTrackColor = Color.Transparent,
+                        ),
+                        thumb = {
+                            Row(
+                                modifier = Modifier.background(Color(0xFF9933FF), shape = RoundedCornerShape(10.dp))
+                            ) {
+                                if (visible) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                        contentDescription = null,
+                                        modifier = Modifier.width(25.dp)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.width(25.dp)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .graphicsLayer{
+                                rotationZ = 90f
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            }
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(
+                                    Constraints(
+                                        minWidth = constraints.minHeight,
+                                        maxWidth = constraints.maxHeight,
+                                        minHeight = constraints.minWidth,
+                                        maxHeight = constraints.maxWidth
+                                    )
+                                )
+                                layout(placeable.height, placeable.width) {
+                                    placeable.place(0, -placeable.height)
+                                }
+                            }
+                            .fillMaxWidth()
+                    )
                 }
             }
 

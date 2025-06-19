@@ -3,13 +3,17 @@ package com.example.khitomiviewer.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -18,6 +22,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +60,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.serialization.json.Json
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiViewerViewModel, isDark: MutableState<Boolean>) {
     val context = LocalContext.current
@@ -316,6 +323,14 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     onValueChange = { v->
                         mainViewModel.settingPageSize(v.toInt())
                     },
+                    thumb = {
+                        Box(modifier = Modifier.padding(0.dp).size(25.dp).background(MaterialTheme.colorScheme.primary,
+                            CircleShape
+                        ))
+                    },
+                    track = { sliderState ->
+                        SliderDefaults.Track(sliderState = sliderState, thumbTrackGapSize = 0.dp, modifier = Modifier.height(10.dp))
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
@@ -374,6 +389,14 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     valueRange = 40f..120f,
                     onValueChange = { v->
                         mainViewModel.setDelayS(v.toLong())
+                    },
+                    thumb = {
+                        Box(modifier = Modifier.padding(0.dp).size(25.dp).background(MaterialTheme.colorScheme.primary,
+                            CircleShape
+                        ))
+                    },
+                    track = { sliderState ->
+                        SliderDefaults.Track(sliderState = sliderState, thumbTrackGapSize = 0.dp, modifier = Modifier.height(10.dp))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
