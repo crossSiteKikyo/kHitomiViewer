@@ -110,8 +110,10 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     val tagLikeCheck = mutableStateOf(prefs.getBoolean("tagLikeCheck", false))
     val galleryLikeCheck = mutableStateOf(prefs.getBoolean("galleryLikeCheck", false))
     var tagSearchList by mutableStateOf<List<Tag>>(emptyList())
-    var lastTagSearchKeyword = mutableStateOf<String>("artist:try")
     var showTypeIdList = Json.decodeFromString<List<Long>>(prefs.getString("showTypeIdList", "[1,2,3,4,5]").toString()).toMutableList()
+    val lastTagLikeCheck = mutableStateOf(tagLikeCheck.value)
+    val lastGalleryLikeCheck = mutableStateOf(galleryLikeCheck.value)
+    var lastTagSearchKeyword = mutableStateOf<String>("artist:try")
 
     // 다이얼로그. 태그 (싫어요,기본,좋아요,구독) 갤러리 DISLIKE, NONE, LIKE선택하는것.
     val selectedTagNameOrGalleryId = mutableStateOf("")
@@ -120,7 +122,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
 
     // 하나의 갤러리를 보여주는 view ui에 사용되는 변수
     private var lastGid: Long? = null
-    var imageUrls = mutableStateListOf<String>()
+    var imageHashes = mutableStateListOf<String>()
         private set
     
     // db 내보내기 불러오기에 사용되는 변수
@@ -287,6 +289,24 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    suspend fun getGgjs2() = withContext(Dispatchers.IO) {
+        // 히토미에서 ggjs의 정보를 가져와야 섬네일 정상 출력이 된다.
+        try {
+            val response = hitomiClient.get("https://ltn.gold-usergeneratedcontent.net/gg.js")
+            val ggjs = response.bodyAsText()
+            b.value = """(?<=b: ')[^']+""".toRegex().find(ggjs)?.value
+            mDefaultO.value = """(?<=var o = )\d""".toRegex().find(ggjs)?.value
+            mDefaultThumbChar.value = if(mDefaultO.value == "0") "a" else "b"
+            mNextO.value = """(?<=o = )\d(?=; break;)""".toRegex().find(ggjs)?.value
+            mNextThumbChar.value = if(mNextO.value == "0") "a" else "b"
+            mList.clear()
+            mList.addAll("""(?<=case )\d+(?=:)""".toRegex().findAll(ggjs).map { matchResult->matchResult.value })
+        } catch (e: Exception) {
+            Log.i("ggjs 얻기 오류", "${e.message}")
+            crawlErrorStr.value = "${getCurrentFormattedTime()}: ggjs 얻기 오류: ${e.message}"
+        }
+    }
+
     fun byteArrayToIntList(bytes: ByteArray): List<Int> {
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
         val result = mutableListOf<Int>()
@@ -308,8 +328,8 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             var sameCount = false
             // 같은 조건이라면 count는 다시 쿼리할 필요가 없다.
             // tagIdListJson, titleKeyword, pageSize, showTypeIdList
-            if(lastTagIdListJson == tagIdListJson && lastTitleKeyword == titleKeyword &&
-                lastPageSize == pageSize && lastShowTypeIdList == showTypeIdList) {
+            if(lastTagIdListJson == tagIdListJson && lastTitleKeyword == titleKeyword && lastPageSize == pageSize &&
+                lastShowTypeIdList == showTypeIdList && lastGalleryLikeCheck.value == galleryLikeCheck.value && lastTagLikeCheck.value == tagLikeCheck.value) {
                 sameCount = true
             }
 
@@ -320,6 +340,8 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             lastTagIdListJson = tagIdListJson
             lastTitleKeyword = titleKeyword
             lastPageSize = pageSize
+            lastGalleryLikeCheck.value = galleryLikeCheck.value
+            lastTagLikeCheck.value = tagLikeCheck.value
             lastShowTypeIdList = showTypeIdList.toMutableList()
 
             val tagIdList = mutableListOf<Long>()
@@ -508,21 +530,16 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         if (lastGid == gId) return@launch
         lastGid = gId
 
-        imageUrls.clear()
+        imageHashes.clear()
+
+        getGgjs2()
 
         val b = b.value
         val mDefault = mDefaultO.value
         val mNext = mNextO.value
         if(mDefault != null && mNext != null) {
-            imageUrls.addAll(imageUrlDao.findByGId(gId).map { imageUrl ->
-                // 여러가지 정보를 조합해 이미지 url을 만든다.
-                // 구형폰에서는 avif 디코딩을 지원하지 않는거 같다. webp로 하자.어쩔 수 없다.
-                val hash = imageUrl.hash
-                val s = "${hash[hash.length-1]}${hash[hash.length-3]}${hash[hash.length-2]}".toInt(16).toString(10)
-                val subdomainNum = (if(s in mList) mNext.toInt() else mDefault.toInt()) + 1
-//                val subdomainChar = if(imageUrl.extension == "avif") "a" else "w"
-//                "https://${subdomainChar}${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.${imageUrl.extension}"
-                "https://w${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.webp"
+            imageHashes.addAll(imageUrlDao.findByGId(gId).map { imageUrl ->
+                imageUrl.hash
             })
         }
     }
