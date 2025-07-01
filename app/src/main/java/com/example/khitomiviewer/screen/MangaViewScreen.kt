@@ -62,8 +62,10 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerViewModel, gIdStr: String?) {
+    // 이걸 해놔야 out of bound 에러가 안난다.
+    mainViewModel.imagesLoading = true
+
     val context = LocalContext.current
-    var pagerState = rememberPagerState { mainViewModel.imageHashes.size }
     val coroutineScope = rememberCoroutineScope()
     val hitomiHeaders = NetworkHeaders.Builder()
         .set("Referer", "https://hitomi.la/")
@@ -82,18 +84,6 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
     val interactionSource = remember { MutableInteractionSource() }
     var isDragging = interactionSource.collectIsDraggedAsState()
 
-    // 값이 변할 때마다 타이머 재시작. 슬라이더 보이기 안보이기를 위한 코드
-    LaunchedEffect(pagerState.currentPageOffsetFraction, pagerState.currentPage, isDragging.value) {
-        if(!isDragging.value) {
-            visible = true
-            delay(1000L) // 1초 후 자동 숨김
-            visible = false
-        }
-        else {
-            visible = true
-        }
-    }
-
     LaunchedEffect(gIdStr) {
         val gId = gIdStr?.toLong()
         if (gId != null) {
@@ -107,95 +97,116 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            HorizontalPager(
-                state = pagerState,
-                beyondViewportPageCount = 15,
-                modifier = Modifier.fillMaxSize()
-            ) { page ->
+            if(!mainViewModel.imagesLoading && mainViewModel.imageHashes.isNotEmpty()) {
+                var pagerState = rememberPagerState(pageCount = { mainViewModel.imageHashes.size })
 
-                var retryCount by remember { mutableIntStateOf(0) }
-                var shouldRetry by remember { mutableStateOf(false) }
-                var showImage by remember { mutableStateOf(false) }
-
-                if(showImage == false) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                // 값이 변할 때마다 타이머 재시작. 슬라이더 보이기 안보이기를 위한 코드
+                LaunchedEffect(pagerState.currentPageOffsetFraction, pagerState.currentPage, isDragging.value) {
+                    if(!isDragging.value) {
+                        visible = true
+                        delay(1000L) // 1초 후 자동 숨김
+                        visible = false
+                    }
+                    else {
+                        visible = true
                     }
                 }
 
-                AsyncImage(
-                    model = ImageRequest.Builder(context).data(hashToImageUrl(mainViewModel.imageHashes[page]) + "?retry=$retryCount")
-                        .httpHeaders(hitomiHeaders)
-                        .diskCacheKey(mainViewModel.imageHashes[page]).build(),
-                    contentDescription = "img",
-                    contentScale = ContentScale.Fit,
-                    placeholder = null,
-                    error = if(showImage) painterResource(R.drawable.errorimg) else null,
-                    onError = { e->
-                        if((e.result.throwable as? HttpException)?.response?.code == 503) {
-                            shouldRetry = true
-                        }
-                        else
-                            showImage = true
-                        Log.i("이미지 로드 에러", e.result.throwable.toString())
-                    },
-                    onSuccess = {showImage = true},
-                    modifier = Modifier
-                        .width(maxWidth)
-                        .height(maxHeight)
-                        .clickable(onClick = {
-                            coroutineScope.launch {
-                                pagerState.scrollToPage(page + 1)
-                            }
-                        })
-                )
+                HorizontalPager(
+                    state = pagerState,
+                    beyondViewportPageCount = 15,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
 
-                LaunchedEffect(shouldRetry) {
-                    if (shouldRetry) {
-                        delay(50) // 딜레이 추가
-                        retryCount++
-                        shouldRetry = false
+                    var retryCount by remember { mutableIntStateOf(0) }
+                    var shouldRetry by remember { mutableStateOf(false) }
+                    var showImage by remember { mutableStateOf(false) }
+
+                    if(showImage == false) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
+
+                    AsyncImage(
+                        model = ImageRequest.Builder(context).data(hashToImageUrl(mainViewModel.imageHashes[page]) + "?retry=$retryCount")
+                            .httpHeaders(hitomiHeaders)
+                            .diskCacheKey(mainViewModel.imageHashes[page]).build(),
+                        contentDescription = "img",
+                        contentScale = ContentScale.Fit,
+                        placeholder = null,
+                        error = if(showImage) painterResource(R.drawable.errorimg) else null,
+                        onError = { e->
+                            if((e.result.throwable as? HttpException)?.response?.code == 503) {
+                                shouldRetry = true
+                            }
+                            else
+                                showImage = true
+                            Log.i("이미지 로드 에러", e.result.throwable.toString())
+                        },
+                        onSuccess = {showImage = true},
+                        modifier = Modifier
+                            .width(maxWidth)
+                            .height(maxHeight)
+                            .clickable(onClick = {
+                                coroutineScope.launch {
+                                    pagerState.scrollToPage(page + 1)
+                                }
+                            })
+                    )
+
+                    LaunchedEffect(shouldRetry) {
+                        if (shouldRetry) {
+                            delay(50) // 딜레이 추가
+                            retryCount++
+                            shouldRetry = false
+                        }
+                    }
+                }
+                // 아래 슬라이더
+                // 최대사이즈 size - 1, thumb모양바꾸기, 값 1초동안 안 변하면 안보이기
+                if (mainViewModel.imageHashes.isNotEmpty()) {
+                    Slider(
+                        value = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+                        onValueChange = { v ->
+                            coroutineScope.launch {
+                                pagerState.scrollToPage(v.toInt())
+                            }
+                        },
+                        valueRange = 0f..(mainViewModel.imageHashes.size.toFloat()-1),
+                        interactionSource = interactionSource,
+                        colors = SliderDefaults.colors(
+                            activeTrackColor  = Color.Transparent,
+                            inactiveTrackColor = Color.Transparent,
+                        ),
+                        thumb = {
+                            if(visible) {
+                                Row(
+                                    modifier = Modifier.background(Color(0xFF9933FF), shape = RoundedCornerShape(10.dp))
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                        contentDescription = null,
+                                        modifier = Modifier.width(25.dp)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.width(25.dp)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                    )
                 }
             }
-            // 아래 슬라이더
-            // 최대사이즈 size - 1, thumb모양바꾸기, 값 1초동안 안 변하면 안보이기
-            if (mainViewModel.imageHashes.isNotEmpty()) {
-                Slider(
-                    value = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-                    onValueChange = { v ->
-                        coroutineScope.launch {
-                            pagerState.scrollToPage(v.toInt())
-                        }
-                    },
-                    valueRange = 0f..(mainViewModel.imageHashes.size.toFloat()-1),
-                    interactionSource = interactionSource,
-                    colors = SliderDefaults.colors(
-                        activeTrackColor  = Color.Transparent,
-                        inactiveTrackColor = Color.Transparent,
-                    ),
-                    thumb = {
-                        if(visible) {
-                            Row(
-                                modifier = Modifier.background(Color(0xFF9933FF), shape = RoundedCornerShape(10.dp))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                    contentDescription = null,
-                                    modifier = Modifier.width(25.dp)
-                                )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                    modifier = Modifier.width(25.dp)
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                )
+            else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }

@@ -124,6 +124,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     private var lastGid: Long? = null
     var imageHashes = mutableStateListOf<String>()
         private set
+    var imagesLoading by mutableStateOf(true)
     
     // db 내보내기 불러오기에 사용되는 변수
     val dbExportImportStr = mutableStateOf("내보내기 및 불러오기를 할 수 있습니다")
@@ -530,6 +531,8 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         if (lastGid == gId) return@launch
         lastGid = gId
 
+        imagesLoading = true
+
         imageHashes.clear()
 
         getGgjs2()
@@ -542,6 +545,8 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
                 imageUrl.hash
             })
         }
+
+        imagesLoading = false
     }
 
     // 메인 세팅 스크린 함수들
