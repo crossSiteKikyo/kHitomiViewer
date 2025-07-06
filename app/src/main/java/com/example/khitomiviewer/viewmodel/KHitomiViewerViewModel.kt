@@ -528,7 +528,10 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     // 만화 보기 화면 함수들
     fun setGalleryImages(gId: Long, context: Context) = viewModelScope.launch(Dispatchers.IO) {
         // 중복실행 방지
-        if (lastGid == gId) return@launch
+        if (lastGid == gId) {
+            imagesLoading = false
+            return@launch
+        }
         lastGid = gId
 
         imagesLoading = true
