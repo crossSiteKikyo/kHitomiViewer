@@ -12,6 +12,13 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+/**
+ * 업데이트 때 해야할 것.
+ * 1. versionName 올리기, versionCode올리기
+ * 2. assets/database/khitomi-db 새거로 교체. Device Explorer의 data/data/com.example.khitomiviewer/databases에 있다.
+ * 3. room/DatabaseProvider에서 db새로운 날짜로 교체
+ * */
+
 android {
     namespace = "com.example.khitomiviewer"
     compileSdk = 35
@@ -20,10 +27,10 @@ android {
         applicationId = "com.example.khitomiviewer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
+        versionCode = 12
         // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
-        // 2.0.0 - 3, 2.0.3 - 6, 2.1.0 - 7
-        versionName = "2.1.3"
+        // 2.0.0 - 3, 2.0.3 - 6, 2.1.0 - 7, 2.2.0 - 12
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -19,7 +19,7 @@ object DatabaseProvider {
     fun getDatabase(context: Context): KHitomiDatabase {
         return INSTANCE ?: synchronized(this) {
             Room.databaseBuilder(context.applicationContext, KHitomiDatabase::class.java, "khitomi-db")
-                .createFromAsset("database/khitomi-db-250701")
+                .createFromAsset("database/khitomi-db-250823")
 //                .addMigrations(MIGRATION_1_2)
                 .build().also { INSTANCE = it}
         }

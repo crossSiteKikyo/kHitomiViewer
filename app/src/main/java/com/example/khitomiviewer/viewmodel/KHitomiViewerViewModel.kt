@@ -125,6 +125,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     var imageHashes = mutableStateListOf<String>()
         private set
     var imagesLoading by mutableStateOf(true)
+    var notExist by mutableStateOf(false)
     
     // db 내보내기 불러오기에 사용되는 변수
     val dbExportImportStr = mutableStateOf("내보내기 및 불러오기를 할 수 있습니다")
@@ -532,11 +533,16 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             imagesLoading = false
             return@launch
         }
+        notExist = false
         lastGid = gId
-
         imagesLoading = true
-
         imageHashes.clear()
+
+        // 없는 갤러리를 로드할 수는 없다.
+        if(!galleryDao.existsById(gId)) {
+            notExist = true
+            return@launch
+        }
 
         getGgjs2()
 

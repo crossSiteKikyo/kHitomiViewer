@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -201,6 +202,11 @@ fun MangaViewScreen(navController: NavController, mainViewModel: KHitomiViewerVi
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter)
                     )
+                }
+            }
+            else if(mainViewModel.notExist) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("없는 갤러리입니다")
                 }
             }
             else {

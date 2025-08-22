@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -33,6 +36,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -51,6 +55,7 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -73,6 +78,8 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
     var isTagSearchFocused by remember { mutableStateOf(false) }
 
     var selectedTagList = remember { mutableStateListOf<Tag>() }
+
+    val showDialog = remember { mutableStateOf(false) }
 
     // 태그 색깔
     val titleColorLong = 0xFFCC9999
@@ -251,6 +258,38 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     }
                 ) {
                     Text("종합 검색")
+                }
+
+                // 갤러리 번호로 열기
+                Text("갤러리 번호로 열기", color = Color.Gray)
+                Button(
+                    shape = RoundedCornerShape(5.dp),
+                    onClick = { showDialog.value = true }
+                ) {
+                    Text("1234567")
+                }
+                // 갤러리 번호로 열기 다이얼로그
+                if(showDialog.value) {
+                    var num by remember { mutableStateOf("") }
+                    AlertDialog(
+                        onDismissRequest = {showDialog.value = false},
+                        confirmButton = {TextButton(onClick = { navController.navigate("MangaViewScreen/${num}") }) {
+                            Text("열기")
+                        }},
+                        title = {
+                            Text("갤러리 번호로 열기")
+                        },
+                        text = {
+                            OutlinedTextField(
+                                value = num,
+                                onValueChange = {
+                                    num = it;
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                maxLines = 1,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        })
                 }
                 HorizontalDivider(thickness = 2.dp)
 
