@@ -12,7 +12,7 @@ data class Tag(
     val tagId: Long = 0,
     val name: String,
     /**
-     * 0싫어요 1기본 2좋아요 3구독
+     * 0싫어요 1기본 2좋아요
      */
     val likeStatus: Int
 )

@@ -18,10 +18,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.khitomiviewer.screen.DatabaseExportImportSettingScreen
-import com.example.khitomiviewer.screen.LikeSettingScreen
+import com.example.khitomiviewer.screen.GalleryLikeSettingScreen
 import com.example.khitomiviewer.screen.ListScreen
 import com.example.khitomiviewer.screen.MainSettingScreen
 import com.example.khitomiviewer.screen.MangaViewScreen
+import com.example.khitomiviewer.screen.TagLikeSettingScreen
 import com.example.khitomiviewer.ui.theme.KHitomiViewerTheme
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
 
@@ -68,9 +69,8 @@ fun MyNav(mainViewModel: KHitomiViewerViewModel, isDark: MutableState<Boolean>) 
             MangaViewScreen(navController, mainViewModel, bse.arguments?.getString("gidStr"))
         }
         composable("MainSettingScreen") { MainSettingScreen(navController, mainViewModel, isDark) }
-        composable("LikeSettingScreen/{tagOrGallery}") { bse ->
-            LikeSettingScreen(navController, mainViewModel, bse.arguments?.getString("tagOrGallery"))
-        }
+        composable("TagLikeSettingScreen") { TagLikeSettingScreen(navController, mainViewModel) }
+        composable("GalleryLikeSettingScreen") { GalleryLikeSettingScreen(navController, mainViewModel) }
         composable("DatabaseExportImportSettingScreen") { DatabaseExportImportSettingScreen(mainViewModel) }
     }
 }

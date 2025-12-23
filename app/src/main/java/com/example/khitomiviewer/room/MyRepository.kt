@@ -10,6 +10,7 @@ import com.example.khitomiviewer.room.entity.Tag
 
 class MyRepository(private val db: KHitomiDatabase) {
 
+    // 일부만 db에 저장되는 참사를 막기 위해 트랜잭션 단위로 처리한다.
     @Transaction
     suspend fun insertGalleryInfo(ginfo:GalleryInfo, thumb1: String, thumb2: String) {
         // 태그들이 존재하는지 확인. 없다면 태그를 만든다.

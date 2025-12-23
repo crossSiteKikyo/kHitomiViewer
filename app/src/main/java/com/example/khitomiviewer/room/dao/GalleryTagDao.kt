@@ -19,6 +19,9 @@ interface GalleryTagDao {
     @Query("select * from gallery_tag where gId = :gId")
     suspend fun findByGid(gId: Long): List<GalleryTag>
 
+    @Query("select * from gallery_tag where tagId = :tagId order by gid desc limit 3")
+    suspend fun findByTagIdLimit(tagId: Long): List<GalleryTag>
+
     @Query("select * from gallery_tag")
     fun findAll(): List<GalleryTag>
 }

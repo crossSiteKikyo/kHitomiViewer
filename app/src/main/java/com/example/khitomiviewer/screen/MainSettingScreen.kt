@@ -1,5 +1,8 @@
 package com.example.khitomiviewer.screen
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +37,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -61,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
+import com.example.khitomiviewer.viewmodel.UpdateEvent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.serialization.json.Json
@@ -114,8 +123,36 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
             }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.updateEvent.collect { event ->
+            when (event) {
+                is UpdateEvent.Latest -> {
+                    Toast.makeText(context, "최신 버전입니다", Toast.LENGTH_SHORT).show()
+                }
+
+                is UpdateEvent.UpdateAvailable -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "새 버전 ${event.version}이 있습니다",
+                        actionLabel = "인터넷 창 열기",
+                        duration = SnackbarDuration.Long
+                    )
+
+                    if (result == SnackbarResult.ActionPerformed) {
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(event.url)
+                        )
+                        context.startActivity(intent)
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
@@ -123,6 +160,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            val context = LocalContext.current
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -273,7 +311,14 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     var num by remember { mutableStateOf("") }
                     AlertDialog(
                         onDismissRequest = {showDialog.value = false},
-                        confirmButton = {TextButton(onClick = { navController.navigate("MangaViewScreen/${num}") }) {
+                        confirmButton = {TextButton(onClick = {
+                            if(num.isEmpty())
+                                Toast.makeText(context, "숫자를 입력하세요", Toast.LENGTH_LONG).show()
+                            else if (num.length > 8)
+                                Toast.makeText(context, "8자리 이하 숫자를 입력하세요", Toast.LENGTH_LONG).show()
+                            else
+                                navController.navigate("MangaViewScreen/${num}")
+                        }) {
                             Text("열기")
                         }},
                         title = {
@@ -401,7 +446,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     // 태그 좋아요 관리 ui – DISLIKE, LIKE, SUBSCRIBE 태그 리스트 보여준다.
                     Button(
                         shape = RoundedCornerShape(7.dp),
-                        onClick = { navController.navigate("LikeSettingScreen/tag") }
+                        onClick = { navController.navigate("TagLikeSettingScreen") }
                     ) {
                         Icon(Icons.Filled.Settings, "setting")
                         Text("태그  관리")
@@ -409,7 +454,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     // 작품 좋아요 관리 ui – DISLIKE, LIKE 작품 리스트 보여준다.
                     Button(
                         shape = RoundedCornerShape(7.dp),
-                        onClick = { navController.navigate("LikeSettingScreen/gallery") }
+                        onClick = { navController.navigate("GalleryLikeSettingScreen") }
                     ) {
                         Icon(Icons.Filled.Settings, "setting")
                         Text("갤러리  관리")
@@ -425,7 +470,7 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                 Text("크롤링 간격: ${mainViewModel.delayS.longValue}초")
                 Slider(
                     value = mainViewModel.delayS.longValue.toFloat(),
-                    valueRange = 40f..120f,
+                    valueRange = 10f..60f,
                     onValueChange = { v->
                         mainViewModel.setDelayS(v.toLong())
                     },
@@ -466,7 +511,12 @@ fun MainSettingScreen(navController: NavHostController, mainViewModel: KHitomiVi
                     Text("좋아요/싫어요 정보 내보내기/불러오기")
                 }
                 HorizontalDivider(thickness = 2.dp)
-                Text("kHitomiViewer 버전: ${versionName}", color = Color.Gray)
+                Text("kHitomiViewer 버전: $versionName", color = Color.Gray)
+                Button(onClick = {
+                    mainViewModel.checkLatestVersion(context, versionName)
+                }) {
+                    Text("최신버전 체크")
+                }
             }
         }
     }
@@ -479,6 +529,7 @@ fun MainTagText3(tag: Tag, textColor:Color, bgColor:Color, selectedTagList: Muta
         tagSearchKeyword.value = ""
     }
     var name = when(tag.likeStatus) {
+        0 -> tag.name + "\uD83C\uDD96"
         2 -> tag.name + "♥"
         else -> tag.name
     }

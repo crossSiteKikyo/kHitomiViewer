@@ -50,6 +50,12 @@ interface GalleryDao {
     @Query("select * from gallery where likeStatus != 1 order by likeStatus desc")
     fun findNotNone(): List<Gallery>
 
+    @Query("select * from gallery where likeStatus = 2 order by gId desc")
+    fun findLike(): List<Gallery>
+
+    @Query("select * from gallery where likeStatus = 0 order by gId desc")
+    fun findDislike(): List<Gallery>
+
     // 동적으로 쿼리를 만든다.
     @RawQuery
     fun findByConditionQuery(query: SupportSQLiteQuery): List<Gallery>

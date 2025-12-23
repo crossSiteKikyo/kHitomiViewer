@@ -2,7 +2,7 @@
 
 ### kHitomiViewer는 한국어 히토미 뷰어입니다.
 
-![Image](https://github.com/user-attachments/assets/0cf487cc-1f90-49cf-8a8a-e914c293848e)
+<img width="300" alt="kHitomiViewerIcon" src="https://github.com/user-attachments/assets/640dc5f5-5e69-4578-8d34-706b61d437a3" />
 
 ### 특징
 

@@ -28,16 +28,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.khitomiviewer.viewmodel.KHitomiViewerViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+fun nowAsFileTimestamp(): String {
+    val formatter = DateTimeFormatter.ofPattern("yy년MM월dd일HHmmss")
+    return LocalDateTime.now().format(formatter)
+}
 @Composable
 fun DatabaseExportImportSettingScreen(mainViewModel: KHitomiViewerViewModel) {
 
     val context = LocalContext.current
     val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree()
+//        ActivityResultContracts.OpenDocumentTree()
+        ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if(uri != null) {
-            mainViewModel.backupDatabaseToFolder(context, uri)
+            mainViewModel.backupDatabaseToUri(context, uri)
         }
     }
     val importLauncher = rememberLauncherForActivityResult(
@@ -88,11 +95,11 @@ fun DatabaseExportImportSettingScreen(mainViewModel: KHitomiViewerViewModel) {
                                 mainViewModel.dbExportImportStr.value = "크롤링 중에는 할 수 없습니다"
                                 return@Button
                             }
-                            exportLauncher.launch(null)
+                            exportLauncher.launch("KHitomiViewer좋아요싫어요정보${nowAsFileTimestamp()}.json")
                         }
                     ) {
                         Icon(Icons.Filled.Settings, "setting")
-                        Text("좋아요/싫어요 정보 내보내기: 폴더 선택 후 저장")
+                        Text("좋아요/싫어요 정보 내보내기: 파일로 저장")
                     }
 
                     Button(

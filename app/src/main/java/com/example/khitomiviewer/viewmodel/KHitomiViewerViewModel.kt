@@ -6,6 +6,7 @@ import android.content.Context.MODE_PRIVATE
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -51,7 +52,12 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.min
 import androidx.core.content.edit
+import com.example.khitomiviewer.json.GithubReleasesApi
+import io.ktor.client.call.body
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.ExperimentalSerializationApi
+
 
 class KHitomiViewerViewModel(application: Application) : AndroidViewModel(application) {
     private val typeDao = DatabaseProvider.getDatabase(application).typeDao()
@@ -80,6 +86,7 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             }
         }
     }
+    val githubClient = HttpClient(CIO)
     val json = Json {
         isLenient = true
         ignoreUnknownKeys = true
@@ -114,6 +121,8 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
     val lastTagLikeCheck = mutableStateOf(tagLikeCheck.value)
     val lastGalleryLikeCheck = mutableStateOf(galleryLikeCheck.value)
     var lastTagSearchKeyword = mutableStateOf<String>("artist:try")
+    private val _updateEvent = MutableSharedFlow<UpdateEvent>()
+    val updateEvent = _updateEvent.asSharedFlow()
 
     // 다이얼로그. 태그 (싫어요,기본,좋아요,구독) 갤러리 DISLIKE, NONE, LIKE선택하는것.
     val selectedTagNameOrGalleryId = mutableStateOf("")
@@ -307,6 +316,41 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             Log.i("ggjs 얻기 오류", "${e.message}")
             crawlErrorStr.value = "${getCurrentFormattedTime()}: ggjs 얻기 오류: ${e.message}"
         }
+    }
+
+    // 최신 버전인지 체크하는 함수
+    fun checkLatestVersion(context: Context, currentVersion: String?) = viewModelScope.launch(Dispatchers.IO) {
+        try {
+            val url = "https://api.github.com/repos/crossSiteKikyo/kHitomiViewer/releases/latest"
+            val showUrl = "https://github.com/crossSiteKikyo/kHitomiViewer/releases/latest"
+            val response = githubClient.get(url)
+            val githubReleasesApi = json.decodeFromString<GithubReleasesApi>(response.bodyAsText())
+            val latest = githubReleasesApi.tag_name.removePrefix("v")
+            if(!currentVersion.isNullOrBlank()) {
+                if(isNewerVersion(latest, currentVersion))
+                    _updateEvent.emit(UpdateEvent.UpdateAvailable(version = latest, url = showUrl))
+                else {
+//                    _updateEvent.emit(UpdateEvent.UpdateAvailable(version = latest, url = showUrl))
+                    _updateEvent.emit(UpdateEvent.Latest)
+                }
+            }
+        } catch (e: Exception) {
+            Log.i("최신버전 체크 오류", "${e.message}")
+            crawlErrorStr.value = "${getCurrentFormattedTime()}: 최신버전 체크 오류: ${e.message}"
+        }
+    }
+
+    fun isNewerVersion(latest: String, current: String): Boolean {
+        val latestParts = latest.split(".").map { it.toInt() }
+        val currentParts = current.split(".").map { it.toInt() }
+
+        for (i in 0 until maxOf(latestParts.size, currentParts.size)) {
+            val l = latestParts.getOrElse(i) { 0 }
+            val c = currentParts.getOrElse(i) { 0 }
+            if (l > c) return true
+            if (l < c) return false
+        }
+        return false
     }
 
     fun byteArrayToIntList(bytes: ByteArray): List<Int> {
@@ -636,6 +680,42 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
+    fun backupDatabaseToUri(context: Context, fileUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+
+            if (crawling.value) {
+                dbExportImportStr.value = "크롤링 중에는 할 수 없습니다"
+                return@launch
+            }
+
+            val lastCrawlOn = crawlOn.value
+            crawlOn.value = false
+
+            try {
+                dbExportImportStr.value = "내보내기 중"
+
+                val tagsAndGalleries = TagsAndGalleries(
+                    galleries = galleryDao.findNotNone(),
+                    tags = tagDao.findNotNone()
+                )
+
+                context.contentResolver
+                    .openOutputStream(fileUri, "w")
+                    ?.use { outputStream ->
+                        Json.encodeToStream(tagsAndGalleries, outputStream)
+                    }
+
+                dbExportImportStr.value = "내보내기 완료"
+
+            } catch (e: Exception) {
+                dbExportImportStr.value = "내보내기 실패: ${e.message}"
+            } finally {
+                crawlOn.value = lastCrawlOn
+            }
+        }
+    }
+
+
     fun createBackupFileInFolder(context: Context, folderUri: Uri, fileName: String): Uri? {
         val docId = DocumentsContract.getTreeDocumentId(folderUri)
         val folderDocumentUri = DocumentsContract.buildDocumentUriUsingTree(folderUri, docId)
@@ -690,4 +770,13 @@ class KHitomiViewerViewModel(application: Application) : AndroidViewModel(applic
             crawlOn.value = lastCrawlOn
         }
     }
+}
+
+sealed class UpdateEvent {
+    data class UpdateAvailable(
+        val version: String,
+        val url: String
+    ) : UpdateEvent()
+
+    object Latest : UpdateEvent()
 }

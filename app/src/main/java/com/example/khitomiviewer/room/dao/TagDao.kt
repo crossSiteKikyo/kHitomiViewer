@@ -38,6 +38,12 @@ interface TagDao {
     @Query("select * from tag where likeStatus != 1 order by likeStatus desc")
     fun findNotNone(): List<Tag>
 
-    @Query("select * from tag where name like :keyword and tagId not in (:tagIds) limit 10")
+    @Query("select * from tag where likeStatus = 2")
+    fun findLike(): List<Tag>
+
+    @Query("select * from tag where likeStatus = 0")
+    fun findDislike(): List<Tag>
+
+    @Query("select * from tag where name like :keyword and tagId not in (:tagIds) limit 15")
     fun findByKeyword(keyword: String, tagIds: List<Long>): List<Tag>
 }
