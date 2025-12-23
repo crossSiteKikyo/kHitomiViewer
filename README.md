@@ -25,3 +25,5 @@
 ### 에러 or 문의사항
 
 [issue](https://github.com/crossSiteKikyo/kHitomiViewer/issues)에 남겨주세요
+
+[디스코드 링크](https://discord.gg/X7r2ADfAH2)
