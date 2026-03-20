@@ -1,6 +1,8 @@
 package com.example.khitomiviewer.ui.theme
 
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -9,6 +11,9 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.khitomiviewer.viewmodel.AppViewModel
+import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
@@ -40,6 +45,10 @@ fun KHitomiViewerTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    // viewModel의 activity 주인을 정해주면 전역으로 사용할 수 있다.
+    val activity = LocalActivity.current as ComponentActivity
+    val appViewModel: AppViewModel = viewModel(activity)
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

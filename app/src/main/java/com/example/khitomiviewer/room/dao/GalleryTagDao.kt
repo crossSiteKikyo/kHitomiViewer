@@ -10,9 +10,6 @@ interface GalleryTagDao {
     @Insert
     fun insert(galleryTag: GalleryTag)
 
-    @Query("delete from gallery_tag")
-    suspend fun deleteAll()
-
     @Query("delete from gallery_tag where gId = :gId")
     suspend fun deleteByGid(gId: Long)
 
@@ -22,6 +19,6 @@ interface GalleryTagDao {
     @Query("select * from gallery_tag where tagId = :tagId order by gid desc limit 3")
     suspend fun findByTagIdLimit(tagId: Long): List<GalleryTag>
 
-    @Query("select * from gallery_tag")
-    fun findAll(): List<GalleryTag>
+    @Query("DELETE FROM gallery_tag WHERE gId = :gId AND tagId = :tagId")
+    suspend fun deleteByGidAndTagId(gId: Long, tagId: Long)
 }

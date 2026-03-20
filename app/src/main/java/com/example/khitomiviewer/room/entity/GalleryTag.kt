@@ -6,12 +6,14 @@ import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "gallery_tag", indices = [
-    Index(value = ["gId", "tagId"]),
-    Index(value = ["gId"]), Index(value = ["tagId"])])
+@Entity(
+    tableName = "gallery_tag",
+    primaryKeys = ["gId", "tagId"],
+    indices = [
+        Index(value = ["tagId", "gId"])
+    ]
+)
 data class GalleryTag(
-    @PrimaryKey(autoGenerate = true)
-    val galleryTagId: Long = 0,
     val gId: Long,
     val tagId: Long
 )

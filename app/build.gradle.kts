@@ -17,6 +17,7 @@ ksp {
  * 1. versionName 올리기, versionCode올리기
  * 2. assets/database/khitomi-db 새거로 교체. Device Explorer의 data/data/com.example.khitomiviewer/databases에 있다.
  * 3. room/DatabaseProvider에서 db새로운 날짜로 교체
+ * 4. Build - Generate Signed App Bundle or APK 에서 release빌드
  * */
 
 android {
@@ -28,9 +29,9 @@ android {
         minSdk = 26
         targetSdk = 35
         // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
-        // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13
-        versionName = "2.3.1"
-        versionCode = 14
+        // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15
+        versionName = "2.4.0"
+        versionCode = 15
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -95,4 +96,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     // 시스템 ui
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
+    // 이 라이브러리를 추가하면 수천 개의 아이콘을 사용할 수 있습니다.
+    implementation("androidx.compose.material:material-icons-extended")
+    // Preferences DataStore
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
 }

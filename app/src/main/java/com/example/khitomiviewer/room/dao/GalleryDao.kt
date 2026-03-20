@@ -17,6 +17,9 @@ interface GalleryDao {
     @Update
     suspend fun update(gallery: Gallery)
 
+    @Query("update gallery set likeStatus = :likeStatus where gId = :gId")
+    fun updateGalleryLike(gId: Long, likeStatus: Int)
+
     @Delete
     suspend fun delete(gallery: Gallery)
 
@@ -32,6 +35,9 @@ interface GalleryDao {
     @Query("select gId from gallery order by gId asc limit 1")
     suspend fun findMinGid(): Long
 
+    @Query("select max(gId) from gallery")
+    fun findMaxGid(): Long
+
     @Query("select count(*) from gallery")
     suspend fun count(): Long
 
@@ -44,17 +50,55 @@ interface GalleryDao {
     @Query("select * from gallery")
     fun findAll(): List<Gallery>
 
-    @Query("select g.gId from gallery g")
+    @Query("select g.gId from gallery g order by gId desc")
     fun findAllGId(): List<Long>
 
     @Query("select * from gallery where likeStatus != 1 order by likeStatus desc")
     fun findNotNone(): List<Gallery>
 
-    @Query("select * from gallery where likeStatus = 2 order by gId desc")
-    fun findLike(): List<Gallery>
+    @Query("select * from gallery where likeStatus = 2 order by gId desc limit :limit offset :offset")
+    fun findLike(limit: Int, offset: Long): List<Gallery>
 
-    @Query("select * from gallery where likeStatus = 0 order by gId desc")
-    fun findDislike(): List<Gallery>
+    @Query("select count(gId) from gallery where likeStatus = 2")
+    fun countLikeGalleries(): Long
+
+    @Query("select * from gallery where likeStatus = 0 order by gId desc limit :limit offset :offset")
+    fun findDislike(limit: Int, offset: Long): List<Gallery>
+
+    @Query("select count(gId) from gallery where likeStatus = 0")
+    fun countDislikeGalleries(): Long
+
+    @Query(
+        """
+        SELECT * FROM gallery 
+        WHERE EXISTS (
+            SELECT 1 FROM gallery_tag 
+            INNER JOIN tag ON gallery_tag.tagId = tag.tagId
+            WHERE gallery_tag.gId = gallery.gId 
+              AND tag.likeStatus = 2
+        )
+        ORDER BY gId DESC 
+        LIMIT :limit OFFSET :offset
+    """
+    )
+    fun getGalleriesWithLikedTags(limit: Int, offset: Long): List<Gallery>
+
+    @Query(
+        """
+        SELECT count(gId) FROM gallery 
+        WHERE EXISTS (
+            SELECT 1 FROM gallery_tag 
+            INNER JOIN tag ON gallery_tag.tagId = tag.tagId
+            WHERE gallery_tag.gId = gallery.gId 
+              AND tag.likeStatus = 2
+        )
+    """
+    )
+    fun countGalleriesWithLikedTags(): Long
+
+    // gId리스트로 검색
+    @Query("select * from gallery where gId in (:gIdList)")
+    fun findByGIdList(gIdList: List<Long>): List<Gallery>
 
     // 동적으로 쿼리를 만든다.
     @RawQuery
@@ -63,104 +107,76 @@ interface GalleryDao {
     // 동적으로 쿼리를 만든다.
     @RawQuery
     fun countByConditionQuery(query: SupportSQLiteQuery): Long
-
-    // 이렇게 group by로 하면 인덱스가 없을때보다는 빠르다.
-    // 복합인덱스가 있다면 select가 빠르다.
-    @Query("""
-        select g.* from gallery g
-        join gallery_tag gt on gt.gId = g.gId
-        join tag t on t.tagId = gt.tagId
-        where g.likeStatus in (:galleryLikeList)
-        group by g.gId
-        having
-            -- t.likeStatus가 0인 태그가 없어야함 --
-            sum(case when t.likeStatus = 0 then 1 else 0 end) = 0
-            -- tagLikeList에 있는 태그가 포함되어야함 --
-            and sum(case when t.likeStatus in (:tagLikeList) then 1 else 0 end) > 0
-        order by gId desc limit :limit offset :offset
-        """)
-    fun findByCondition10(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>): List<Gallery>
-
-    @Query("""
-        select count(*) 
-        from (
-            select g.gId from gallery g
-            join gallery_tag gt on gt.gId = g.gId
-            join tag t on t.tagId = gt.tagId
-            where g.likeStatus in (:galleryLikeList)
-            group by g.gId
-            having
-                -- t.likeStatus가 0인 태그가 없어야함 --
-                sum(case when t.likeStatus = 0 then 1 else 0 end) = 0
-                -- tagLikeList에 있는 태그가 포함되어야함 --
-                and sum(case when t.likeStatus in (:tagLikeList) then 1 else 0 end) > 0
-        )
-    """)
-    fun countByCondition10(galleryLikeList: List<Int>, tagLikeList: List<Int>): Long
-
-    @Query("""
+    
+    @Query(
+        """
         select * from gallery g
-        where g.likeStatus in (:galleryLikeList)
+        where g.likeStatus != 0
         and g.typeId in (:showTypeIdList)
         and not exists (
             select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
             where gt.gId = g.gId and t.likeStatus = 0
-        )
-        and exists (
-            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
-            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
         )
         
         order by gId desc limit :limit offset :offset
-        """)
-    fun findByCondition(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>): List<Gallery>
+        """
+    )
+    fun findByCondition(
+        limit: Int,
+        offset: Long,
+        showTypeIdList: List<Long>
+    ): List<Gallery>
 
-    @Query("""
+    @Query(
+        """
         select count(g.gId) from gallery g
-        where g.likeStatus in (:galleryLikeList)
+        where g.likeStatus != 0
         and g.typeId in (:showTypeIdList)
         and not exists (
             select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
             where gt.gId = g.gId and t.likeStatus = 0
         )
-        and exists (
-            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
-            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
-        )
-    """)
-    fun countByCondition(galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>): Long
+    """
+    )
+    fun countByCondition(
+        showTypeIdList: List<Long>
+    ): Long
 
-    @Query("""
+    @Query(
+        """
         select * from gallery g
-        where g.likeStatus in (:galleryLikeList)
+        where g.likeStatus != 0
         and g.typeId in (:showTypeIdList)
         and g.title like :titleKeyword
         and not exists (
             select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
             where gt.gId = g.gId and t.likeStatus = 0
         )
-        and exists (
-            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
-            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
-        )
         
         order by gId desc limit :limit offset :offset
-        """)
-    fun findByConditionTitleKeyword(limit: Int, offset: Long, galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>, titleKeyword: String): List<Gallery>
+        """
+    )
+    fun findByConditionTitleKeyword(
+        limit: Int,
+        offset: Long,
+        showTypeIdList: List<Long>,
+        titleKeyword: String
+    ): List<Gallery>
 
-    @Query("""
+    @Query(
+        """
         select count(g.gId) from gallery g
-        where g.likeStatus in (:galleryLikeList)
+        where g.likeStatus != 0
         and g.typeId in (:showTypeIdList)
         and g.title like :titleKeyword
         and not exists (
             select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
             where gt.gId = g.gId and t.likeStatus = 0
         )
-        and exists (
-            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
-            where gt.gId = g.gId and t.likeStatus in (:tagLikeList) 
-        )
-    """)
-    fun countByConditionTitleKeyword(galleryLikeList: List<Int>, tagLikeList: List<Int>, showTypeIdList: List<Long>, titleKeyword: String): Long
+    """
+    )
+    fun countByConditionTitleKeyword(
+        showTypeIdList: List<Long>,
+        titleKeyword: String
+    ): Long
 }

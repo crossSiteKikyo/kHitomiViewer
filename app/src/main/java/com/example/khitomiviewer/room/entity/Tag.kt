@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "tag", indices = [Index(value = ["tagId"]), Index(value = ["likeStatus"])])
+@Entity(tableName = "tag", indices = [Index(value = ["likeStatus"])])
 data class Tag(
     @PrimaryKey(autoGenerate = true)
     val tagId: Long = 0,

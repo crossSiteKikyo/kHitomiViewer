@@ -5,14 +5,38 @@ import com.example.khitomiviewer.json.TagsAndGalleries
 import com.example.khitomiviewer.json.GalleryInfo
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.GalleryTag
-import com.example.khitomiviewer.room.entity.ImageUrl
 import com.example.khitomiviewer.room.entity.Tag
 
 class MyRepository(private val db: KHitomiDatabase) {
+    @Transaction
+    suspend fun syncGalleryTags(gId: Long, tagsToAdd: List<String>, tagsToRemove: List<String>) {
+        // 1. 제거할 태그 처리 (DB에는 있는데 서버에는 없는 것)
+        for (tagName in tagsToRemove) {
+            val tag = db.tagDao().findByNameNullable(tagName)
+            if (tag != null) {
+                db.galleryTagDao().deleteByGidAndTagId(gId, tag.tagId)
+            }
+        }
+
+        // 2. 추가할 태그 처리 (서버에는 있는데 DB에는 없는 것)
+        for (tagName in tagsToAdd) {
+            // 우선 마스터 Tag 테이블에 해당 이름이 있는지 확인
+            var tag = db.tagDao().findByNameNullable(tagName)
+
+            // 만약 처음 보는 태그라면 새로 생성
+            if (tag == null) {
+                db.tagDao().insert(Tag(name = tagName, likeStatus = 1))
+                tag = db.tagDao().findByName(tagName) // 생성 후 다시 가져옴
+            }
+
+            // 갤러리와 태그 연결
+            db.galleryTagDao().insert(GalleryTag(gId = gId, tagId = tag.tagId))
+        }
+    }
 
     // 일부만 db에 저장되는 참사를 막기 위해 트랜잭션 단위로 처리한다.
     @Transaction
-    suspend fun insertGalleryInfo(ginfo:GalleryInfo, thumb1: String, thumb2: String) {
+    suspend fun insertGalleryInfo(ginfo: GalleryInfo, thumb1: String, thumb2: String) {
         // 태그들이 존재하는지 확인. 없다면 태그를 만든다.
         if (ginfo.tags != null) {
             for (tag in ginfo.tags) {
@@ -50,51 +74,84 @@ class MyRepository(private val db: KHitomiDatabase) {
             }
         }
         // 갤러리 저장.
-        db.galleryDao().insert(Gallery(ginfo.id.toLong(), ginfo.title, thumb1, thumb2, ginfo.date, ginfo.files.size,
-            1, db.typeDao().findByName(ginfo.type).typeId))
+        db.galleryDao().insert(
+            Gallery(
+                ginfo.id.toLong(), ginfo.title, thumb1, thumb2, ginfo.date, ginfo.files.size,
+                1, db.typeDao().findByName(ginfo.type).typeId
+            )
+        )
         // 갤러리토큰 저장.
         // artist, group, parody가 없다면 null tag를 넣어준다.
-        if(ginfo.artists == null) {
-            db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName("artist:null").tagId))
-        }
-        else {
+        if (ginfo.artists == null) {
+            db.galleryTagDao().insert(
+                GalleryTag(
+                    gId = ginfo.id.toLong(),
+                    tagId = db.tagDao().findByName("artist:null").tagId
+                )
+            )
+        } else {
             for (artist in ginfo.artists) {
-                db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName(artist.toArtistString()).tagId))
+                db.galleryTagDao().insert(
+                    GalleryTag(
+                        gId = ginfo.id.toLong(),
+                        tagId = db.tagDao().findByName(artist.toArtistString()).tagId
+                    )
+                )
             }
         }
-        if(ginfo.groups == null) {
-            db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName("group:null").tagId))
-        }
-        else {
+        if (ginfo.groups == null) {
+            db.galleryTagDao().insert(
+                GalleryTag(
+                    gId = ginfo.id.toLong(),
+                    tagId = db.tagDao().findByName("group:null").tagId
+                )
+            )
+        } else {
             for (group in ginfo.groups) {
-                db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName(group.toGroupString()).tagId))
+                db.galleryTagDao().insert(
+                    GalleryTag(
+                        gId = ginfo.id.toLong(),
+                        tagId = db.tagDao().findByName(group.toGroupString()).tagId
+                    )
+                )
             }
         }
-        if(ginfo.parodys == null) {
-            db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName("parody:null").tagId))
-        }
-        else {
+        if (ginfo.parodys == null) {
+            db.galleryTagDao().insert(
+                GalleryTag(
+                    gId = ginfo.id.toLong(),
+                    tagId = db.tagDao().findByName("parody:null").tagId
+                )
+            )
+        } else {
             for (parody in ginfo.parodys) {
-                db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName(parody.toParodyString()).tagId))
+                db.galleryTagDao().insert(
+                    GalleryTag(
+                        gId = ginfo.id.toLong(),
+                        tagId = db.tagDao().findByName(parody.toParodyString()).tagId
+                    )
+                )
             }
         }
-        if(ginfo.characters != null) {
+        if (ginfo.characters != null) {
             for (character in ginfo.characters) {
-                db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName(character.toCharacterString()).tagId))
+                db.galleryTagDao().insert(
+                    GalleryTag(
+                        gId = ginfo.id.toLong(),
+                        tagId = db.tagDao().findByName(character.toCharacterString()).tagId
+                    )
+                )
             }
         }
-        if(ginfo.tags != null) {
+        if (ginfo.tags != null) {
             for (tag in ginfo.tags) {
-                db.galleryTagDao().insert(GalleryTag(gId = ginfo.id.toLong(), tagId = db.tagDao().findByName(tag.toTagString()).tagId))
+                db.galleryTagDao().insert(
+                    GalleryTag(
+                        gId = ginfo.id.toLong(),
+                        tagId = db.tagDao().findByName(tag.toTagString()).tagId
+                    )
+                )
             }
-        }
-        // 이미지 url 저장
-        for (idx in ginfo.files.indices) {
-            val file = ginfo.files[idx]
-            val extension = if(file.hasavif == 1) "avif" else "webp"
-
-            // 이미지 urldao에 저장.
-            db.imageUrlDao().insert(ImageUrl(gId = ginfo.id.toLong(), idx = idx.toLong(), hash = file.hash, extension = extension))
         }
     }
 
@@ -106,23 +163,18 @@ class MyRepository(private val db: KHitomiDatabase) {
         db.galleryDao().delete(g)
         // 갤러리 태그 삭제
         db.galleryTagDao().deleteByGid(gId)
-        // 이미지 삭제
-        db.imageUrlDao().deleteByGid(gId)
     }
 
+    // db 에 좋아요/싫어요 정보 넣기
     @Transaction
     suspend fun updateLikeDislikeInfo(tagsAndGalleries: TagsAndGalleries) {
         // gId는 항상 고정이다. 그러므로 gId를 기준으로 하면 됨.
         for (gallery in tagsAndGalleries.galleries) {
-            val g = db.galleryDao().findByIdNullable(gallery.gId)
-            if(g != null && g.likeStatus != gallery.likeStatus)
-                db.galleryDao().update(Gallery(g.gId, g.title, g.thumb1, g.thumb2, g.date, g.filecount, gallery.likeStatus, g.typeId))
+            db.galleryDao().updateGalleryLike(gallery.gId, gallery.likeStatus)
         }
-        // tagId는 고정이 아니기 때문에 tagName을 기준으로 찾아야한다.
+        // tagId는 내 앱이 아니라면 고정이 아니기 때문에 name을 기준으로 찾아야한다
         for (tag in tagsAndGalleries.tags) {
-            val t = db.tagDao().findByNameNullable(tag.name)
-            if(t != null && t.likeStatus != tag.likeStatus)
-                db.tagDao().update(Tag(t.tagId, t.name, tag.likeStatus))
+            db.tagDao().updateTagLikeByName(tag.name, tag.likeStatus)
         }
     }
 }

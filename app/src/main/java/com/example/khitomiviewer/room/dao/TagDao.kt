@@ -14,6 +14,12 @@ interface TagDao {
     @Update
     fun update(tag: Tag)
 
+    @Query("update tag set likeStatus = :likeStatus where tag.tagId = :tagId ")
+    fun updateTagLike(tagId: Long, likeStatus: Int)
+
+    @Query("update tag set likeStatus = :likeStatus where tag.name = :name ")
+    fun updateTagLikeByName(name: String, likeStatus: Int)
+
     @Query("delete from tag")
     suspend fun deleteAll()
 
@@ -38,11 +44,20 @@ interface TagDao {
     @Query("select * from tag where likeStatus != 1 order by likeStatus desc")
     fun findNotNone(): List<Tag>
 
-    @Query("select * from tag where likeStatus = 2 order by name")
-    fun findLike(): List<Tag>
+    @Query("select * from tag where tagId in (:tagIdList)")
+    fun findByTagIdList(tagIdList: List<Long>): List<Tag>
 
-    @Query("select * from tag where likeStatus = 0 order by name")
-    fun findDislike(): List<Tag>
+    @Query("select * from tag where likeStatus = 2 order by name limit :limit offset :offset")
+    fun findLike(limit: Int, offset: Long): List<Tag>
+
+    @Query("select count(tagId) from tag where likeStatus = 2")
+    fun countLikeTags(): Long
+
+    @Query("select * from tag where likeStatus = 0 order by name limit :limit offset :offset")
+    fun findDislike(limit: Int, offset: Long): List<Tag>
+
+    @Query("select count(tagId) from tag where likeStatus = 0")
+    fun countDislikeTags(): Long
 
     @Query("select * from tag where name like :keyword and tagId not in (:tagIds) limit 15")
     fun findByKeyword(keyword: String, tagIds: List<Long>): List<Tag>

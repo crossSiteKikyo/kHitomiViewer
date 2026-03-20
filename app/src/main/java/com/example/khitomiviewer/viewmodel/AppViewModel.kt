@@ -1,0 +1,135 @@
+package com.example.khitomiviewer.viewmodel
+
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.khitomiviewer.PreferenceManager
+import com.example.khitomiviewer.api.GithubApi
+import com.example.khitomiviewer.room.DatabaseProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
+
+// "UI 관련 전역 상태"만 관리하는 viewModel
+class AppViewModel(application: Application) : AndroidViewModel(application) {
+    private val typeDao = DatabaseProvider.getDatabase(application).tagDao()
+
+    // Application Context를 안전하게 가져오기
+    private val context get() = getApplication<Application>().applicationContext
+    val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName
+
+    // ui 이벤트를 위한 변수들. toast를 띄우거나 snackbar를 띄우는데 사용한다.
+    private val _uiEvent = MutableSharedFlow<UIEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
+    private val githubApi = GithubApi()
+
+    // 최신 버전인지 체크하는 함수
+    fun checkLatestVersion() =
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val urlLink = "https://github.com/crossSiteKikyo/kHitomiViewer/releases/latest"
+
+                val githubReleasesApi = githubApi.getLatestRelease()
+                val latest = githubReleasesApi.tag_name.removePrefix("v")
+                if (!currentVersion.isNullOrBlank()) {
+                    if (isNewerVersion(latest, currentVersion))
+                        _uiEvent.emit(
+                            UIEvent.UpdateAvailable(
+                                version = latest,
+                                url = urlLink
+                            )
+                        )
+                    else {
+                        _uiEvent.emit(UIEvent.ShowToast("최신 버전입니다"))
+                    }
+                }
+            } catch (e: Exception) {
+                Log.i("최신버전 체크 오류", "${e.message}")
+                _uiEvent.emit(UIEvent.ShowToast("최신 버전 체크 오류: ${e.message}"))
+            }
+        }
+
+    fun checkLatestVersionAtAppStart() =
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val urlLink = "https://github.com/crossSiteKikyo/kHitomiViewer/releases/latest"
+
+                val githubReleasesApi = githubApi.getLatestRelease()
+                val latest = githubReleasesApi.tag_name.removePrefix("v")
+                if (!currentVersion.isNullOrBlank()) {
+                    if (isNewerVersion(latest, currentVersion))
+                        _uiEvent.emit(
+                            UIEvent.UpdateAvailable(
+                                version = latest,
+                                url = urlLink
+                            )
+                        )
+                }
+            } catch (e: Exception) {
+                Log.i("최신버전 체크 오류", "${e.message}")
+                _uiEvent.emit(UIEvent.ShowToast("최신 버전 체크 오류: ${e.message}"))
+            }
+        }
+
+    fun isNewerVersion(latest: String, current: String): Boolean {
+        val latestParts = latest.split(".").map { it.toInt() }
+        val currentParts = current.split(".").map { it.toInt() }
+
+        for (i in 0 until maxOf(latestParts.size, currentParts.size)) {
+            val l = latestParts.getOrElse(i) { 0 }
+            val c = currentParts.getOrElse(i) { 0 }
+            if (l > c) return true
+            if (l < c) return false
+        }
+        return false
+    }
+
+    // 데이터베이스 용량 최적화
+    fun vacuumDataBase() = viewModelScope.launch(Dispatchers.IO) {
+        try {
+            // 1. 진행 중임을 알림 (선택 사항)
+            _uiEvent.emit(UIEvent.ShowToast("데이터베이스 최적화 중... 기다려주세요"))
+            // 2. DB 인스턴스 가져오기
+            val db = DatabaseProvider.getDatabase(context)
+            // 3. Room의 추상화 계층을 통하지 않고 직접 SQLite 명령 실행
+            // openHelper를 사용하면 DAO 정의 없이도 모든 SQL 명령이 가능합니다.
+            db.openHelper.writableDatabase.execSQL("VACUUM")
+            // 4. 완료 알림
+            _uiEvent.emit(UIEvent.ShowToast("최적화 완료! 용량이 절약되었습니다."))
+        } catch (e: Exception) {
+            _uiEvent.emit(UIEvent.ShowToast("최적화 실패: ${e.message}"))
+        }
+    }
+
+    private val prefManager = PreferenceManager(application)
+
+    // UI에서 관찰할 데이터들
+    val isDarkMode = prefManager.isDarkMode
+
+    fun toggleDarkMode(isDark: Boolean) = viewModelScope.launch {
+        prefManager.setDarkMode(!isDark)
+    }
+}
+
+sealed class UIEvent {
+    data class UpdateAvailable(
+        val version: String,
+        val url: String
+    ) : UIEvent()
+
+    data class ShowToast(val message: String) : UIEvent()
+
+    // 태그 차단 -> 차단 헤제나 차단 목록으로 가기
+    // 태그 구독 -> 구독 태그 목록 보기
+    // 갤러리 차단 -> 차단 헤제나 차단 목록으로 가기
+    // 갤러리 북마크 -> 북마크 갤러리 목록으로 가기
+    // 등등의 onAction으로 할 수 있는 것들이다.
+    data class ShowSnackBar(
+        val message: String,
+        val actionLabel: String? = null,
+        val onAction: (() -> Unit)? = null
+    ) : UIEvent()
+}
