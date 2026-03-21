@@ -1,8 +1,13 @@
 package com.example.khitomiviewer.ui.tag
 
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -27,11 +32,7 @@ fun MainTag(
         navController.navigate(Screen.List.createRoute(1L, longArrayOf(tag.tagId)))
     }
 
-    var name = when (tag.likeStatus) {
-        2 -> tag.name + "♥"
-        else -> tag.name
-    }
-    var color: Color = textColor
+    var name = tag.name
     if (name.startsWith("parody:")) {
         name = name.replace("parody:", "")
     } else if (name.startsWith("character:")) {
@@ -42,9 +43,7 @@ fun MainTag(
         name = name.replace("artist:", "")
     }
 
-    Text(
-        name,
-        color = color,
+    Row(
         modifier = Modifier
             .combinedClickable(
                 onClick = { tagClick() },
@@ -53,7 +52,16 @@ fun MainTag(
                     isTagDialogOpen.value = true
                 }
             )
-            .clip(RoundedCornerShape(5.dp))
-            .padding(horizontal = 2.dp)
-    )
+    ) {
+        Text(
+            name,
+            color = textColor,
+            modifier = Modifier
+                .padding(horizontal = 2.dp)
+        )
+        if (tag.likeStatus == 2)
+            Icon(Icons.Outlined.ThumbUp, null)
+        else if (tag.likeStatus == 0)
+            Icon(Icons.Outlined.Block, null)
+    }
 }

@@ -53,5 +53,4 @@ fun SelectedTag(tag: Tag, onRemove: () -> Unit) {
             )
         )
     }
-
 }

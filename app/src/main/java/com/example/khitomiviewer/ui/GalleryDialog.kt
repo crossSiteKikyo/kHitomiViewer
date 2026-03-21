@@ -3,10 +3,15 @@ package com.example.khitomiviewer.ui
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,7 +33,6 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
 
     // 다이얼로그
     if (isGalleryDialogOpen.value) {
-        val likeStatusIntToStr = listOf("싫어요 \uD83C\uDD96", "기본", "좋아요 ♥")
         AlertDialog(
             onDismissRequest = {},
             confirmButton = {
@@ -51,22 +55,43 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                 ) {
                     Text("${dialogViewModel.selectedGallery?.gId}")
                     Text("${dialogViewModel.selectedGallery?.title}")
-
-                    for (x in 0..2) {
-                        if (x == dialogViewModel.selectedGallery?.likeStatus)
-                            Button(
-                                onClick = {},
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                            ) { Text(likeStatusIntToStr[x]) }
-                        else
-                            Button(onClick = {
-                                // db에 상태 변경
-                                dialogViewModel.changeGalleryLike(x)
-                                // 다이얼로그 닫기
-                                isGalleryDialogOpen.value = false
-                                // 갤러리 재로딩
-                                galleryViewModel.galleryReLoading()
-                            }) { Text(likeStatusIntToStr[x]) }
+                    Button(
+                        enabled = dialogViewModel.selectedGallery?.likeStatus != 0,
+                        onClick = {
+                            dialogViewModel.changeGalleryLike(0)    // db에 상태 변경
+                            isGalleryDialogOpen.value = false   // 다이얼로그 닫기
+                            galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                        }
+                    ) {
+                        Row {
+                            Text("싫어요")
+                            Icon(Icons.Outlined.Block, null)
+                        }
+                    }
+                    Button(
+                        enabled = dialogViewModel.selectedGallery?.likeStatus != 1,
+                        onClick = {
+                            dialogViewModel.changeGalleryLike(1)    // db에 상태 변경
+                            isGalleryDialogOpen.value = false   // 다이얼로그 닫기
+                            galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                        }
+                    ) {
+                        Row {
+                            Text("상태 없음")
+                        }
+                    }
+                    Button(
+                        enabled = dialogViewModel.selectedGallery?.likeStatus != 2,
+                        onClick = {
+                            dialogViewModel.changeGalleryLike(2)    // db에 상태 변경
+                            isGalleryDialogOpen.value = false   // 다이얼로그 닫기
+                            galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                        }
+                    ) {
+                        Row {
+                            Text("좋아요")
+                            Icon(Icons.Outlined.ThumbUp, null)
+                        }
                     }
                 }
             }

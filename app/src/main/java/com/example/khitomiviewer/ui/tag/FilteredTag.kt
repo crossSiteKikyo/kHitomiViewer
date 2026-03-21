@@ -2,9 +2,14 @@ package com.example.khitomiviewer.ui.tag
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -34,14 +39,20 @@ fun FilteredTag(tag: Tag, onClick: () -> Unit) {
         bgColor = Color(0xFF0080FF)
     }
 
-    Text(
-        tag.name, color = color, modifier = Modifier
+    Row(
+        modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
-            .padding(0.dp)
-            .clip(RoundedCornerShape(5.dp))
             .combinedClickable(
                 onClick = onClick,
             )
-    )
+    ) {
+        Text(
+            tag.name, color = color, modifier = Modifier.padding(0.dp)
+        )
+        if (tag.likeStatus == 2)
+            Icon(Icons.Outlined.ThumbUp, null)
+        else if (tag.likeStatus == 0)
+            Icon(Icons.Outlined.Block, null)
+    }
 }

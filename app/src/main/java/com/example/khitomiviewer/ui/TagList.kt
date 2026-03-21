@@ -14,7 +14,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.ThumbDown
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.ThumbsUpDown
+import androidx.compose.material.icons.twotone.ThumbDown
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -115,12 +123,21 @@ fun TagList(
                     ),
                 border = BorderStroke(2.dp, cardBorderColor)
             ) {
-                Text(
-                    t.name, color = textColor, modifier = Modifier
-                        .padding(horizontal = 2.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
                         .fillMaxWidth()
                         .background(color = bgColor)
-                )
+                ) {
+                    Text(
+                        t.name, color = textColor, modifier = Modifier
+                            .padding(horizontal = 2.dp)
+                    )
+                    if (t.likeStatus == 2)
+                        Icon(Icons.Outlined.ThumbUp, null)
+                    else if (t.likeStatus == 0)
+                        Icon(Icons.Outlined.Block, null)
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

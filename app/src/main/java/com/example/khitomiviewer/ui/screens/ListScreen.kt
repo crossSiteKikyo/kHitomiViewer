@@ -42,6 +42,8 @@ import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.GalleryList
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.Search
+import com.example.khitomiviewer.ui.tag.SearchedTag
+import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.SearchViewModel
 import kotlinx.coroutines.launch
@@ -58,6 +60,7 @@ fun ListScreen(
     val activity = LocalActivity.current as ComponentActivity
     val galleryViewModel: GalleryViewModel = viewModel(activity)
     val searchViewModel: SearchViewModel = viewModel(activity)
+    val dialogViewModel: DialogViewModel = viewModel(activity)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -131,9 +134,17 @@ fun ListScreen(
                                     .horizontalScroll(rememberScrollState())
                             ) {
                                 Text(
-                                    "태그검색 - ${searchViewModel.currentSearchTags.joinToString(", ") { tag -> tag.name }}",
+                                    "태그검색 - ",
                                     fontWeight = FontWeight.Bold,
                                 )
+                                searchViewModel.currentSearchTags.map { tag ->
+                                    SearchedTag(
+                                        tag,
+                                        dialogViewModel,
+                                        isTagDialogOpen,
+                                        navController
+                                    )
+                                }
                             }
                         }
                     }
