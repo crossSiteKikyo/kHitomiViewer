@@ -74,6 +74,7 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.ui.AutoPlayDialog
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 import kotlinx.coroutines.delay
@@ -90,6 +91,7 @@ fun ViewMangaScreen(
     val activity = LocalActivity.current as ComponentActivity
     val hitomiViewModel: HitomiViewModel = viewModel(activity)
     val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
 
     val isAutoPlayDialogOpen = remember { mutableStateOf(false) }
     var isUiVisible by remember { mutableStateOf(false) }
@@ -120,6 +122,11 @@ fun ViewMangaScreen(
         if (gId != null) {
             viewMangaViewModel.setGalleryImages(gId)
         }
+    }
+
+    // 볼륨 키 가로채기 비활성화
+    LaunchedEffect(Unit) {
+        appViewModel.isPaginationActive.value = false
     }
 
     // 시스템 바 숨겨서 몰입을 높이기 위한 변수들

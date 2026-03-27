@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.PictureInPicture
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.ui.graphics.vector.ImageVector
 import java.net.URLEncoder
@@ -96,6 +97,7 @@ sealed class Screen(
     // 인자가 없는 화면
     data object Menu : Screen("MenuScreen", "메뉴", Icons.Outlined.Menu)
     data object Setting : Screen("SettingScreen", "세팅", Icons.Outlined.Settings)
+    data object Crawling : Screen("CrawlingScreen", "크롤링", Icons.Outlined.SmartToy)
     data object Help : Screen("HelpScreen", "도움말", Icons.AutoMirrored.Outlined.HelpOutline)
     data object DatabaseExportImport :
         Screen(

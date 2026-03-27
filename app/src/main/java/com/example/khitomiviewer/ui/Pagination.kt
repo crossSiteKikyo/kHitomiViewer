@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -36,7 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.khitomiviewer.Screen
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -46,10 +49,6 @@ fun Pagination(
     maxPage: Long,
     pageMoveNavigate: (Long) -> Unit
 ) {
-    // 전역 viewModel들
-    val activity = LocalActivity.current as ComponentActivity
-    val galleryViewModel: GalleryViewModel = viewModel(activity)
-
     val pageList = remember { mutableStateListOf<Long>() }
 
     LaunchedEffect(page, maxPage) {

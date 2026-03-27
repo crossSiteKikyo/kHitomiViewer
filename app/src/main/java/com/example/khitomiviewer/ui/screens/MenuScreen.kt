@@ -23,10 +23,12 @@ import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material.icons.outlined.ThumbDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -51,6 +53,11 @@ fun MenuScreen(
     val activity = LocalActivity.current as ComponentActivity
     val appViewModel: AppViewModel = viewModel(activity)
 
+    // 볼륨 키 가로채기 비활성화
+    LaunchedEffect(Unit) {
+        appViewModel.isPaginationActive.value = false
+    }
+
     val isDark by appViewModel.isDarkMode.collectAsState(initial = false)
 
     val context = LocalContext.current
@@ -65,7 +72,7 @@ fun MenuScreen(
         Image(
             painter = painterResource(id = R.drawable.mainicon),
             null,
-            modifier = Modifier.width(130.dp)
+            modifier = Modifier.width(100.dp)
         )
 
         Text("kHitomiViewer 버전: ${appViewModel.currentVersion}", color = Color.Gray)
@@ -119,6 +126,13 @@ fun MenuScreen(
         }) {
             Icon(Icons.Outlined.Settings, null)
             Text("설정")
+        }
+
+        MenuRow(onClick = {
+            navController.navigate(Screen.Crawling.route)
+        }) {
+            Icon(Icons.Outlined.SmartToy, null)
+            Text("크롤링")
         }
 
         MenuRow(onClick = {

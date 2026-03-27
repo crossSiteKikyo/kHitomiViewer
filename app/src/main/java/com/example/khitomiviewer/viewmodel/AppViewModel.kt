@@ -2,6 +2,7 @@ package com.example.khitomiviewer.viewmodel
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.PreferenceManager
@@ -9,12 +10,14 @@ import com.example.khitomiviewer.api.GithubApi
 import com.example.khitomiviewer.room.DatabaseProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // "UI 관련 전역 상태"만 관리하는 viewModel
 class AppViewModel(application: Application) : AndroidViewModel(application) {
-    private val typeDao = DatabaseProvider.getDatabase(application).tagDao()
+    private val prefManager = PreferenceManager(application)
 
     // Application Context를 안전하게 가져오기
     private val context get() = getApplication<Application>().applicationContext
@@ -24,9 +27,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiEvent = MutableSharedFlow<UIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
+    // 볼륨키로 페이징하기 관련
+    // 볼륨 키 페이징 설정값 (Activity에서 즉시 확인하기 위해 StateFlow로 변환)
+    val isVolumeKeyPagingEnabled = prefManager.isVolumeKeyPaging
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun toggleVolumeKeyPaging(enabled: Boolean) {
+        viewModelScope.launch {
+            prefManager.setVolumeKeyPaging(enabled)
+        }
+    }
+
+    var isPaginationActive = mutableStateOf(false)  // 현재 화면에 Pagination 컴포저블이 활성화되어 있는지 여부
+
+    // 볼륨 키 이벤트 스트림
+    private val _volumeKeyEvent = MutableSharedFlow<VolumeKeyEvent>(extraBufferCapacity = 1)
+    val volumeKeyEvent = _volumeKeyEvent.asSharedFlow()
+    fun onVolumeKeyPressed(event: VolumeKeyEvent) {
+        viewModelScope.launch { _volumeKeyEvent.emit(event) }
+    }
+
+    // 최신 버전인지 체크
     private val githubApi = GithubApi()
 
-    // 최신 버전인지 체크하는 함수
     fun checkLatestVersion() =
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -104,15 +127,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private val prefManager = PreferenceManager(application)
-
-    // UI에서 관찰할 데이터들
+    // 다크모드 관련. UI에서 관찰할 데이터들
     val isDarkMode = prefManager.isDarkMode
 
     fun toggleDarkMode(isDark: Boolean) = viewModelScope.launch {
         prefManager.setDarkMode(!isDark)
     }
 }
+
+enum class VolumeKeyEvent { UP, DOWN }
 
 sealed class UIEvent {
     data class UpdateAvailable(

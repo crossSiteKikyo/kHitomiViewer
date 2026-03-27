@@ -3,19 +3,21 @@ package com.example.khitomiviewer.ui.screens
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,9 +25,12 @@ import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 
 @Composable
-fun HelpScreen(verticalScrollState: ScrollState) {
+fun CrawlingScreen(
+    verticalScrollState: ScrollState
+) {
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
+    val hitomiViewModel: HitomiViewModel = viewModel(activity)
     val appViewModel: AppViewModel = viewModel(activity)
 
     // 볼륨 키 가로채기 비활성화
@@ -35,35 +40,23 @@ fun HelpScreen(verticalScrollState: ScrollState) {
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(verticalScrollState)
-            .padding(5.dp)
-    ) {
-        HelpCard("캐시와 데이터베이스", "앱 용량이 너무 커질시 캐시(임시파일)를 삭제하세요. 데이터베이스(데이터)는 절대 삭제하면 안됩니다.")
-    }
-}
-
-@Composable
-fun HelpCard(title: String, content: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(2.dp, Color.Gray, RoundedCornerShape(5.dp))
-            .padding(5.dp)
+            .fillMaxSize()
+            .padding(horizontal = 5.dp)
+            .verticalScroll(verticalScrollState),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            title,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp),
+            "크롤링",
+            modifier = Modifier.padding(vertical = 10.dp),
             fontSize = 25.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
         )
-        Text(
-            content,
-            color = Color.DarkGray,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Text("마지막 크롤링 에러")
+        Text(hitomiViewModel.crawlErrorStr.value, color = Color.Gray)
+        Text("크롤링 상황")
+        Text(hitomiViewModel.crawlStatusStr.value, color = Color.Gray)
+        Text("남은 크롤링 개수")
+        Text("${hitomiViewModel.filteredIds.size}", color = Color.Gray)
     }
 }

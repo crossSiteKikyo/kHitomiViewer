@@ -21,7 +21,9 @@ import androidx.navigation.NavHostController
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.GalleryList
 import com.example.khitomiviewer.ui.Pagination
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -36,12 +38,35 @@ fun RankScreen(
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
     val galleryViewModel: GalleryViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
 
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(page, period) {
         // hitomi에서 popular를 가져온다.
         galleryViewModel.getPopularFromHitomi(page, period)
+    }
+
+    LaunchedEffect(Unit) {
+        // 볼륨 키 가로채기 활성화
+        appViewModel.isPaginationActive.value = true
+    }
+
+    val onPageMove: (Long) -> Unit = { targetPage ->
+        navController.navigate(Screen.Rank.createRoute(targetPage, period))
+        coroutineScope.launch { verticalScrollState.scrollTo(0) }
+    }
+
+    // 2. 볼륨 키 이벤트 구독 (단 한 곳에서만 수행)
+    LaunchedEffect(page, galleryViewModel.maxPage) {
+        appViewModel.volumeKeyEvent.collect { event ->
+            if (appViewModel.isVolumeKeyPagingEnabled.value) {
+                when (event) {
+                    VolumeKeyEvent.UP -> if (page > 1) onPageMove(page - 1)
+                    VolumeKeyEvent.DOWN -> if (page < galleryViewModel.maxPage) onPageMove(page + 1)
+                }
+            }
+        }
     }
 
     Column(
@@ -59,15 +84,9 @@ fun RankScreen(
             PeriodButton(navController, "year", period, "년간")
         }
 
-        Pagination(false, page, galleryViewModel.maxPage) { page ->
-            navController.navigate(Screen.Rank.createRoute(page, period))
-            coroutineScope.launch { verticalScrollState.scrollTo(0) }
-        }
+        Pagination(false, page, galleryViewModel.maxPage, onPageMove)
         GalleryList(navController, isTagDialogOpen, isGalleryDialogOpen)
-        Pagination(true, page, galleryViewModel.maxPage) { page ->
-            navController.navigate(Screen.Rank.createRoute(page, period))
-            coroutineScope.launch { verticalScrollState.scrollTo(0) }
-        }
+        Pagination(true, page, galleryViewModel.maxPage, onPageMove)
     }
 }
 

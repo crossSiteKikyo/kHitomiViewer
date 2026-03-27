@@ -26,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -43,9 +44,11 @@ import com.example.khitomiviewer.ui.GalleryList
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.Search
 import com.example.khitomiviewer.ui.tag.SearchedTag
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.SearchViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -61,6 +64,7 @@ fun ListScreen(
     val galleryViewModel: GalleryViewModel = viewModel(activity)
     val searchViewModel: SearchViewModel = viewModel(activity)
     val dialogViewModel: DialogViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -85,6 +89,28 @@ fun ListScreen(
         }
     }
 
+    val onPageMove: (Long) -> Unit = { targetPage ->
+        navController.navigate(Screen.List.createRoute(targetPage, tagIdList, titleKeyword))
+        coroutineScope.launch { verticalScrollState.scrollTo(0) }
+    }
+
+    // 볼륨 키 가로채기 활성화
+    LaunchedEffect(Unit) {
+        appViewModel.isPaginationActive.value = true
+    }
+
+    // 2. 볼륨 키 이벤트 구독 (단 한 곳에서만 수행)
+    LaunchedEffect(page, galleryViewModel.maxPage) {
+        appViewModel.volumeKeyEvent.collect { event ->
+            if (appViewModel.isVolumeKeyPagingEnabled.value) {
+                when (event) {
+                    VolumeKeyEvent.UP -> if (page > 1) onPageMove(page - 1)
+                    VolumeKeyEvent.DOWN -> if (page < galleryViewModel.maxPage) onPageMove(page + 1)
+                }
+            }
+        }
+    }
+
     if (galleryViewModel.loading.value) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -104,7 +130,11 @@ fun ListScreen(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .border(width = 1.dp, color = Color.Gray, shape = RoundedCornerShape(2.dp))
+                        .border(
+                            width = 1.dp,
+                            color = Color.Gray,
+                            shape = RoundedCornerShape(2.dp)
+                        )
                 ) {
                     // gId검색결과 보여주기
                     if (gId != null && gId != 0L) {
@@ -159,15 +189,9 @@ fun ListScreen(
                         .padding(0.dp)
                 ) { Icon(Icons.Filled.Search, "search") }
             }
-            Pagination(false, page, galleryViewModel.maxPage) { page ->
-                navController.navigate(Screen.List.createRoute(page, tagIdList, titleKeyword))
-                coroutineScope.launch { verticalScrollState.scrollTo(0) }
-            }
+            Pagination(false, page, galleryViewModel.maxPage, onPageMove)
             GalleryList(navController, isTagDialogOpen, isGalleryDialogOpen)
-            Pagination(true, page, galleryViewModel.maxPage) { page ->
-                navController.navigate(Screen.List.createRoute(page, tagIdList, titleKeyword))
-                coroutineScope.launch { verticalScrollState.scrollTo(0) }
-            }
+            Pagination(true, page, galleryViewModel.maxPage, onPageMove)
         }
         Search(navController, isSearchSheetVisible, titleKeyword)
     }

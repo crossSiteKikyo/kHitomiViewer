@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DataExportImportViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -46,6 +48,12 @@ fun DatabaseExportImportSettingScreen() {
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
     val dataExportImportViewModel: DataExportImportViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
+
+    // 볼륨 키 가로채기 비활성화
+    LaunchedEffect(Unit) {
+        appViewModel.isPaginationActive.value = false
+    }
 
     val context = LocalContext.current
     val exportLauncher = rememberLauncherForActivityResult(
@@ -107,6 +115,6 @@ fun DatabaseExportImportSettingScreen() {
             }
             Text(dataExportImportViewModel.statusString.value, color = Color.Gray)
         }
-            
+
     }
 }

@@ -1,10 +1,12 @@
 package com.example.khitomiviewer
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
@@ -47,21 +49,42 @@ import com.example.khitomiviewer.ui.GalleryDialog
 import com.example.khitomiviewer.ui.TagDialog
 import com.example.khitomiviewer.ui.UIEventHandler
 import com.example.khitomiviewer.ui.VerticalScrollBar
+import com.example.khitomiviewer.ui.screens.CrawlingScreen
 import com.example.khitomiviewer.ui.theme.KHitomiViewerTheme
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 
 class MainActivity : ComponentActivity() {
+    // 크롤링을 위해 hitomiViewModel 생성. viewModel(activity)와 같은 인스턴스이다.
+    private val hitomiViewModel: HitomiViewModel by viewModels()
+    private val appViewModel: AppViewModel by viewModels()
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val isSettingOn = appViewModel.isVolumeKeyPagingEnabled.value
+        val isPaginationVisible = appViewModel.isPaginationActive.value
+
+        if (isSettingOn && isPaginationVisible) {
+            return when (keyCode) {
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    appViewModel.onVolumeKeyPressed(VolumeKeyEvent.UP)
+                    true // 시스템 볼륨 바가 뜨지 않게 함
+                }
+
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    appViewModel.onVolumeKeyPressed(VolumeKeyEvent.DOWN)
+                    true
+                }
+
+                else -> super.onKeyDown(keyCode, event)
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             enableEdgeToEdge()
-            // viewModel의 activity 주인을 정해주면 전역으로 사용할 수 있다.
-            val activity = LocalActivity.current as ComponentActivity
-            // 크롤링을 위해 hitomi뷰모델 생성
-            val hitomiViewModel: HitomiViewModel = viewModel(activity)
-            val appViewModel: AppViewModel = viewModel(activity)
             appViewModel.checkLatestVersionAtAppStart()
 
             val isDark by appViewModel.isDarkMode.collectAsState(initial = false)
@@ -276,6 +299,11 @@ fun MainApp() {
                 }
                 composable(Screen.Setting.route) {
                     SettingScreen(
+                        verticalScrollState
+                    )
+                }
+                composable(Screen.Crawling.route) {
+                    CrawlingScreen(
                         verticalScrollState
                     )
                 }

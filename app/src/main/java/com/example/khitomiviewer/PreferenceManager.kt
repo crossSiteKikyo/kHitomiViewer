@@ -26,6 +26,7 @@ class PreferenceManager(private val context: Context) {
         val IS_AUTO_PLAY_LOOP = booleanPreferencesKey("is_auto_play_loop")
         val AUTO_PLAY_PERIOD = intPreferencesKey("auto_play_period")
         val TYPE_ID_LIST = stringPreferencesKey("showTypeIdList")
+        val IS_VOLUME_KEY_PAGING = booleanPreferencesKey("is_volume_key_paging")
         val LAST_CRAWL_MISSED_GALLERIES = longPreferencesKey("last_crawl_missed_galleries")
         val LAST_DELETE_DELETED_GALLERY = longPreferencesKey("last_delete_deleted_gallery")
         val LAST_SYNC_GALLERY_TAG_1000 = longPreferencesKey("last_sync_gallery_tag_1000")
@@ -36,8 +37,6 @@ class PreferenceManager(private val context: Context) {
         val LAST_SYNC_GALLERY_TAG_6000 = longPreferencesKey("last_sync_gallery_tag_6000")
         val LAST_SYNC_GALLERY_TAG_7000 = longPreferencesKey("last_sync_gallery_tag_7000")
         val LAST_SYNC_GALLERY_TAG_8000 = longPreferencesKey("last_sync_gallery_tag_8000")
-        val LAST_SYNC_GALLERY_TAG_AFTER_2000 =
-            longPreferencesKey("last_sync_gallery_tag_after_2000")
     }
 
     // 공통 읽기 로직
@@ -71,6 +70,11 @@ class PreferenceManager(private val context: Context) {
 
     val autoPlayPeriod: Flow<Int> = getPreference(Keys.AUTO_PLAY_PERIOD, 10)
     suspend fun updateAutoPlayPeriod(period: Int) = setPreference(Keys.AUTO_PLAY_PERIOD, period)
+
+    // 볼륨 키로 페이징하기 관련
+    val isVolumeKeyPaging: Flow<Boolean> = getPreference(Keys.IS_VOLUME_KEY_PAGING, false)
+    suspend fun setVolumeKeyPaging(enabled: Boolean) =
+        setPreference(Keys.IS_VOLUME_KEY_PAGING, enabled)
 
     // 미처 크롤링 하지 못한 갤러리 크롤링 관련
     val lastCrawlMissedGalleries: Flow<Long> = getPreference(Keys.LAST_CRAWL_MISSED_GALLERIES, 0L)

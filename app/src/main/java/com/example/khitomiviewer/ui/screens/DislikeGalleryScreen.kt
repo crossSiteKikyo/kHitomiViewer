@@ -16,7 +16,9 @@ import androidx.navigation.NavHostController
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.GalleryList
 import com.example.khitomiviewer.ui.Pagination
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,6 +32,7 @@ fun DislikeGalleryScreen(
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
     val galleryViewModel: GalleryViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -37,8 +40,27 @@ fun DislikeGalleryScreen(
         galleryViewModel.getDislikeGalleries(page)
     }
 
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         galleryViewModel.setMaxPageDislikeGalleries()
+        // 볼륨 키 가로채기 활성화
+        appViewModel.isPaginationActive.value = true
+    }
+
+    val onPageMove: (Long) -> Unit = { targetPage ->
+        navController.navigate(Screen.DislikeGallery.createRoute(targetPage))
+        coroutineScope.launch { verticalScrollState.scrollTo(0) }
+    }
+
+    // 2. 볼륨 키 이벤트 구독 (단 한 곳에서만 수행)
+    LaunchedEffect(page, galleryViewModel.maxPage) {
+        appViewModel.volumeKeyEvent.collect { event ->
+            if (appViewModel.isVolumeKeyPagingEnabled.value) {
+                when (event) {
+                    VolumeKeyEvent.UP -> if (page > 1) onPageMove(page - 1)
+                    VolumeKeyEvent.DOWN -> if (page < galleryViewModel.maxPage) onPageMove(page + 1)
+                }
+            }
+        }
     }
 
     Column(
@@ -46,14 +68,8 @@ fun DislikeGalleryScreen(
             .fillMaxSize()
             .verticalScroll(verticalScrollState)
     ) {
-        Pagination(false, page, galleryViewModel.maxPage) { page ->
-            navController.navigate(Screen.DislikeGallery.createRoute(page))
-            coroutineScope.launch { verticalScrollState.scrollTo(0) }
-        }
+        Pagination(false, page, galleryViewModel.maxPage, onPageMove)
         GalleryList(navController, isTagDialogOpen, isGalleryDialogOpen)
-        Pagination(true, page, galleryViewModel.maxPage) { page ->
-            navController.navigate(Screen.DislikeGallery.createRoute(page))
-            coroutineScope.launch { verticalScrollState.scrollTo(0) }
-        }
+        Pagination(true, page, galleryViewModel.maxPage, onPageMove)
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -112,7 +113,14 @@ fun AutoPlayDialog(isAutoPlayDialogOpen: MutableState<Boolean>) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("반복: ")
-                        Checkbox(
+//                        Checkbox(
+//                            checked = viewMangaViewModel.tempIsLoop.value,
+//                            onCheckedChange = {
+//                                viewMangaViewModel.tempIsLoop.value = it
+//                                viewMangaViewModel.toggleIsAutoPlayLoop(it)
+//                            }
+//                        )
+                        Switch(
                             checked = viewMangaViewModel.tempIsLoop.value,
                             onCheckedChange = {
                                 viewMangaViewModel.tempIsLoop.value = it

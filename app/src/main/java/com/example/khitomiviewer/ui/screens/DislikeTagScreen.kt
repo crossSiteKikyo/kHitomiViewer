@@ -16,7 +16,9 @@ import androidx.navigation.NavHostController
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.TagList
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.TagViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -29,6 +31,7 @@ fun DislikeTagScreen(
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
     val tagViewModel: TagViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -36,8 +39,27 @@ fun DislikeTagScreen(
         tagViewModel.getDislikeTags(page)
     }
 
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         tagViewModel.setMaxPageDislikeTags()
+        // 볼륨 키 가로채기 활성화
+        appViewModel.isPaginationActive.value = true
+    }
+
+    val onPageMove: (Long) -> Unit = { targetPage ->
+        navController.navigate(Screen.DislikeTag.createRoute(targetPage))
+        coroutineScope.launch { verticalScrollState.scrollTo(0) }
+    }
+
+    // 2. 볼륨 키 이벤트 구독 (단 한 곳에서만 수행)
+    LaunchedEffect(page, tagViewModel.maxPage) {
+        appViewModel.volumeKeyEvent.collect { event ->
+            if (appViewModel.isVolumeKeyPagingEnabled.value) {
+                when (event) {
+                    VolumeKeyEvent.UP -> if (page > 1) onPageMove(page - 1)
+                    VolumeKeyEvent.DOWN -> if (page < tagViewModel.maxPage) onPageMove(page + 1)
+                }
+            }
+        }
     }
 
     Column(
@@ -45,14 +67,8 @@ fun DislikeTagScreen(
             .fillMaxSize()
             .verticalScroll(verticalScrollState)
     ) {
-        Pagination(false, page, tagViewModel.maxPage) { page ->
-            navController.navigate(Screen.DislikeTag.createRoute(page))
-            coroutineScope.launch { verticalScrollState.scrollTo(0) }
-        }
+        Pagination(false, page, tagViewModel.maxPage, onPageMove)
         TagList(navController, isTagDialogOpen)
-        Pagination(true, page, tagViewModel.maxPage) { page ->
-            navController.navigate(Screen.DislikeTag.createRoute(page))
-            coroutineScope.launch { verticalScrollState.scrollTo(0) }
-        }
+        Pagination(true, page, tagViewModel.maxPage, onPageMove)
     }
 }
