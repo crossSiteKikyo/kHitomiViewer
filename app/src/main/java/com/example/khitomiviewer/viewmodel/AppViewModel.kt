@@ -27,6 +27,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiEvent = MutableSharedFlow<UIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
+    // 로드할 갤러리 수 관련
+    val pageSize = prefManager.pageSize
+    fun setPageSize(size: Int) = viewModelScope.launch {
+        prefManager.setPageSize(size)
+    }
+
+    // 갤러리 리스트 ui 관련
+    val galleryListUi = prefManager.galleryListUi
+    fun setGalleryListUi(v: String) = viewModelScope.launch {
+        prefManager.setGalleryListUi(v)
+    }
+
     // 볼륨키로 페이징하기 관련
     // 볼륨 키 페이징 설정값 (Activity에서 즉시 확인하기 위해 StateFlow로 변환)
     val isVolumeKeyPagingEnabled = prefManager.isVolumeKeyPaging

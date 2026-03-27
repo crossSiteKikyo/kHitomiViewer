@@ -45,6 +45,7 @@ import com.example.khitomiviewer.ui.screens.SubscriptionScreen
 import com.example.khitomiviewer.ui.screens.ViewMangaScreen
 import com.example.khitomiviewer.ui.BottomBar
 import com.example.khitomiviewer.ui.FloatingActionButton
+import com.example.khitomiviewer.ui.GalleryDetailDialog
 import com.example.khitomiviewer.ui.GalleryDialog
 import com.example.khitomiviewer.ui.TagDialog
 import com.example.khitomiviewer.ui.UIEventHandler
@@ -112,6 +113,7 @@ fun MainApp() {
     // 다이얼로그 보일지 말지
     val isTagDialogOpen = remember { mutableStateOf(false) }
     val isGalleryDialogOpen = remember { mutableStateOf(false) }
+    val isGalleryDetailDialogOpen = remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -179,6 +181,7 @@ fun MainApp() {
                         verticalScrollState,
                         isTagDialogOpen,
                         isGalleryDialogOpen,
+                        isGalleryDetailDialogOpen,
                         bse.arguments?.getLong("page") ?: 1L,
                         bse.arguments?.getLongArray("tagIdList"),
                         bse.arguments?.getString("titleKeyword"),
@@ -198,6 +201,7 @@ fun MainApp() {
                         verticalScrollState,
                         isTagDialogOpen,
                         isGalleryDialogOpen,
+                        isGalleryDetailDialogOpen,
                         bse.arguments?.getLong("page") ?: 1L
                     )
                 }
@@ -214,6 +218,7 @@ fun MainApp() {
                         verticalScrollState,
                         isTagDialogOpen,
                         isGalleryDialogOpen,
+                        isGalleryDetailDialogOpen,
                         bse.arguments?.getLong("page") ?: 1L
                     )
                 }
@@ -260,6 +265,7 @@ fun MainApp() {
                         verticalScrollState,
                         isTagDialogOpen,
                         isGalleryDialogOpen,
+                        isGalleryDetailDialogOpen,
                         bse.arguments?.getLong("page") ?: 1L
                     )
                 }
@@ -281,6 +287,7 @@ fun MainApp() {
                         verticalScrollState,
                         isTagDialogOpen,
                         isGalleryDialogOpen,
+                        isGalleryDetailDialogOpen,
                         bse.arguments?.getLong("page") ?: 1L,
                         bse.arguments?.getString("period") ?: "week",
                     )
@@ -320,6 +327,12 @@ fun MainApp() {
         VerticalScrollBar(innerPadding, verticalScrollState)
         TagDialog(isTagDialogOpen)
         GalleryDialog(isGalleryDialogOpen)
+        GalleryDetailDialog(
+            navController,
+            isTagDialogOpen,
+            isGalleryDialogOpen,
+            isGalleryDetailDialogOpen
+        )
         UIEventHandler(snackbarHostState)
     }
 }

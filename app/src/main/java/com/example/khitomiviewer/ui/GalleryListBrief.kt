@@ -49,15 +49,16 @@ import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
 @Composable
-fun GalleryList(
+fun GalleryListBrief(
     navController: NavHostController,
-    isTagDialogOpen: MutableState<Boolean>,
-    isGalleryDialogOpen: MutableState<Boolean>
+    isGalleryDialogOpen: MutableState<Boolean>,
+    isGalleryDetailDialogOpen: MutableState<Boolean>
 ) {
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
@@ -151,125 +152,6 @@ fun GalleryList(
                             .height(1.dp)
                             .background(color = titleColor)
                     )
-                    // 작가
-                    val artists =
-                        g.tags.filter { tag -> tag.name.startsWith("artist:") }
-                    if (artists.isNotEmpty()) {
-                        FlowRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(color = typeBgColor)
-                                .padding(horizontal = 3.dp)
-                        ) {
-                            Text("작가: ", color = textColor)
-                            for (i in artists.indices) {
-                                if (i != 0)
-                                    Text(", ", color = textColor)
-                                MainTag(
-                                    artists[i],
-                                    textColor,
-                                    dialogViewModel,
-                                    isTagDialogOpen,
-                                    navController
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(color = titleColor)
-                        )
-                    }
-                    // 그룹
-                    val groups = g.tags.filter { tag -> tag.name.startsWith("group:") }
-                    if (groups.isNotEmpty()) {
-                        FlowRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(color = typeBgColor)
-                                .padding(horizontal = 3.dp)
-                        ) {
-                            Text("그룹: ", color = textColor)
-                            for (i in groups.indices) {
-                                if (i != 0)
-                                    Text(", ", color = textColor)
-                                MainTag(
-                                    groups[i],
-                                    textColor,
-                                    dialogViewModel,
-                                    isTagDialogOpen,
-                                    navController
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(color = titleColor)
-                        )
-                    }
-                    // 시리즈
-                    val parodies =
-                        g.tags.filter { tag -> tag.name.startsWith("parody:") }
-                    if (parodies.isNotEmpty()) {
-                        FlowRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(color = typeBgColor)
-                                .padding(horizontal = 3.dp)
-                        ) {
-                            Text("시리즈: ", color = textColor)
-                            for (i in parodies.indices) {
-                                if (i != 0)
-                                    Text(", ", color = textColor)
-                                MainTag(
-                                    parodies[i],
-                                    textColor,
-                                    dialogViewModel,
-                                    isTagDialogOpen,
-                                    navController
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(color = titleColor)
-                        )
-                    }
-                    // 캐릭터
-                    val characters =
-                        g.tags.filter { tag -> tag.name.startsWith("character:") }
-                    if (characters.isNotEmpty()) {
-                        FlowRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(color = typeBgColor)
-                                .padding(horizontal = 3.dp)
-                        ) {
-                            Text("캐릭터: ", color = textColor)
-                            for (i in characters.indices) {
-                                if (i != 0)
-                                    Text(", ", color = textColor)
-                                MainTag(
-                                    characters[i],
-                                    textColor,
-                                    dialogViewModel,
-                                    isTagDialogOpen,
-                                    navController
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(color = titleColor)
-                        )
-                    }
                     // 이미지 미리보기
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -277,15 +159,8 @@ fun GalleryList(
                             .fillMaxWidth()
                             .combinedClickable(
                                 onClick = {
-                                    // ggjs정보가 없는데 보면 에러남.
-                                    if (hitomiViewModel.mList.isNotEmpty())
-                                        navController.navigate("ViewMangaScreen/${g.gId}")
-                                    else
-                                        Toast.makeText(
-                                            context,
-                                            "서버 정보를 받아오는중입니다. 잠시 기다려주세요",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                    dialogViewModel.setGalleryDetail(g)
+                                    isGalleryDetailDialogOpen.value = true
                                 },
                                 onLongClick = {
                                     dialogViewModel.setGallery(g.gId)
@@ -325,33 +200,6 @@ fun GalleryList(
                                 .border(1.dp, Color.Black),
                         )
                     }
-                    // 나머지 태그들
-                    val males = g.tags.filter { tag -> tag.name.startsWith("male:") }
-                    val females =
-                        g.tags.filter { tag -> tag.name.startsWith("female:") }
-                    val others = g.tags.filter { tag ->
-                        (!tag.name.startsWith("artist:") && !tag.name.startsWith("group:") && !tag.name.startsWith(
-                            "parody:"
-                        )
-                                && !tag.name.startsWith("character:") && !tag.name.startsWith(
-                            "male:"
-                        ) && !tag.name.startsWith("female:"))
-                    }
-                    FlowRow(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.padding(3.dp)
-                    ) {
-                        for (tag in males) {
-                            SubTag(tag, dialogViewModel, isTagDialogOpen, navController)
-                        }
-                        for (tag in females) {
-                            SubTag(tag, dialogViewModel, isTagDialogOpen, navController)
-                        }
-                        for (tag in others) {
-                            SubTag(tag, dialogViewModel, isTagDialogOpen, navController)
-                        }
-                    }
                     // 갤러리id   포스트 시간   페이지 수
                     SelectionContainer {
                         Row(
@@ -382,23 +230,4 @@ fun GalleryList(
             }
         }
     }
-}
-
-fun formatSavedDate(dateString: String): String {
-    // 1. 저장된 문자열의 패턴 정의 (연-월-일 시:분:초-오프셋)
-    // 참고: -06 같은 오프셋은 'X'나 'x'로 처리합니다.
-    val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssX", Locale.ENGLISH)
-
-    // 2. 문자열을 OffsetDateTime 객체로 파싱
-    val parsedDate = OffsetDateTime.parse(dateString, inputFormatter)
-
-    // 3. 사용자의 시스템 타임존으로 변경 (예: 한국이면 +09:00로 자동 변환)
-    val localDate = parsedDate.atZoneSameInstant(java.time.ZoneId.systemDefault())
-
-    // 4. JS의 toLocaleString()처럼 보기 편한 포맷으로 출력
-    // FormatStyle.MEDIUM은 "2007. 11. 18. 오전 9:19:00" 같은 식입니다.
-    val outputFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-        .withLocale(Locale.getDefault())
-
-    return localDate.format(outputFormatter)
 }

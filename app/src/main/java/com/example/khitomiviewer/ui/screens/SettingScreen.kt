@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +56,8 @@ fun SettingScreen(
     val appViewModel: AppViewModel = viewModel(activity)
 
     val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
+    val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
+    val pageSize by appViewModel.pageSize.collectAsState(20)
 
     // 볼륨 키 가로채기 비활성화
     LaunchedEffect(Unit) {
@@ -77,6 +85,78 @@ fun SettingScreen(
                 checked = isVolumePaging,
                 onCheckedChange = { appViewModel.toggleVolumeKeyPaging(it) }
             )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("갤러리 UI")
+            Button(onClick = {
+                appViewModel.setGalleryListUi("Extended")
+            }, enabled = galleryListUi != "Extended", contentPadding = PaddingValues(2.dp)) {
+                Text("확장")
+            }
+            Button(onClick = {
+                appViewModel.setGalleryListUi("Brief")
+            }, enabled = galleryListUi != "Brief", contentPadding = PaddingValues(2.dp)) {
+                Text("간략히")
+            }
+            Button(onClick = {
+                appViewModel.setGalleryListUi("Grid")
+            }, enabled = galleryListUi != "Grid", contentPadding = PaddingValues(2.dp)) {
+                Text("그리드")
+            }
+        }
+
+        var pageSizeDDExpanded by remember { mutableStateOf(false) }
+
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clickable { pageSizeDDExpanded = !pageSizeDDExpanded },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("한번에 로드할 갤러리 수")
+                Text("$pageSize 개", color = Color.Gray)
+            }
+            DropdownMenu(
+                expanded = pageSizeDDExpanded,
+                onDismissRequest = { pageSizeDDExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("14") },
+                    onClick = { appViewModel.setPageSize(14); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("16") },
+                    onClick = { appViewModel.setPageSize(16); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("18") },
+                    onClick = { appViewModel.setPageSize(18); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("20") },
+                    onClick = { appViewModel.setPageSize(20); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("24") },
+                    onClick = { appViewModel.setPageSize(24); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("30") },
+                    onClick = { appViewModel.setPageSize(30); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("40") },
+                    onClick = { appViewModel.setPageSize(40); pageSizeDDExpanded = false })
+                DropdownMenuItem(
+                    text = { Text("50") },
+                    onClick = { appViewModel.setPageSize(50); pageSizeDDExpanded = false })
+            }
         }
     }
 }

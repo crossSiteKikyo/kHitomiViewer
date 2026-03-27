@@ -27,6 +27,8 @@ class PreferenceManager(private val context: Context) {
         val AUTO_PLAY_PERIOD = intPreferencesKey("auto_play_period")
         val TYPE_ID_LIST = stringPreferencesKey("showTypeIdList")
         val IS_VOLUME_KEY_PAGING = booleanPreferencesKey("is_volume_key_paging")
+        val GALLERY_LIST_UI = stringPreferencesKey("gallery_list_ui")
+        val PAGE_SIZE = intPreferencesKey("page_size")
         val LAST_CRAWL_MISSED_GALLERIES = longPreferencesKey("last_crawl_missed_galleries")
         val LAST_DELETE_DELETED_GALLERY = longPreferencesKey("last_delete_deleted_gallery")
         val LAST_SYNC_GALLERY_TAG_1000 = longPreferencesKey("last_sync_gallery_tag_1000")
@@ -75,6 +77,14 @@ class PreferenceManager(private val context: Context) {
     val isVolumeKeyPaging: Flow<Boolean> = getPreference(Keys.IS_VOLUME_KEY_PAGING, false)
     suspend fun setVolumeKeyPaging(enabled: Boolean) =
         setPreference(Keys.IS_VOLUME_KEY_PAGING, enabled)
+
+    // 갤러리 리스트 ui
+    val galleryListUi: Flow<String> = getPreference(Keys.GALLERY_LIST_UI, "Extended")
+    suspend fun setGalleryListUi(v: String) = setPreference(Keys.GALLERY_LIST_UI, v)
+
+    // 한번에 로드할 갤러리 개수
+    val pageSize: Flow<Int> = getPreference(Keys.PAGE_SIZE, 20)
+    suspend fun setPageSize(size: Int) = setPreference(Keys.PAGE_SIZE, size)
 
     // 미처 크롤링 하지 못한 갤러리 크롤링 관련
     val lastCrawlMissedGalleries: Flow<Long> = getPreference(Keys.LAST_CRAWL_MISSED_GALLERIES, 0L)

@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.room.DatabaseProvider
+import com.example.khitomiviewer.room.GalleryFullDto
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.Tag
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,14 @@ class DialogViewModel(application: Application) : AndroidViewModel(application) 
     // 다이얼로그. 태그 (싫어요,기본,좋아요,구독) 갤러리 DISLIKE, NONE, LIKE선택하는것.
     var selectedTag by mutableStateOf<Tag?>(null)
     var selectedGallery by mutableStateOf<Gallery?>(null)
+
+    // 갤러리 디테일 정보 보여주는 다이얼로그
+
+    val selectedGalleryDetail = mutableStateOf<GalleryFullDto?>(null)
+
+    fun setGalleryDetail(galleryFullDto: GalleryFullDto) {
+        selectedGalleryDetail.value = galleryFullDto
+    }
 
     fun setTag(tag: Tag) {
         selectedTag = tag
