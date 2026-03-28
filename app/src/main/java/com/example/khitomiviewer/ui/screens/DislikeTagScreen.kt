@@ -35,6 +35,11 @@ fun DislikeTagScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
+    val onPageMove: (Long) -> Unit = { targetPage ->
+        navController.navigate(Screen.DislikeTag.createRoute(targetPage))
+        coroutineScope.launch { verticalScrollState.scrollTo(0) }
+    }
+
     LaunchedEffect(page) {
         tagViewModel.getDislikeTags(page)
     }
@@ -43,15 +48,7 @@ fun DislikeTagScreen(
         tagViewModel.setMaxPageDislikeTags()
         // 볼륨 키 가로채기 활성화
         appViewModel.isPaginationActive.value = true
-    }
-
-    val onPageMove: (Long) -> Unit = { targetPage ->
-        navController.navigate(Screen.DislikeTag.createRoute(targetPage))
-        coroutineScope.launch { verticalScrollState.scrollTo(0) }
-    }
-
-    // 2. 볼륨 키 이벤트 구독 (단 한 곳에서만 수행)
-    LaunchedEffect(page, tagViewModel.maxPage) {
+        // 볼륨 키 이벤트 구독
         appViewModel.volumeKeyEvent.collect { event ->
             if (appViewModel.isVolumeKeyPagingEnabled.value) {
                 when (event) {

@@ -77,6 +77,7 @@ import com.example.khitomiviewer.ui.AutoPlayDialog
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
+import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -124,9 +125,9 @@ fun ViewMangaScreen(
         }
     }
 
-    // 볼륨 키 가로채기 비활성화
     LaunchedEffect(Unit) {
-        appViewModel.isPaginationActive.value = false
+        // 볼륨 키 가로채기 활성화
+        appViewModel.isPaginationActive.value = true
     }
 
     // 시스템 바 숨겨서 몰입을 높이기 위한 변수들
@@ -166,6 +167,25 @@ fun ViewMangaScreen(
             }
         } else {
             val pagerState = rememberPagerState(pageCount = { imageHashes.size })
+            fun movePage(direction: String) {
+                coroutineScope.launch {
+                    if (direction == "next" && pagerState.currentPage < imageHashes.size - 1)
+                        pagerState.scrollToPage(pagerState.currentPage + 1)
+                    else if (direction == "prev" && pagerState.currentPage > 0)
+                        pagerState.scrollToPage(pagerState.currentPage - 1)
+                }
+            }
+            LaunchedEffect(Unit) {
+                // 볼륨 키 이벤트 구독
+                appViewModel.volumeKeyEvent.collect { event ->
+                    if (appViewModel.isVolumeKeyPagingEnabled.value) {
+                        when (event) {
+                            VolumeKeyEvent.UP -> movePage("prev")
+                            VolumeKeyEvent.DOWN -> movePage("next")
+                        }
+                    }
+                }
+            }
             // 자동넘기기 타이머 로직
             LaunchedEffect(viewMangaViewModel.isAutoPlaying.value, pagerState.currentPage) {
                 if (viewMangaViewModel.isAutoPlaying.value) {
@@ -180,14 +200,7 @@ fun ViewMangaScreen(
                         pagerState.scrollToPage(pagerState.currentPage + 1)
                 }
             }
-            fun movePage(direction: String) {
-                coroutineScope.launch {
-                    if (direction == "next" && pagerState.currentPage < imageHashes.size - 1)
-                        pagerState.scrollToPage(pagerState.currentPage + 1)
-                    else if (direction == "prev" && pagerState.currentPage > 0)
-                        pagerState.scrollToPage(pagerState.currentPage - 1)
-                }
-            }
+            // rtl인지 ltr인지에 따라서 레이아웃 방향이 바뀐다.
             CompositionLocalProvider(LocalLayoutDirection provides if (isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr) {
                 HorizontalPager(
                     state = pagerState,

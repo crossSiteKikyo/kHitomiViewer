@@ -100,13 +100,10 @@ fun ListScreen(
         coroutineScope.launch { verticalScrollState.scrollTo(0) }
     }
 
-    // 볼륨 키 가로채기 활성화
     LaunchedEffect(Unit) {
+        // 볼륨 키 가로채기 활성화
         appViewModel.isPaginationActive.value = true
-    }
-
-    // 2. 볼륨 키 이벤트 구독 (단 한 곳에서만 수행)
-    LaunchedEffect(page, galleryViewModel.maxPage) {
+        // 볼륨 키 이벤트 구독
         appViewModel.volumeKeyEvent.collect { event ->
             if (appViewModel.isVolumeKeyPagingEnabled.value) {
                 when (event) {
