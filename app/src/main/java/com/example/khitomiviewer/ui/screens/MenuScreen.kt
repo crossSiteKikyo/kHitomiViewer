@@ -110,22 +110,29 @@ fun MenuScreen(
         MenuRow(onClick = {
             navController.navigate(Screen.DislikeGallery.route)
         }) {
-            Icon(Icons.Outlined.ThumbDown, null)
+            Icon(Screen.DislikeGallery.icon, null)
             Text("갤러리 싫어요(차단)")
         }
 
         MenuRow(onClick = {
             navController.navigate(Screen.DislikeTag.route)
         }) {
-            Icon(Icons.Outlined.ThumbDown, null)
+            Icon(Screen.DislikeTag.icon, null)
             Text("태그 싫어요(차단)")
         }
 
         MenuRow(onClick = {
             navController.navigate(Screen.Setting.route)
         }) {
-            Icon(Icons.Outlined.Settings, null)
+            Icon(Screen.Setting.icon, null)
             Text("설정")
+        }
+
+        MenuRow(onClick = {
+            navController.navigate(Screen.Record.route)
+        }) {
+            Icon(Screen.Record.icon, null)
+            Text("기록")
         }
 
         MenuRow(onClick = {

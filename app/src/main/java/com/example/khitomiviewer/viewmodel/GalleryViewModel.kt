@@ -76,6 +76,12 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    // 갤러리 기록을 삭제할 때.
+    fun resetGalleryRecord(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
+        galleryDao.resetGalleryRecord(gId)
+        galleryReLoading()
+    }
+
     // 갤러리 id들로 검색할 때.
     fun findByGalleryIds(gIdList: List<Long>) = viewModelScope.launch(Dispatchers.IO) {
         val galleryList: List<Gallery> = galleryDao.findByGIdList(gIdList).sortedBy { gallery ->
@@ -87,6 +93,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                 gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
                 date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
                 typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
                 tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
             )
         }
@@ -128,6 +135,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                 gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
                 date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
                 typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
                 tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
             )
         }
@@ -150,6 +158,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                 gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
                 date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
                 typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
                 tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
             )
         }
@@ -172,6 +181,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                 gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
                 date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
                 typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
                 tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
             )
         }
@@ -179,6 +189,29 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
     fun setMaxPageGalleriesWithLikedTags() = viewModelScope.launch(Dispatchers.IO) {
         val count = galleryDao.countGalleriesWithLikedTags()
+        // 올림한다.
+        maxPage = count / pageSize.value + if (count % pageSize.value > 0) 1 else 0
+        if (maxPage == 0L) maxPage = 1
+    }
+
+    // 기록이 있는 갤러리 로딩
+    fun getRecordGalleries(page: Long) = viewModelScope.launch(Dispatchers.IO) {
+        val galleryList: List<Gallery> =
+            galleryDao.getRecordGalleries(pageSize.value, (page - 1) * pageSize.value)
+
+        galleries = galleryList.map { g ->
+            GalleryFullDto(
+                gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
+                date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
+                typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
+                tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
+            )
+        }
+    }
+
+    fun setMaxPageRecordGalleries() = viewModelScope.launch(Dispatchers.IO) {
+        val count = galleryDao.countRecordGalleries()
         // 올림한다.
         maxPage = count / pageSize.value + if (count % pageSize.value > 0) 1 else 0
         if (maxPage == 0L) maxPage = 1
@@ -197,6 +230,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                 gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
                 date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
                 typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
                 tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
             )
         }
@@ -236,6 +270,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                     gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
                     date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
                     typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                    lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
                     tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
                 )
             }

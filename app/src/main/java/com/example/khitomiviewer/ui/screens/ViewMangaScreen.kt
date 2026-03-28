@@ -38,6 +38,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -86,7 +90,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ViewMangaScreen(
     navController: NavController,
-    gIdStr: String?
+    gId: Long
 ) {
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
@@ -98,7 +102,7 @@ fun ViewMangaScreen(
     var isUiVisible by remember { mutableStateOf(false) }
 
     // 이걸 해놔야 out of bound 에러가 안난다.
-//    imageListViewModel.imagesLoading.value = true
+    viewMangaViewModel.imagesLoading.value = true
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -118,11 +122,8 @@ fun ViewMangaScreen(
 
     val imageHashes = viewMangaViewModel.imageHashes
 
-    LaunchedEffect(gIdStr) {
-        val gId = gIdStr?.toLong()
-        if (gId != null) {
-            viewMangaViewModel.setGalleryImages(gId)
-        }
+    LaunchedEffect(gId) {
+        viewMangaViewModel.setGalleryImages(gId)
     }
 
     LaunchedEffect(Unit) {
@@ -166,7 +167,14 @@ fun ViewMangaScreen(
                 CircularProgressIndicator()
             }
         } else {
+            val snackbarHostState = remember { SnackbarHostState() }
             val pagerState = rememberPagerState(pageCount = { imageHashes.size })
+            // 마지막 본 페이지 업데이트 로직
+            LaunchedEffect(pagerState.currentPage) {
+                delay(100)  //너무 자주 업데이트 하는 것을 방지한다.
+                if (pagerState.currentPage > 0)
+                    viewMangaViewModel.updateLastPage(gId, pagerState.currentPage + 1)
+            }
             fun movePage(direction: String) {
                 coroutineScope.launch {
                     if (direction == "next" && pagerState.currentPage < imageHashes.size - 1)
@@ -176,6 +184,17 @@ fun ViewMangaScreen(
                 }
             }
             LaunchedEffect(Unit) {
+                // 마지막 읽던 페이지가 1 초과라면 snackbar로 이동하기가 뜬다.
+                if (viewMangaViewModel.lastPage.intValue > 1) {
+                    val result =
+                        snackbarHostState.showSnackbar(
+                            "마지막으로 읽던 페이지 ${viewMangaViewModel.lastPage.intValue}",
+                            "이동", duration = SnackbarDuration.Long
+                        )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        pagerState.scrollToPage(viewMangaViewModel.lastPage.intValue - 1)
+                    }
+                }
                 // 볼륨 키 이벤트 구독
                 appViewModel.volumeKeyEvent.collect { event ->
                     if (appViewModel.isVolumeKeyPagingEnabled.value) {
@@ -350,6 +369,13 @@ fun ViewMangaScreen(
                     }
                 }
             }
+            // 스낵바가 그려질 호스트를 하단에 배치
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp) // 하단 UI와 겹치지 않게 조절
+            )
             AutoPlayDialog(isAutoPlayDialogOpen)
         }
     }

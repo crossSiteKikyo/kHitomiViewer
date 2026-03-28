@@ -7,6 +7,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,9 +49,11 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.tag.MainTag
 import com.example.khitomiviewer.ui.tag.SubTag
 import com.example.khitomiviewer.viewmodel.DialogViewModel
+import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 
 @Composable
@@ -62,6 +66,7 @@ fun GalleryDetailDialog(
     // 전역 viewModel
     val activity = LocalActivity.current as ComponentActivity
     val hitomiViewModel: HitomiViewModel = viewModel(activity)
+    val galleryViewModel: GalleryViewModel = viewModel(activity)
     val dialogViewModel: DialogViewModel = viewModel(activity)
 
     val galleryDetail by dialogViewModel.selectedGalleryDetail
@@ -297,7 +302,11 @@ fun GalleryDetailDialog(
                                             // ggjs정보가 없는데 보면 에러남.
                                             if (hitomiViewModel.mList.isNotEmpty()) {
                                                 isGalleryDetailDialogOpen.value = false
-                                                navController.navigate("ViewMangaScreen/${g.gId}")
+                                                navController.navigate(
+                                                    Screen.ViewManga.createRoute(
+                                                        g.gId
+                                                    )
+                                                )
                                             } else
                                                 Toast.makeText(
                                                     context,
@@ -392,6 +401,37 @@ fun GalleryDetailDialog(
                                     Text(
                                         "${g.filecount}p",
                                         color = Color.Gray,
+                                        modifier = Modifier.padding(horizontal = 5.dp)
+                                    )
+                                }
+                            }
+                            // 기록이 있다면. 기록삭제, 마지막기록시간, 보던페이지
+                            if (g.lastReadAt > 0) {
+                                HorizontalDivider(Modifier.fillMaxWidth())
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        "기록삭제",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        modifier = Modifier
+                                            .padding(horizontal = 5.dp)
+                                            .background(Color(0x77FF0000), RoundedCornerShape(3.dp))
+                                            .clickable(onClick = {
+                                                galleryViewModel.resetGalleryRecord(
+                                                    g.gId
+                                                )
+                                                dialogViewModel.galleryDetailReloading()
+                                            })
+                                    )
+                                    Text("기록:")
+                                    Text(formatLongDate(g.lastReadAt))
+                                    Text(
+                                        "${g.lastReadPage}p",
                                         modifier = Modifier.padding(horizontal = 5.dp)
                                     )
                                 }

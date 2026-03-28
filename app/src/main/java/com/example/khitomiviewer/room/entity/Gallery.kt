@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 @Entity(
     tableName = "gallery", indices = [
         Index(value = ["likeStatus"]),
+        Index(value = ["lastReadAt"]),  // 기록 정렬용으로 추가.
         Index(value = ["typeId", "gId"]) // 추가: 필터링 + 정렬 성능 최적화
     ]
 )
@@ -25,4 +26,6 @@ data class Gallery(
      */
     val likeStatus: Int,
     val typeId: Long,
+    val lastReadAt: Long,
+    val lastReadPage: Int
 )

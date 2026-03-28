@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Collections
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.ImportExport
 import androidx.compose.material.icons.outlined.Leaderboard
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material.icons.outlined.Subscriptions
+import androidx.compose.material.icons.outlined.ThumbDown
 import androidx.compose.ui.graphics.vector.ImageVector
 import java.net.URLEncoder
 
@@ -51,7 +53,7 @@ sealed class Screen(
     }
 
     data object DislikeGallery :
-        Screen("DislikeGalleryScreen?page={page}", "싫어요한 갤러리들", Icons.Outlined.Collections) {
+        Screen("DislikeGalleryScreen?page={page}", "싫어요한 갤러리들", Icons.Outlined.ThumbDown) {
         fun createRoute(page: Long = 1L): String {
             return "DislikeGalleryScreen?page=${page}"
         }
@@ -65,7 +67,7 @@ sealed class Screen(
     }
 
     data object DislikeTag :
-        Screen("DislikeTagScreen?page={page}", "싫어요한 태그들", Icons.Outlined.Sell) {
+        Screen("DislikeTagScreen?page={page}", "싫어요한 태그들", Icons.Outlined.ThumbDown) {
         fun createRoute(page: Long = 1L): String {
             return "DislikeTagScreen?page=${page}"
         }
@@ -89,9 +91,16 @@ sealed class Screen(
         }
     }
 
+    data object Record :
+        Screen("RecordScreen?page={page}", "기록", Icons.Outlined.History) {
+        fun createRoute(page: Long = 1L): String {
+            return "RecordScreen?page=${page}"
+        }
+    }
+
     data object ViewManga :
-        Screen("ViewMangaScreen/{gidStr}", "만화보기", Icons.Outlined.PictureInPicture) {
-        fun createRoute(gid: String): String = "ViewMangaScreen/$gid"
+        Screen("ViewMangaScreen?gId={gId}", "만화보기", Icons.Outlined.PictureInPicture) {
+        fun createRoute(gId: Long): String = "ViewMangaScreen?gId=$gId"
     }
 
     // 인자가 없는 화면

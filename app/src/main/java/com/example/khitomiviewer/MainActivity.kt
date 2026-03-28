@@ -51,6 +51,7 @@ import com.example.khitomiviewer.ui.TagDialog
 import com.example.khitomiviewer.ui.UIEventHandler
 import com.example.khitomiviewer.ui.VerticalScrollBar
 import com.example.khitomiviewer.ui.screens.CrawlingScreen
+import com.example.khitomiviewer.ui.screens.RecordScreen
 import com.example.khitomiviewer.ui.theme.KHitomiViewerTheme
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
@@ -270,6 +271,23 @@ fun MainApp() {
                     )
                 }
                 composable(
+                    Screen.Record.route,
+                    arguments = listOf(
+                        navArgument("page") {
+                            type = NavType.LongType
+                            defaultValue = 1L
+                        })
+                ) { bse ->
+                    RecordScreen(
+                        navController,
+                        verticalScrollState,
+                        isTagDialogOpen,
+                        isGalleryDialogOpen,
+                        isGalleryDetailDialogOpen,
+                        bse.arguments?.getLong("page") ?: 1L
+                    )
+                }
+                composable(
                     Screen.Rank.route,
                     arguments = listOf(
                         navArgument("page") {
@@ -292,10 +310,17 @@ fun MainApp() {
                         bse.arguments?.getString("period") ?: "week",
                     )
                 }
-                composable(Screen.ViewManga.route) { bse ->
+                composable(
+                    Screen.ViewManga.route,
+                    arguments = listOf(
+                        navArgument("gId") {
+                            type = NavType.LongType
+                            defaultValue = 3861923L
+                        })
+                ) { bse ->
                     ViewMangaScreen(
                         navController,
-                        bse.arguments?.getString("gidStr")
+                        bse.arguments?.getLong("gId") ?: 3861923L
                     )
                 }
                 composable(Screen.Menu.route) {

@@ -7,6 +7,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -43,12 +45,15 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.tag.MainTag
 import com.example.khitomiviewer.ui.tag.SubTag
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -279,7 +284,7 @@ fun GalleryListExtended(
                                 onClick = {
                                     // ggjs정보가 없는데 보면 에러남.
                                     if (hitomiViewModel.mList.isNotEmpty())
-                                        navController.navigate("ViewMangaScreen/${g.gId}")
+                                        navController.navigate(Screen.ViewManga.createRoute(g.gId))
                                     else
                                         Toast.makeText(
                                             context,
@@ -378,6 +383,35 @@ fun GalleryListExtended(
                             )
                         }
                     }
+                    // 기록이 있다면. 기록삭제, 마지막기록시간, 보던페이지
+                    if (g.lastReadAt > 0) {
+                        HorizontalDivider(Modifier.fillMaxWidth())
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "기록삭제",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .padding(horizontal = 5.dp)
+                                    .background(Color(0x77FF0000), RoundedCornerShape(3.dp))
+                                    .clickable(onClick = {
+                                        galleryViewModel.resetGalleryRecord(g.gId)
+                                        dialogViewModel.galleryDetailReloading()
+                                    })
+                            )
+                            Text("기록:")
+                            Text(formatLongDate(g.lastReadAt))
+                            Text(
+                                "${g.lastReadPage}p",
+                                modifier = Modifier.padding(horizontal = 5.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -401,4 +435,17 @@ fun formatSavedDate(dateString: String): String {
         .withLocale(Locale.getDefault())
 
     return localDate.format(outputFormatter)
+}
+
+fun formatLongDate(lastReadAt: Long): String {
+    // 1. Long(ms)을 Instant 객체로 변환 (UTC 기준점)
+    val instant = Instant.ofEpochMilli(lastReadAt)
+    // 2. 사용자의 시스템 타임존으로 변경
+    val zonedDateTime = instant.atZone(ZoneId.systemDefault())
+    // 3. 기존에 사용하시던 포맷터 설정 그대로 적용
+    // FormatStyle.MEDIUM -> "2026. 3. 28. 오후 10:41:00" (한국 기준)
+    val outputFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+        .withLocale(Locale.getDefault())
+
+    return zonedDateTime.format(outputFormatter)
 }

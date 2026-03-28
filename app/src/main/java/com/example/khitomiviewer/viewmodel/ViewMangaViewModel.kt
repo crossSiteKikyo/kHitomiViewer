@@ -3,6 +3,7 @@ package com.example.khitomiviewer.viewmodel
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,16 +13,21 @@ import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.api.HitomiApi
 import com.example.khitomiviewer.json.GalleryInfo
+import com.example.khitomiviewer.room.DatabaseProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ViewMangaViewModel(application: Application) : AndroidViewModel(application) {
+    private val galleryDao = DatabaseProvider.getDatabase(application).galleryDao()
+
     // 만화 보기 화면에서 사용되는 변수
     private var lastGid: Long? = null
     var imageHashes = mutableStateListOf<String>()
     var imagesLoading = mutableStateOf(true)
     var notExist by mutableStateOf(false)
     val title = mutableStateOf("제목")
+
+    val lastPage = mutableIntStateOf(1)
 
     // 사용자 설정
     private val prefManager = PreferenceManager(application)
@@ -47,8 +53,13 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
 
     val hitomiApi = HitomiApi()
 
-    // 만화 보기 화면 함수들. 원래 ggjs를 크롤링 한번 했지만, 안하는 걸로 로직 변경
+    // 만화 보기 화면 함수. 원래 ggjs를 크롤링 한번 했지만, 안하는 걸로 로직 변경
     fun setGalleryImages(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
+        // 갤러리에 마지막 읽은 시간을 갱신한다.
+        galleryDao.updateLastReadAt(gId)
+        // 마지막으로 본 페이지를
+        val g = galleryDao.findById(gId)
+        lastPage.intValue = g.lastReadPage
         // 중복실행 방지
         if (lastGid == gId) {
             imagesLoading.value = false
@@ -69,5 +80,9 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
         }
 
         imagesLoading.value = false
+    }
+
+    fun updateLastPage(gId: Long, page: Int) = viewModelScope.launch(Dispatchers.IO) {
+        galleryDao.updateLastReadPage(gId, page)
     }
 }

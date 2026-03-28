@@ -77,7 +77,7 @@ class MyRepository(private val db: KHitomiDatabase) {
         db.galleryDao().insert(
             Gallery(
                 ginfo.id.toLong(), ginfo.title, thumb1, thumb2, ginfo.date, ginfo.files.size,
-                1, db.typeDao().findByName(ginfo.type).typeId
+                1, db.typeDao().findByName(ginfo.type).typeId, 0L, 0
             )
         )
         // 갤러리토큰 저장.

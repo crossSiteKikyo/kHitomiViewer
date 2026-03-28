@@ -14,11 +14,20 @@ interface GalleryDao {
     @Insert
     suspend fun insert(gallery: Gallery)
 
-    @Update
-    suspend fun update(gallery: Gallery)
+//    @Update
+//    suspend fun update(gallery: Gallery)
 
     @Query("update gallery set likeStatus = :likeStatus where gId = :gId")
     fun updateGalleryLike(gId: Long, likeStatus: Int)
+
+    @Query("update gallery set lastReadAt = :timestamp where gId = :gId")
+    fun updateLastReadAt(gId: Long, timestamp: Long = System.currentTimeMillis())
+
+    @Query("update gallery set lastReadPage = :page where gId = :gId")
+    fun updateLastReadPage(gId: Long, page: Int)
+
+    @Query("update gallery set lastReadAt = 0, lastReadPage = 0 where gId = :gId")
+    fun resetGalleryRecord(gId: Long)
 
     @Delete
     suspend fun delete(gallery: Gallery)
@@ -96,6 +105,19 @@ interface GalleryDao {
     )
     fun countGalleriesWithLikedTags(): Long
 
+    @Query(
+        """
+        SELECT * FROM gallery 
+        WHERE lastReadAt > 0
+        ORDER BY lastReadAt DESC 
+        LIMIT :limit OFFSET :offset
+    """
+    )
+    fun getRecordGalleries(limit: Int, offset: Long): List<Gallery>
+
+    @Query("select count(gId) from gallery where lastReadAt > 0")
+    fun countRecordGalleries(): Long
+
     // gId리스트로 검색
     @Query("select * from gallery where gId in (:gIdList)")
     fun findByGIdList(gIdList: List<Long>): List<Gallery>
@@ -107,7 +129,7 @@ interface GalleryDao {
     // 동적으로 쿼리를 만든다.
     @RawQuery
     fun countByConditionQuery(query: SupportSQLiteQuery): Long
-    
+
     @Query(
         """
         select * from gallery g

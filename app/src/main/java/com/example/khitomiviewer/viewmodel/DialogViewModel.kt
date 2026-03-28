@@ -12,11 +12,14 @@ import com.example.khitomiviewer.room.GalleryFullDto
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.Tag
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class DialogViewModel(application: Application) : AndroidViewModel(application) {
+    private val typeDao = DatabaseProvider.getDatabase(application).typeDao()
     private val tagDao = DatabaseProvider.getDatabase(application).tagDao()
     private val galleryDao = DatabaseProvider.getDatabase(application).galleryDao()
+    private val galleryTagDao = DatabaseProvider.getDatabase(application).galleryTagDao()
 
     // 다이얼로그. 태그 (싫어요,기본,좋아요,구독) 갤러리 DISLIKE, NONE, LIKE선택하는것.
     var selectedTag by mutableStateOf<Tag?>(null)
@@ -28,6 +31,21 @@ class DialogViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setGalleryDetail(galleryFullDto: GalleryFullDto) {
         selectedGalleryDetail.value = galleryFullDto
+    }
+
+    // 갤러리 정보 재로딩
+    fun galleryDetailReloading() = viewModelScope.launch(Dispatchers.IO) {
+        if (selectedGalleryDetail.value != null) {
+            delay(20)
+            val g = galleryDao.findById(selectedGalleryDetail.value!!.gId)
+            selectedGalleryDetail.value = GalleryFullDto(
+                gId = g.gId, title = g.title, thumb1 = g.thumb1, thumb2 = g.thumb2,
+                date = g.date, filecount = g.filecount, likeStatus = g.likeStatus,
+                typeId = g.typeId, typeName = typeDao.findById(g.typeId).name,
+                lastReadAt = g.lastReadAt, lastReadPage = g.lastReadPage,
+                tags = tagDao.findByIds(galleryTagDao.findByGid(g.gId).map { gt -> gt.tagId })
+            )
+        }
     }
 
     fun setTag(tag: Tag) {

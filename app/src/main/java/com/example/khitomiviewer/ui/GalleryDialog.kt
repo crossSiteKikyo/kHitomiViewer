@@ -61,6 +61,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                             dialogViewModel.changeGalleryLike(0)    // db에 상태 변경
                             isGalleryDialogOpen.value = false   // 다이얼로그 닫기
                             galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                            dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
                         Row {
@@ -74,6 +75,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                             dialogViewModel.changeGalleryLike(1)    // db에 상태 변경
                             isGalleryDialogOpen.value = false   // 다이얼로그 닫기
                             galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                            dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
                         Row {
@@ -86,6 +88,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                             dialogViewModel.changeGalleryLike(2)    // db에 상태 변경
                             isGalleryDialogOpen.value = false   // 다이얼로그 닫기
                             galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                            dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
                         Row {

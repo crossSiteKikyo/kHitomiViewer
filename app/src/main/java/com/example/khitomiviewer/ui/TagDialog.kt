@@ -63,6 +63,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
                             isTagDialogOpen.value = false   // 다이얼로그 닫기
                             galleryViewModel.galleryReLoading() // 갤러리 재로딩
                             tagViewModel.tagReLoading() // 태그 재로딩
+                            dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
                         Row {
@@ -77,6 +78,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
                             isTagDialogOpen.value = false   // 다이얼로그 닫기
                             galleryViewModel.galleryReLoading() // 갤러리 재로딩
                             tagViewModel.tagReLoading() // 태그 재로딩
+                            dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
                         Row {
@@ -90,6 +92,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
                             isTagDialogOpen.value = false   // 다이얼로그 닫기
                             galleryViewModel.galleryReLoading() // 갤러리 재로딩
                             tagViewModel.tagReLoading() // 태그 재로딩
+                            dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
                         Row {

@@ -29,9 +29,9 @@ android {
         minSdk = 26
         targetSdk = 35
         // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
-        // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15, 2.5.0 - 17, 2.6.0 - 18
-        versionName = "2.6.1"
-        versionCode = 19
+        // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15, 2.5.0 - 17, 2.6.0 - 18, 2.7.0 - 20
+        versionName = "2.7.0"
+        versionCode = 20
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
