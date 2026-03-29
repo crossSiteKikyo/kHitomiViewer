@@ -3,9 +3,11 @@ package com.example.khitomiviewer.room
 import androidx.room.Transaction
 import com.example.khitomiviewer.json.TagsAndGalleries
 import com.example.khitomiviewer.json.GalleryInfo
+import com.example.khitomiviewer.json.PupilBackup
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.GalleryTag
 import com.example.khitomiviewer.room.entity.Tag
+import com.example.khitomiviewer.viewmodel.ArticleReadLog
 
 class MyRepository(private val db: KHitomiDatabase) {
     @Transaction
@@ -167,7 +169,7 @@ class MyRepository(private val db: KHitomiDatabase) {
 
     // db 에 좋아요/싫어요 정보 넣기
     @Transaction
-    suspend fun updateLikeDislikeInfo(tagsAndGalleries: TagsAndGalleries) {
+    fun updateLikeDislikeInfo(tagsAndGalleries: TagsAndGalleries) {
         // gId는 항상 고정이다. 그러므로 gId를 기준으로 하면 됨.
         for (gallery in tagsAndGalleries.galleries) {
             db.galleryDao().updateGalleryLike(gallery.gId, gallery.likeStatus)
@@ -175,6 +177,45 @@ class MyRepository(private val db: KHitomiDatabase) {
         // tagId는 내 앱이 아니라면 고정이 아니기 때문에 name을 기준으로 찾아야한다
         for (tag in tagsAndGalleries.tags) {
             db.tagDao().updateTagLikeByName(tag.name, tag.likeStatus)
+        }
+    }
+
+    // pupil 즐겨찾기 백업 임포트
+    @Transaction
+    fun importPupilBackupInfo(pupilBackup: PupilBackup) {
+        // gId는 항상 고정이다. 그러므로 gId를 기준으로 하면 됨.
+        for (gId in pupilBackup.favorites) {
+            db.galleryDao().updateGalleryLike(gId, 2)
+        }
+        // tagId는 내 앱이 아니라면 고정이 아니기 때문에 name을 기준으로 찾아야한다
+        for (t in pupilBackup.favorite_tags) {
+            val name = when (t.area) {
+                "artist", "group", "character", "female", "male" -> "${t.area}:${t.tag}"
+                "series" -> "parody:${t.tag}"
+                else -> t.tag
+            }
+            db.tagDao().updateTagLikeByName(name, 2)
+        }
+    }
+
+    // violet 북마크 임포트
+    @Transaction
+    fun importVioletBookmarks(
+        gIdList: List<Long>,
+        tagNameList: List<String>,
+        articleReadLogs: List<ArticleReadLog>
+    ) {
+        // 갤러리 북마크
+        for (gId in gIdList) {
+            db.galleryDao().updateGalleryLike(gId, 2)
+        }
+        // 태그 북마크
+        for (name in tagNameList) {
+            db.tagDao().updateTagLikeByName(name, 2)
+        }
+        // 갤러리 히스토리 (기록)
+        for (a in articleReadLogs) {
+            db.galleryDao().updateRecord(a.gId, a.lastReadAt, a.lastReadPage)
         }
     }
 }

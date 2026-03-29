@@ -26,6 +26,9 @@ interface GalleryDao {
     @Query("update gallery set lastReadPage = :page where gId = :gId")
     fun updateLastReadPage(gId: Long, page: Int)
 
+    @Query("update gallery set lastReadAt = :lastReadAt, lastReadPage = :page where gId = :gId")
+    fun updateRecord(gId: Long, lastReadAt: Long, page: Int)
+
     @Query("update gallery set lastReadAt = 0, lastReadPage = 0 where gId = :gId")
     fun resetGalleryRecord(gId: Long)
 

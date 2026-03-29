@@ -134,26 +134,33 @@ class HitomiViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     suspend fun getGIdsAndFilterGids() = withContext(Dispatchers.IO) {
-        try {
-            val array = hitomiApi.getKoreanGids()
-            serverGidList.addAll(byteArrayToIntList(array))
-            Log.i("서버에 있는 갤러리 총 수", "${serverGidList.size}")
-            // db에서 제일 큰 gid보다 큰 gid들만 크롤링할 id들에 포함시킨다. 이진탐색으로 함.
-            val targetGid = galleryDao.findMaxGid().toInt()
-            // 만약 정확한 값이 없다면, 그 값이 있어야 할 위치를 (-(insertion point) - 1) 형태로 반환함
-            val searchIndex = serverGidList.binarySearch(targetGid, reverseOrder())
-            // index가 0 이상이면 정확한 값이 있는 것이고, 음수면 '그 값보다 작은 첫 번째 값'의 위치가 나옴
-            val limitIndex = if (searchIndex >= 0) {
-                searchIndex // maxGid와 같은 값은 제외해야 하므로, 그 앞까지만 포함
-            } else {
-                -(searchIndex + 1) // maxGid보다 작은 첫 번째 값의 인덱스
+        var isSuccess = false   // serverGidList는 실패하면 안되는 값이기 때문에 성공할 때까지 시도한다.
+
+        while (!isSuccess) {
+            try {
+                val array = hitomiApi.getKoreanGids()
+                serverGidList.addAll(byteArrayToIntList(array))
+                Log.i("서버에 있는 갤러리 총 수", "${serverGidList.size}")
+                // db에서 제일 큰 gid보다 큰 gid들만 크롤링할 id들에 포함시킨다. 이진탐색으로 함.
+                val targetGid = galleryDao.findMaxGid().toInt()
+                // 만약 정확한 값이 없다면, 그 값이 있어야 할 위치를 (-(insertion point) - 1) 형태로 반환함
+                val searchIndex = serverGidList.binarySearch(targetGid, reverseOrder())
+                // index가 0 이상이면 정확한 값이 있는 것이고, 음수면 '그 값보다 작은 첫 번째 값'의 위치가 나옴
+                val limitIndex = if (searchIndex >= 0) {
+                    searchIndex // maxGid와 같은 값은 제외해야 하므로, 그 앞까지만 포함
+                } else {
+                    -(searchIndex + 1) // maxGid보다 작은 첫 번째 값의 인덱스
+                }
+                filteredIds.addAll(serverGidList.subList(0, limitIndex))
+                // 내림차순이기 때문에 오름차순으로 바꿔준다
+                filteredIds.reverse()
+                isSuccess = true
+            } catch (e: Exception) {
+                Log.i("갤러리 gId 리스트 얻기 오류", "${e.message}")
+                crawlErrorStr.value =
+                    "${getCurrentFormattedTime()}: 갤러리 gId 리스트 얻기 오류: ${e.message}"
+                delay(5000) // 5초후 재시도
             }
-            filteredIds.addAll(serverGidList.subList(0, limitIndex))
-            // 내림차순이기 때문에 오름차순으로 바꿔준다
-            filteredIds.reverse()
-        } catch (e: Exception) {
-            Log.i("갤러리 gId 리스트 얻기 오류", "${e.message}")
-            crawlErrorStr.value = "${getCurrentFormattedTime()}: 갤러리 gId 리스트 얻기 오류: ${e.message}"
         }
     }
 

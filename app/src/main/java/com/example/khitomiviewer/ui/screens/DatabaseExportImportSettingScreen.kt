@@ -1,6 +1,5 @@
 package com.example.khitomiviewer.ui.screens
 
-import android.R
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,21 +11,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,18 +49,32 @@ fun DatabaseExportImportSettingScreen() {
     }
 
     val context = LocalContext.current
-    val exportLauncher = rememberLauncherForActivityResult(
+    val kHitomiViewerExportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
             dataExportImportViewModel.backupDatabaseToUri(context, uri)
         }
     }
-    val importLauncher = rememberLauncherForActivityResult(
+    val kHitomiViewerImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
             dataExportImportViewModel.importFromJsonFile(context, uri)
+        }
+    }
+    val pupilImportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            dataExportImportViewModel.importFromJsonFilePupil(context, uri)
+        }
+    }
+    val violetImportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            dataExportImportViewModel.importFromVioletDatabase(context, uri)
         }
     }
 
@@ -80,11 +87,11 @@ fun DatabaseExportImportSettingScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "갤러리&태그 정보 내보내기/불러오기",
-            fontWeight = FontWeight.Bold,
-            style = TextStyle(fontSize = 21.sp)
+            "내보내기/불러오기",
+            modifier = Modifier.padding(bottom = 10.dp),
+            fontWeight = FontWeight.Black,
+            style = TextStyle(fontSize = 30.sp)
         )
-        HorizontalDivider(thickness = 2.dp)
         if (dataExportImportViewModel.dbExportImportProgress.value) {
             CircularProgressIndicator()
             Text(
@@ -96,23 +103,60 @@ fun DatabaseExportImportSettingScreen() {
                 fontSize = 30.sp
             )
         } else {
+            HorizontalDivider(thickness = 2.dp)
+            Text(
+                "갤러리&태그 정보 내보내기",
+                fontWeight = FontWeight.Bold,
+                style = TextStyle(fontSize = 21.sp)
+            )
             Button(
                 shape = RoundedCornerShape(7.dp),
                 onClick = {
-                    exportLauncher.launch("KHitomiViewer${nowAsFileTimestamp()}.json")
+                    kHitomiViewerExportLauncher.launch("KHitomiViewer${nowAsFileTimestamp()}.json")
                 }
             ) {
-                Text("정보 내보내기: 파일로 저장")
+                Text("kHitomiViewer 정보 내보내기")
+            }
+
+            HorizontalDivider(thickness = 2.dp)
+            Text(
+                "갤러리&태그 정보 불러오기",
+                fontWeight = FontWeight.Bold,
+                style = TextStyle(fontSize = 21.sp)
+            )
+            Button(
+                shape = RoundedCornerShape(7.dp),
+                onClick = {
+                    kHitomiViewerImportLauncher.launch(arrayOf("application/json"))
+                }
+            ) {
+                Text("kHitomiViewer 정보 불러오기")
             }
 
             Button(
                 shape = RoundedCornerShape(7.dp),
                 onClick = {
-                    importLauncher.launch(arrayOf("application/json"))
+                    pupilImportLauncher.launch(arrayOf("application/json"))
                 }
             ) {
-                Text("정보 불러오기: 파일 선택 후 db에 저장")
+                Text("Pupil 백업 정보 불러오기")
             }
+
+            Button(
+                shape = RoundedCornerShape(7.dp),
+                onClick = {
+                    // SQLite 파일들을 위한 MIME 타입들
+                    val mimeTypes = arrayOf(
+                        "application/x-sqlite3",
+                        "application/vnd.sqlite3",
+                        "application/octet-stream"
+                    )
+                    violetImportLauncher.launch(mimeTypes)
+                }
+            ) {
+                Text("violet-bookmarks.db로 불러오기")
+            }
+
             Text(dataExportImportViewModel.statusString.value, color = Color.Gray)
         }
 

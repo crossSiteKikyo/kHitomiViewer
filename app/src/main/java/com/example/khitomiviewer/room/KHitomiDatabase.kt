@@ -13,7 +13,7 @@ import com.example.khitomiviewer.room.entity.Type
 
 @Database(
     entities = [Type::class, Gallery::class, Tag::class, GalleryTag::class],
-    version = 5, exportSchema = false
+    version = 6, exportSchema = false
 )
 abstract class KHitomiDatabase : RoomDatabase() {
     abstract fun typeDao(): TypeDao
