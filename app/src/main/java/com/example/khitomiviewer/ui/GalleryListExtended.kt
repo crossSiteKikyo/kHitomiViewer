@@ -51,6 +51,7 @@ import com.example.khitomiviewer.ui.tag.SubTag
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
+import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -69,6 +70,7 @@ fun GalleryListExtended(
     val hitomiViewModel: HitomiViewModel = viewModel(activity)
     val galleryViewModel: GalleryViewModel = viewModel(activity)
     val dialogViewModel: DialogViewModel = viewModel(activity)
+    val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
 
     val galleries by remember { derivedStateOf { galleryViewModel.galleries } }
 
@@ -283,9 +285,10 @@ fun GalleryListExtended(
                             .combinedClickable(
                                 onClick = {
                                     // ggjs정보가 없는데 보면 에러남.
-                                    if (hitomiViewModel.mList.isNotEmpty())
+                                    if (hitomiViewModel.mList.isNotEmpty()) {
+                                        viewMangaViewModel.imagesLoading.value = true
                                         navController.navigate(Screen.ViewManga.createRoute(g.gId))
-                                    else
+                                    } else
                                         Toast.makeText(
                                             context,
                                             "서버 정보를 받아오는중입니다. 잠시 기다려주세요",

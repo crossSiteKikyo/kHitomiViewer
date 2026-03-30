@@ -29,6 +29,7 @@ class PreferenceManager(private val context: Context) {
         val IS_VOLUME_KEY_PAGING = booleanPreferencesKey("is_volume_key_paging")
         val GALLERY_LIST_UI = stringPreferencesKey("gallery_list_ui")
         val PAGE_SIZE = intPreferencesKey("page_size")
+        val VIEW_METHOD = stringPreferencesKey("view_method")
         val LAST_CRAWL_MISSED_GALLERIES = longPreferencesKey("last_crawl_missed_galleries")
         val LAST_DELETE_DELETED_GALLERY = longPreferencesKey("last_delete_deleted_gallery")
         val LAST_SYNC_GALLERY_TAG_1000 = longPreferencesKey("last_sync_gallery_tag_1000")
@@ -85,6 +86,10 @@ class PreferenceManager(private val context: Context) {
     // 한번에 로드할 갤러리 개수
     val pageSize: Flow<Int> = getPreference(Keys.PAGE_SIZE, 20)
     suspend fun setPageSize(size: Int) = setPreference(Keys.PAGE_SIZE, size)
+
+    // 만화보기화면 보는 방법
+    val viewMethod: Flow<String> = getPreference(Keys.VIEW_METHOD, "swipe")
+    suspend fun setViewMethod(method: String) = setPreference(Keys.VIEW_METHOD, method)
 
     // 미처 크롤링 하지 못한 갤러리 크롤링 관련
     val lastCrawlMissedGalleries: Flow<Long> = getPreference(Keys.LAST_CRAWL_MISSED_GALLERIES, 0L)

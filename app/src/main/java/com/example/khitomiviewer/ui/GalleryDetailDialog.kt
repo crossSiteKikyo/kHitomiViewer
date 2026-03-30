@@ -55,6 +55,7 @@ import com.example.khitomiviewer.ui.tag.SubTag
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
+import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 
 @Composable
 fun GalleryDetailDialog(
@@ -68,6 +69,7 @@ fun GalleryDetailDialog(
     val hitomiViewModel: HitomiViewModel = viewModel(activity)
     val galleryViewModel: GalleryViewModel = viewModel(activity)
     val dialogViewModel: DialogViewModel = viewModel(activity)
+    val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
 
     val galleryDetail by dialogViewModel.selectedGalleryDetail
 
@@ -302,6 +304,7 @@ fun GalleryDetailDialog(
                                             // ggjs정보가 없는데 보면 에러남.
                                             if (hitomiViewModel.mList.isNotEmpty()) {
                                                 isGalleryDetailDialogOpen.value = false
+                                                viewMangaViewModel.imagesLoading.value = true
                                                 navController.navigate(
                                                     Screen.ViewManga.createRoute(
                                                         g.gId

@@ -36,6 +36,12 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
         prefManager.setRtl(!isRtl)
     }
 
+    // 보는 방법. scroll인지 swipe인지
+    val viewMethod = prefManager.viewMethod
+    fun setViewMethod(method: String) = viewModelScope.launch {
+        prefManager.setViewMethod(method)
+    }
+
     // 자동 넘기기 관련 변수들
     val isAutoPlayLoop = prefManager.isAutoPlayLoop
     fun toggleIsAutoPlayLoop(isAutoPlayLoop: Boolean) = viewModelScope.launch {
@@ -74,6 +80,7 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
             val galleryInfo: GalleryInfo = hitomiApi.getGalleryInfo(gId.toInt())
             title.value = galleryInfo.title
             imageHashes.addAll(galleryInfo.files.map { it.hash })
+            Log.i("갤러리 이미지 개수", "${galleryInfo.files.size}")
         } catch (e: Exception) {
             notExist = true
             Log.e("뭔가오류", "존재하지 않는다?")

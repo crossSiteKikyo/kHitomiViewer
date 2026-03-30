@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
+import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 
 @Composable
 fun SettingScreen(
@@ -54,6 +56,7 @@ fun SettingScreen(
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
     val appViewModel: AppViewModel = viewModel(activity)
+    val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
 
     val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
     val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
@@ -95,6 +98,7 @@ fun SettingScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("갤러리 UI")
+            Spacer(Modifier.padding(horizontal = 10.dp))
             Button(onClick = {
                 appViewModel.setGalleryListUi("Extended")
             }, enabled = galleryListUi != "Extended", contentPadding = PaddingValues(2.dp)) {
@@ -156,6 +160,30 @@ fun SettingScreen(
                 DropdownMenuItem(
                     text = { Text("50") },
                     onClick = { appViewModel.setPageSize(50); pageSizeDDExpanded = false })
+            }
+        }
+
+        val viewMethod by viewMangaViewModel.viewMethod.collectAsState("swipe")
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("만화 보기 UI")
+            Spacer(Modifier.padding(horizontal = 10.dp))
+            Spacer(Modifier.padding(horizontal = 10.dp))
+            Button(onClick = {
+                viewMangaViewModel.setViewMethod("scroll")
+            }, enabled = viewMethod != "scroll", contentPadding = PaddingValues(2.dp)) {
+                Text("스크롤")
+            }
+            Button(onClick = {
+                viewMangaViewModel.setViewMethod("swipe")
+            }, enabled = viewMethod != "swipe", contentPadding = PaddingValues(2.dp)) {
+                Text("스와이프")
             }
         }
     }
