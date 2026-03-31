@@ -8,10 +8,17 @@ import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.GalleryTag
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.ArticleReadLog
+import com.example.khitomiviewer.viewmodel.GalleryBookmarkInfo
+import com.example.khitomiviewer.viewmodel.TagBookmarkInfo
 
 class MyRepository(private val db: KHitomiDatabase) {
     @Transaction
-    suspend fun syncGalleryTags(gId: Long, tagsToAdd: List<String>, tagsToRemove: List<String>) {
+    suspend fun syncGalleryTags(
+        gId: Long,
+        tagsToAdd: List<String>,
+        tagsToRemove: List<String>,
+        title: String? = null
+    ) {
         // 1. 제거할 태그 처리 (DB에는 있는데 서버에는 없는 것)
         for (tagName in tagsToRemove) {
             val tag = db.tagDao().findByNameNullable(tagName)
@@ -33,6 +40,11 @@ class MyRepository(private val db: KHitomiDatabase) {
 
             // 갤러리와 태그 연결
             db.galleryTagDao().insert(GalleryTag(gId = gId, tagId = tag.tagId))
+        }
+
+        // 제목이 바뀌었다면, 제목 업데이트
+        if (title != null) {
+            db.galleryDao().updateGalleryTitle(gId, title)
         }
     }
 
@@ -79,7 +91,7 @@ class MyRepository(private val db: KHitomiDatabase) {
         db.galleryDao().insert(
             Gallery(
                 ginfo.id.toLong(), ginfo.title, thumb1, thumb2, ginfo.date, ginfo.files.size,
-                1, db.typeDao().findByName(ginfo.type).typeId, 0L, 0
+                1, 0L, db.typeDao().findByName(ginfo.type).typeId, 0L, 0
             )
         )
         // 갤러리토큰 저장.
@@ -172,11 +184,22 @@ class MyRepository(private val db: KHitomiDatabase) {
     fun updateLikeDislikeInfo(tagsAndGalleries: TagsAndGalleries) {
         // gId는 항상 고정이다. 그러므로 gId를 기준으로 하면 됨.
         for (gallery in tagsAndGalleries.galleries) {
-            db.galleryDao().updateGalleryLike(gallery.gId, gallery.likeStatus)
+            db.galleryDao()
+                .updateGalleryLike(gallery.gId, gallery.likeStatus, gallery.likeStatusChangedAt)
         }
         // tagId는 내 앱이 아니라면 고정이 아니기 때문에 name을 기준으로 찾아야한다
         for (tag in tagsAndGalleries.tags) {
-            db.tagDao().updateTagLikeByName(tag.name, tag.likeStatus)
+            db.tagDao().updateTagLikeByName(tag.name, tag.likeStatus, tag.likeStatusChangedAt)
+        }
+        // 기록이 있다면 기록 업데이트
+        if (tagsAndGalleries.galleryRecords != null) {
+            for (galleryRecord in tagsAndGalleries.galleryRecords) {
+                db.galleryDao().updateRecord(
+                    galleryRecord.gId,
+                    galleryRecord.lastReadAt,
+                    galleryRecord.lastReadPage
+                )
+            }
         }
     }
 
@@ -185,7 +208,7 @@ class MyRepository(private val db: KHitomiDatabase) {
     fun importPupilBackupInfo(pupilBackup: PupilBackup) {
         // gId는 항상 고정이다. 그러므로 gId를 기준으로 하면 됨.
         for (gId in pupilBackup.favorites) {
-            db.galleryDao().updateGalleryLike(gId, 2)
+            db.galleryDao().updateGalleryLike(gId, 2, 0L)
         }
         // tagId는 내 앱이 아니라면 고정이 아니기 때문에 name을 기준으로 찾아야한다
         for (t in pupilBackup.favorite_tags) {
@@ -194,24 +217,24 @@ class MyRepository(private val db: KHitomiDatabase) {
                 "series" -> "parody:${t.tag}"
                 else -> t.tag
             }
-            db.tagDao().updateTagLikeByName(name, 2)
+            db.tagDao().updateTagLikeByName(name, 2, 0L)
         }
     }
 
     // violet 북마크 임포트
     @Transaction
     fun importVioletBookmarks(
-        gIdList: List<Long>,
-        tagNameList: List<String>,
+        galleryBookmarkInfos: List<GalleryBookmarkInfo>,
+        tagBookmarkInfos: List<TagBookmarkInfo>,
         articleReadLogs: List<ArticleReadLog>
     ) {
         // 갤러리 북마크
-        for (gId in gIdList) {
-            db.galleryDao().updateGalleryLike(gId, 2)
+        for (gbinfo in galleryBookmarkInfos) {
+            db.galleryDao().updateGalleryLike(gbinfo.gId, 2, gbinfo.time)
         }
         // 태그 북마크
-        for (name in tagNameList) {
-            db.tagDao().updateTagLikeByName(name, 2)
+        for (tbinfo in tagBookmarkInfos) {
+            db.tagDao().updateTagLikeByName(tbinfo.name, 2, tbinfo.time)
         }
         // 갤러리 히스토리 (기록)
         for (a in articleReadLogs) {

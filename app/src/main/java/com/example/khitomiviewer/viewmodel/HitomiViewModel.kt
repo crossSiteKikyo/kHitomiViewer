@@ -422,8 +422,16 @@ class HitomiViewModel(application: Application) : AndroidViewModel(application) 
                     // 히토미 태그와 db태그가 다르다면, 태그를 추가하거나 없앤다.
                     val tagsToAdd = serverTagNames.toSet() - dbTagNames.toSet()
                     val tagsToRemove = dbTagNames.toSet() - serverTagNames.toSet()
-                    if (tagsToAdd.isNotEmpty() || tagsToRemove.isNotEmpty()) {
-                        repository.syncGalleryTags(gId, tagsToAdd.toList(), tagsToRemove.toList())
+                    // 제목이 바뀌었는지 체크한다.
+                    val title =
+                        if (galleryDao.findById(gId).title == galleryInfo.title) null else galleryInfo.title
+                    if (tagsToAdd.isNotEmpty() || tagsToRemove.isNotEmpty() || title != null) {
+                        repository.syncGalleryTags(
+                            gId,
+                            tagsToAdd.toList(),
+                            tagsToRemove.toList(),
+                            title
+                        )
                     }
                 } catch (e: Exception) {
                     Log.i("갤러리태그 동기화 $gId 중 오류", "${e.message}")

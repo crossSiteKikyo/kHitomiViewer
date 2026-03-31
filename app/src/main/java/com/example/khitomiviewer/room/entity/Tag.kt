@@ -14,5 +14,6 @@ data class Tag(
     /**
      * 0싫어요 1기본 2좋아요
      */
-    val likeStatus: Int
+    val likeStatus: Int = 1,
+    val likeStatusChangedAt: Long = 0L
 )

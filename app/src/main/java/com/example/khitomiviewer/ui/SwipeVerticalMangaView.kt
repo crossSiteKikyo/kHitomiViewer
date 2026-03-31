@@ -1,5 +1,6 @@
 package com.example.khitomiviewer.ui
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -9,22 +10,21 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -45,11 +45,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,8 +62,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
@@ -73,14 +75,16 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.viewmodel.AppViewModel
+import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun ScrollMangaView(
+fun SwipeVerticalMangaView(
     gId: Long,
     hitomiHeaders: NetworkHeaders,
     hashToImageUrl: (String) -> String,
@@ -92,142 +96,134 @@ fun ScrollMangaView(
     val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
     val appViewModel: AppViewModel = viewModel(activity)
 
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
     val isAutoPlayDialogOpen = remember { mutableStateOf(false) }
     var isUiVisible by remember { mutableStateOf(false) }
 
-    val listState = rememberLazyListState()
-    val currentPage by remember { derivedStateOf { listState.firstVisibleItemIndex } }
     val coroutineScope = rememberCoroutineScope()
 
-    // 마지막 본 페이지 업데이트 로직
-    LaunchedEffect(currentPage) {
-        delay(100)  //너무 자주 업데이트 하는 것을 방지한다.
-        if (currentPage > 0)
-            viewMangaViewModel.updateLastPage(gId, currentPage)
-    }
+    val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        // 마지막 읽던 페이지가 1 초과라면 snackbar로 이동하기가 뜬다.
-        if (viewMangaViewModel.lastPage.intValue > 1) {
-            val result =
-                snackbarHostState.showSnackbar(
-                    "마지막으로 읽던 페이지 ${viewMangaViewModel.lastPage.intValue}",
-                    "이동", duration = SnackbarDuration.Long
-                )
-            if (result == SnackbarResult.ActionPerformed) {
-                listState.scrollToItem(viewMangaViewModel.lastPage.intValue)
+    // 사용자의 설정을 저장하는 변수 (예: true면 일본식 RTL)
+    val isRtl by viewMangaViewModel.isRtlMode.collectAsState(initial = false)
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        val snackbarHostState = remember { SnackbarHostState() }
+        val pagerState = rememberPagerState(pageCount = { imageHashes.size })
+        // 마지막 본 페이지 업데이트 로직
+        LaunchedEffect(pagerState.currentPage) {
+            delay(100)  //너무 자주 업데이트 하는 것을 방지한다.
+            if (pagerState.currentPage > 0)
+                viewMangaViewModel.updateLastPage(gId, pagerState.currentPage + 1)
+        }
+        fun movePage(direction: String) {
+            coroutineScope.launch {
+                if (direction == "next" && pagerState.currentPage < imageHashes.size - 1)
+                    pagerState.scrollToPage(pagerState.currentPage + 1)
+                else if (direction == "prev" && pagerState.currentPage > 0)
+                    pagerState.scrollToPage(pagerState.currentPage - 1)
             }
         }
-    }
-    LaunchedEffect(Unit) {
-        // 볼륨 키 이벤트 구독
-        appViewModel.volumeKeyEvent.collect { event ->
-            if (appViewModel.isVolumeKeyPagingEnabled.value) {
-                when (event) {
-                    VolumeKeyEvent.UP -> {
-                        if (currentPage > 0)
-                            listState.scrollToItem(currentPage - 1)
-                    }
-
-                    VolumeKeyEvent.DOWN -> {
-                        if (currentPage < imageHashes.size - 1)
-                            listState.scrollToItem(currentPage + 1)
+        LaunchedEffect(Unit) {
+            // 마지막 읽던 페이지가 1 초과라면 snackbar로 이동하기가 뜬다.
+            if (viewMangaViewModel.lastPage.intValue > 1) {
+                val result =
+                    snackbarHostState.showSnackbar(
+                        "마지막으로 읽던 페이지 ${viewMangaViewModel.lastPage.intValue}",
+                        "이동", duration = SnackbarDuration.Long
+                    )
+                if (result == SnackbarResult.ActionPerformed) {
+                    pagerState.scrollToPage(viewMangaViewModel.lastPage.intValue - 1)
+                }
+            }
+        }
+        LaunchedEffect(Unit) {
+            // 볼륨 키 이벤트 구독
+            appViewModel.volumeKeyEvent.collect { event ->
+                if (appViewModel.isVolumeKeyPagingEnabled.value) {
+                    when (event) {
+                        VolumeKeyEvent.UP -> movePage("prev")
+                        VolumeKeyEvent.DOWN -> movePage("next")
                     }
                 }
             }
         }
-    }
-    // 자동넘기기 타이머 로직
-    LaunchedEffect(viewMangaViewModel.isAutoPlaying.value, currentPage) {
-        if (viewMangaViewModel.isAutoPlaying.value) {
-            delay(viewMangaViewModel.tempPeriod.value.toInt() * 1000L)
-            val isLastPage = currentPage == imageHashes.size - 1
-            if (isLastPage) {
-                if (viewMangaViewModel.tempIsLoop.value)
-                    listState.scrollToItem(0)
-                else
-                    viewMangaViewModel.isAutoPlaying.value = false
-            } else
-                listState.scrollToItem(currentPage + 1)
+        // 자동넘기기 타이머 로직
+        LaunchedEffect(viewMangaViewModel.isAutoPlaying.value, pagerState.currentPage) {
+            if (viewMangaViewModel.isAutoPlaying.value) {
+                delay(viewMangaViewModel.tempPeriod.value.toInt() * 1000L)
+                val isLastPage = pagerState.currentPage == imageHashes.size - 1
+                if (isLastPage) {
+                    if (viewMangaViewModel.tempIsLoop.value)
+                        pagerState.scrollToPage(0)
+                    else
+                        viewMangaViewModel.isAutoPlaying.value = false
+                } else
+                    pagerState.scrollToPage(pagerState.currentPage + 1)
+            }
         }
-    }
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = {
-                    isUiVisible = !isUiVisible
-                })
-        ) {
-            items(
-                imageHashes.size,
-                key = { idx -> imageHashes[idx] }
-            ) { page ->
-                val hash = imageHashes[page]
+        VerticalPager(
+            state = pagerState,
+            beyondViewportPageCount = 12,
+            key = { idx -> imageHashes[idx] },
+            modifier = Modifier.fillMaxSize()
+        )
+        { page ->
+            val hash = imageHashes[page]
+            var retryCount by remember { mutableIntStateOf(0) }
+            var shouldRetry by remember { mutableStateOf(false) }
+            var showImage by remember { mutableStateOf(false) }
 
-                var retryCount by remember { mutableIntStateOf(0) }
-                var shouldRetry by remember { mutableStateOf(false) }
-//            var showImage by remember { mutableStateOf(false) }
-
-                // 이미지가 로드되었는지 여부와 비율을 기억합니다.
-                var isLoaded by remember { mutableStateOf(false) }
-                var aspectRatio by remember { mutableFloatStateOf(0f) }
-
+            if (!showImage) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        //이미 로드된 적이 있다면 비율을 유지하여 스크롤 점프 방지
-                        .then(
-                            if (aspectRatio > 0f) Modifier.aspectRatio(aspectRatio)
-                            else Modifier.heightIn(min = 300.dp)
-                        ),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (!isLoaded) {
-                        CircularProgressIndicator()
-                    }
-
-                    LaunchedEffect(shouldRetry) {
-                        if (shouldRetry) {
-                            delay(50) // 딜레이 추가
-                            retryCount++
-                            shouldRetry = false
-                        }
-                    }
-
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(hashToImageUrl(hash) + "?retry=$retryCount")
-                            .httpHeaders(hitomiHeaders)
-                            .memoryCacheKey(hash).diskCacheKey(hash)
-                            .build(),
-                        contentDescription = "img",
-                        contentScale = ContentScale.FillWidth,
-                        placeholder = null,
-                        error = if (isLoaded) painterResource(R.drawable.errorimg) else null,
-                        onError = { e ->
-                            if ((e.result.throwable as? HttpException)?.response?.code == 503) {
-                                shouldRetry = true
-                            } else
-                                isLoaded = true
-                            Log.i("이미지 로드 에러", e.result.throwable.toString())
-                        },
-                        onSuccess = { result ->
-                            isLoaded = true
-                            // 이미지의 실제 비율을 계산하여 저장
-                            val width = result.painter.intrinsicSize.width
-                            val height = result.painter.intrinsicSize.height
-                            if (height > 0) {
-                                aspectRatio = width / height
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    CircularProgressIndicator()
                 }
             }
+
+            LaunchedEffect(shouldRetry) {
+                if (shouldRetry) {
+                    delay(50) // 딜레이 추가
+                    retryCount++
+                    shouldRetry = false
+                }
+            }
+
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(hashToImageUrl(hash) + "?retry=$retryCount")
+                    .httpHeaders(hitomiHeaders)
+                    .memoryCacheKey(hash).diskCacheKey(hash)
+                    .build(),
+                contentDescription = "img",
+                contentScale = ContentScale.Fit,
+                placeholder = null,
+                error = if (showImage) painterResource(R.drawable.errorimg) else null,
+                onError = { e ->
+                    if ((e.result.throwable as? HttpException)?.response?.code == 503) {
+                        shouldRetry = true
+                    } else
+                        showImage = true
+                    Log.i("이미지 로드 에러", e.result.throwable.toString())
+                },
+                onSuccess = { showImage = true },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            val ratio = offset.y / constraints.maxHeight
+                            when {
+                                ratio < 0.3f -> movePage("prev")
+                                ratio > 0.7f -> movePage("next")
+                                else -> isUiVisible = !isUiVisible // UI 보이기/숨기기
+                            }
+                        }
+                    }
+            )
         }
         // 상단 ui
         AnimatedVisibility(
@@ -262,10 +258,10 @@ fun ScrollMangaView(
             ) {
                 HorizontalDivider()
                 Slider(
-                    value = currentPage.toFloat(),
+                    value = pagerState.currentPage + pagerState.currentPageOffsetFraction,
                     onValueChange = { v ->
                         coroutineScope.launch {
-                            listState.scrollToItem(v.toInt())
+                            pagerState.scrollToPage(v.toInt())
                         }
                     },
                     valueRange = 0f..(imageHashes.size.toFloat() - 1),
@@ -290,7 +286,7 @@ fun ScrollMangaView(
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp)
                 )
-                Text("${currentPage + 1}/${imageHashes.size}")
+                Text("${pagerState.currentPage + 1}/${imageHashes.size}")
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
@@ -314,6 +310,7 @@ fun ScrollMangaView(
                 }
             }
         }
+
         // 스낵바가 그려질 호스트를 하단에 배치
         SnackbarHost(
             hostState = snackbarHostState,

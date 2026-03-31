@@ -63,7 +63,7 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
     fun setGalleryImages(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
         // 갤러리에 마지막 읽은 시간을 갱신한다.
         galleryDao.updateLastReadAt(gId)
-        // 마지막으로 본 페이지를
+        // 마지막으로 본 페이지를 세팅한다.
         val g = galleryDao.findById(gId)
         lastPage.intValue = g.lastReadPage
         // 중복실행 방지
@@ -85,8 +85,14 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
             notExist = true
             Log.e("뭔가오류", "존재하지 않는다?")
         }
-
         imagesLoading.value = false
+    }
+
+    // UI변경으로인해 마지막으로 본 페이지를 재세팅한다.
+    fun reloadLastPage(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
+        // 마지막으로 본 페이지를 세팅한다.
+        val g = galleryDao.findById(gId)
+        lastPage.intValue = g.lastReadPage
     }
 
     fun updateLastPage(gId: Long, page: Int) = viewModelScope.launch(Dispatchers.IO) {

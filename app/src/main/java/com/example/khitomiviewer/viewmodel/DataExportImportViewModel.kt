@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.json.GalleryBrief
+import com.example.khitomiviewer.json.GalleryRecordBrief
 import com.example.khitomiviewer.json.PupilBackup
 import com.example.khitomiviewer.json.TagBrief
 import com.example.khitomiviewer.json.TagsAndGalleries
@@ -57,9 +58,12 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
             dbExportImportProgress.value = true
             try {
                 val tagsAndGalleries = TagsAndGalleries(
-                    galleries = galleryDao.findNotNone()
-                        .map { g -> GalleryBrief(g.gId, g.likeStatus) },
-                    tags = tagDao.findNotNone().map { t -> TagBrief(t.name, t.likeStatus) }
+                    galleries = galleryDao.findLikeOrDislike()
+                        .map { g -> GalleryBrief(g.gId, g.likeStatus, g.likeStatusChangedAt) },
+                    tags = tagDao.findLikeOrDislike()
+                        .map { t -> TagBrief(t.name, t.likeStatus, t.likeStatusChangedAt) },
+                    galleryRecords = galleryDao.findGalleryRecords()
+                        .map { g -> GalleryRecordBrief(g.gId, g.lastReadAt, g.lastReadPage) }
                 )
                 context.contentResolver
                     .openOutputStream(fileUri, "w")
@@ -76,7 +80,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun importFromJsonFile(context: Context, uri: Uri) {
+    fun importFromJsonFileKHitomiViewer(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             dbExportImportProgress.value = true
             try {
@@ -84,6 +88,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                     val tagsAndGalleries = json.decodeFromStream<TagsAndGalleries>(inputStream)
                     // db 에 좋아요/싫어요 정보 넣기
                     repository.updateLikeDislikeInfo(tagsAndGalleries)
+                    Log.i("개수", "${tagsAndGalleries.galleries.size} ${tagsAndGalleries.tags.size}")
                 } ?: throw IOException("InputStream이 null입니다")
                 statusString.value = "불러오기 완료: ${getCurrentFormattedTime()}"
             } catch (e: Exception) {
@@ -131,49 +136,78 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                 null,
                 SQLiteDatabase.OPEN_READONLY
             ).use { db ->
-                val gIdList = mutableListOf<Long>() // 북마크 갤러리 아이디들
-                val tagNameList = mutableListOf<String>() // 작가, 그룹 북마크 이름들
+                val galleryBookmarkInfos = mutableListOf<GalleryBookmarkInfo>() // 북마크 갤러리 아이디들
+                val tagBookmarkInfos = mutableListOf<TagBookmarkInfo>() // 작가, 그룹 북마크 이름들
                 val articleReadLogs = mutableListOf<ArticleReadLog>() // 읽은 히스토리(기록)
                 // 쿼리 실행
                 if (isTableExists(db, "BookmarkArticle")) {
-                    db.rawQuery("select Article from BookmarkArticle", null).use { cursor ->
-                        val index = cursor.getColumnIndex("Article")
-                        if (index != -1) {
-                            while (cursor.moveToNext()) {
-                                gIdList.add(cursor.getLong(index))
+                    db.rawQuery("select Article, DateTime from BookmarkArticle", null)
+                        .use { cursor ->
+                            val idx1 = cursor.getColumnIndex("Article")
+                            val idx2 = cursor.getColumnIndex("DateTime")
+                            if (idx1 != -1 && idx2 != -1) {
+                                while (cursor.moveToNext()) {
+                                    galleryBookmarkInfos.add(
+                                        GalleryBookmarkInfo(
+                                            cursor.getLong(idx1),
+                                            convertDateStringToMillis(cursor.getString(idx2))
+                                        )
+                                    )
+                                }
                             }
                         }
-                    }
                 }
                 if (isTableExists(db, "LOCAL_FAVORITES")) {
-                    db.rawQuery("select GID from LOCAL_FAVORITES", null).use { cursor ->
-                        val index = cursor.getColumnIndex("GID")
-                        if (index != -1) {
+                    db.rawQuery("select GID, TIME from LOCAL_FAVORITES", null).use { cursor ->
+                        val idx1 = cursor.getColumnIndex("GID")
+                        val idx2 = cursor.getColumnIndex("TIME")
+                        if (idx1 != -1 && idx2 != -1) {
                             while (cursor.moveToNext()) {
-                                gIdList.add(cursor.getLong(index))
+                                galleryBookmarkInfos.add(
+                                    GalleryBookmarkInfo(
+                                        cursor.getLong(idx1),
+                                        cursor.getLong(idx2)
+                                    )
+                                )
                             }
                         }
                     }
                 }
                 if (isTableExists(db, "BookmarkArtist")) {
-                    db.rawQuery("select Artist from BookmarkArtist WHERE IsGroup = 0", null)
-                        .use { cursor ->
-                            val index = cursor.getColumnIndex("Artist")
-                            if (index != -1) {
-                                while (cursor.moveToNext()) {
-                                    tagNameList.add("artist:${cursor.getString(index)}")
-                                }
+                    db.rawQuery(
+                        "select Artist, DateTime from BookmarkArtist WHERE IsGroup = 0",
+                        null
+                    ).use { cursor ->
+                        val idx1 = cursor.getColumnIndex("Artist")
+                        val idx2 = cursor.getColumnIndex("DateTime")
+                        if (idx1 != -1) {
+                            while (cursor.moveToNext()) {
+                                tagBookmarkInfos.add(
+                                    TagBookmarkInfo(
+                                        "artist:${cursor.getString(idx1)}",
+                                        convertDateStringToMillis(cursor.getString(idx2))
+                                    )
+                                )
                             }
                         }
-                    db.rawQuery("select Artist from BookmarkArtist WHERE IsGroup = 1", null)
-                        .use { cursor ->
-                            val index = cursor.getColumnIndex("Artist")
-                            if (index != -1) {
-                                while (cursor.moveToNext()) {
-                                    tagNameList.add("group:${cursor.getString(index)}")
-                                }
+                    }
+                    db.rawQuery(
+                        "select Artist, DateTime from BookmarkArtist WHERE IsGroup = 1",
+                        null
+                    ).use { cursor ->
+                        val idx1 = cursor.getColumnIndex("Artist")
+                        val idx2 = cursor.getColumnIndex("DateTime")
+                        if (idx1 != -1) {
+                            while (cursor.moveToNext()) {
+                                tagBookmarkInfos.add(
+                                    TagBookmarkInfo(
+                                        "group:${cursor.getString(idx1)}",
+                                        convertDateStringToMillis(cursor.getString(idx2))
+                                    )
+                                )
                             }
                         }
+                    }
                 }
                 if (isTableExists(db, "ArticleReadLog")) {
                     db.rawQuery("select Article, DateTimeStart, LastPage from ArticleReadLog", null)
@@ -181,7 +215,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                             val idx1 = cursor.getColumnIndex("Article")
                             val idx2 = cursor.getColumnIndex("DateTimeStart")
                             val idx3 = cursor.getColumnIndex("LastPage")
-                            if (idx1 != -1) {
+                            if (idx1 != -1 && idx2 != -1 && idx3 != -1) {
                                 while (cursor.moveToNext()) {
                                     articleReadLogs.add(
                                         ArticleReadLog(
@@ -195,7 +229,11 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                         }
                 }
                 // db에 저장
-                repository.importVioletBookmarks(gIdList, tagNameList, articleReadLogs)
+                repository.importVioletBookmarks(
+                    galleryBookmarkInfos,
+                    tagBookmarkInfos,
+                    articleReadLogs
+                )
 
                 statusString.value =
                     "Violet 갤러리 북마크 , 아티스트 or 그룹 북마크, 기록 불러오기 성공. 한국어 hitomi 정보에 없는 정보들은 무시됩니다."
@@ -234,6 +272,16 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
         }
     }
 }
+
+data class GalleryBookmarkInfo( //violet정보
+    val gId: Long,
+    val time: Long
+)
+
+data class TagBookmarkInfo( //violet정보
+    val name: String,
+    val time: Long
+)
 
 data class ArticleReadLog(
     val gId: Long,

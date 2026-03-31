@@ -44,6 +44,7 @@ import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.GalleryListBrief
 import com.example.khitomiviewer.ui.GalleryListExtended
 import com.example.khitomiviewer.ui.GalleryListGrid
+import com.example.khitomiviewer.ui.GalleryListUiSelect
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.Search
 import com.example.khitomiviewer.ui.tag.SearchedTag
@@ -192,6 +193,7 @@ fun ListScreen(
                         .padding(0.dp)
                 ) { Icon(Icons.Filled.Search, "search") }
             }
+            GalleryListUiSelect()
             Pagination(false, page, galleryViewModel.maxPage, onPageMove)
             if (galleryListUi == "Extended")
                 GalleryListExtended(navController, isTagDialogOpen, isGalleryDialogOpen)

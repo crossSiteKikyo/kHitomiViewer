@@ -59,12 +59,18 @@ class DialogViewModel(application: Application) : AndroidViewModel(application) 
     fun changeTagLike(like: Int) = viewModelScope.launch(Dispatchers.IO) {
         val tagId = selectedTag?.tagId
         if (tagId != null)
-            tagDao.updateTagLike(tagId, like)
+            if (like == 1)
+                tagDao.updateTagLike(tagId, like, 0L)
+            else
+                tagDao.updateTagLike(tagId, like, System.currentTimeMillis())
     }
 
     fun changeGalleryLike(like: Int) = viewModelScope.launch(Dispatchers.IO) {
         val gId = selectedGallery?.gId
         if (gId != null)
-            galleryDao.updateGalleryLike(gId, like)
+            if (like == 1)
+                galleryDao.updateGalleryLike(gId, like, 0L)
+            else
+                galleryDao.updateGalleryLike(gId, like, System.currentTimeMillis())
     }
 }

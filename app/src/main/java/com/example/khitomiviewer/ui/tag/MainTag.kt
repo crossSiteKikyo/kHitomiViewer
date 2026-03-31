@@ -26,10 +26,13 @@ fun MainTag(
     textColor: Color,
     dialogViewModel: DialogViewModel,
     isTagDialogOpen: MutableState<Boolean>,
-    navController: NavHostController
+    navController: NavHostController,
+    isGalleryDetailDialogOpen: MutableState<Boolean>? = null
 ) {
     fun tagClick() {
         navController.navigate(Screen.List.createRoute(1L, longArrayOf(tag.tagId)))
+        if (isGalleryDetailDialogOpen != null)
+            isGalleryDetailDialogOpen.value = false
     }
 
     var name = tag.name
@@ -60,8 +63,8 @@ fun MainTag(
                 .padding(horizontal = 2.dp)
         )
         if (tag.likeStatus == 2)
-            Icon(Icons.Outlined.ThumbUp, null)
+            Icon(Icons.Outlined.ThumbUp, null, tint = textColor)
         else if (tag.likeStatus == 0)
-            Icon(Icons.Outlined.Block, null)
+            Icon(Icons.Outlined.Block, null, tint = textColor)
     }
 }

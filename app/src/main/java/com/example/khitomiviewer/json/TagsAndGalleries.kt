@@ -8,7 +8,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TagsAndGalleries(
     var galleries: List<GalleryBrief>,
-    var tags: List<TagBrief>
+    var tags: List<TagBrief>,
+    var galleryRecords: List<GalleryRecordBrief>? = null
 )
 
 @Serializable
@@ -18,6 +19,7 @@ data class GalleryBrief(
      * 0싫어요 1기본 2좋아요
      */
     val likeStatus: Int,
+    val likeStatusChangedAt: Long = 0,
 )
 
 @Serializable
@@ -26,5 +28,13 @@ data class TagBrief(
     /**
      * 0싫어요 1기본 2좋아요
      */
-    val likeStatus: Int
+    val likeStatus: Int,
+    val likeStatusChangedAt: Long = 0,
+)
+
+@Serializable
+data class GalleryRecordBrief(
+    val gId: Long,
+    val lastReadAt: Long,
+    val lastReadPage: Int
 )

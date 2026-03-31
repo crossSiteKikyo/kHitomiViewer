@@ -56,10 +56,8 @@ fun SettingScreen(
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
     val appViewModel: AppViewModel = viewModel(activity)
-    val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
 
     val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
-    val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
     val pageSize by appViewModel.pageSize.collectAsState(20)
 
     // 볼륨 키 가로채기 비활성화
@@ -90,32 +88,6 @@ fun SettingScreen(
             )
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("갤러리 UI")
-            Spacer(Modifier.padding(horizontal = 10.dp))
-            Button(onClick = {
-                appViewModel.setGalleryListUi("Extended")
-            }, enabled = galleryListUi != "Extended", contentPadding = PaddingValues(2.dp)) {
-                Text("확장")
-            }
-            Button(onClick = {
-                appViewModel.setGalleryListUi("Brief")
-            }, enabled = galleryListUi != "Brief", contentPadding = PaddingValues(2.dp)) {
-                Text("간략히")
-            }
-            Button(onClick = {
-                appViewModel.setGalleryListUi("Grid")
-            }, enabled = galleryListUi != "Grid", contentPadding = PaddingValues(2.dp)) {
-                Text("그리드")
-            }
-        }
-
         var pageSizeDDExpanded by remember { mutableStateOf(false) }
 
         Box(
@@ -136,6 +108,9 @@ fun SettingScreen(
                 expanded = pageSizeDDExpanded,
                 onDismissRequest = { pageSizeDDExpanded = false }
             ) {
+                DropdownMenuItem(
+                    text = { Text("12") },
+                    onClick = { appViewModel.setPageSize(12); pageSizeDDExpanded = false })
                 DropdownMenuItem(
                     text = { Text("14") },
                     onClick = { appViewModel.setPageSize(14); pageSizeDDExpanded = false })
@@ -160,30 +135,6 @@ fun SettingScreen(
                 DropdownMenuItem(
                     text = { Text("50") },
                     onClick = { appViewModel.setPageSize(50); pageSizeDDExpanded = false })
-            }
-        }
-
-        val viewMethod by viewMangaViewModel.viewMethod.collectAsState("swipe")
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("만화 보기 UI")
-            Spacer(Modifier.padding(horizontal = 10.dp))
-            Spacer(Modifier.padding(horizontal = 10.dp))
-            Button(onClick = {
-                viewMangaViewModel.setViewMethod("scroll")
-            }, enabled = viewMethod != "scroll", contentPadding = PaddingValues(2.dp)) {
-                Text("스크롤")
-            }
-            Button(onClick = {
-                viewMangaViewModel.setViewMethod("swipe")
-            }, enabled = viewMethod != "swipe", contentPadding = PaddingValues(2.dp)) {
-                Text("스와이프")
             }
         }
     }

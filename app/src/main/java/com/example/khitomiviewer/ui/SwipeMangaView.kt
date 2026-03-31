@@ -35,6 +35,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarDuration
@@ -45,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -85,7 +87,8 @@ fun SwipeMangaView(
     gId: Long,
     hitomiHeaders: NetworkHeaders,
     hashToImageUrl: (String) -> String,
-    imageHashes: SnapshotStateList<String>
+    imageHashes: SnapshotStateList<String>,
+    isUISelectDialogOpen: MutableState<Boolean>
 ) {
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
@@ -233,7 +236,7 @@ fun SwipeMangaView(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Black.copy(alpha = 0.2f))
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))
                         .statusBarsPadding() // 상태바 영역 침범 방지
                 ) {
                     Text(viewMangaViewModel.title.value)
@@ -251,7 +254,7 @@ fun SwipeMangaView(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Black.copy(alpha = 0.2f))
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))
                         .padding(bottom = 5.dp)
                 ) {
                     HorizontalDivider()
@@ -294,9 +297,15 @@ fun SwipeMangaView(
                             onClick = { viewMangaViewModel.toggleRtlMode(isRtl) }
                         ) {
                             if (isRtl)
-                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
+                                Icon(Icons.AutoMirrored.Outlined.ArrowForward, null)
                             else
                                 Icon(Icons.AutoMirrored.Outlined.ArrowForward, null)
+                        }
+                        Button(
+                            shape = RoundedCornerShape(4.dp),
+                            onClick = { isUISelectDialogOpen.value = true }
+                        ) {
+                            Text("UI선택")
                         }
                         if (viewMangaViewModel.isAutoPlaying.value)
                             Button(

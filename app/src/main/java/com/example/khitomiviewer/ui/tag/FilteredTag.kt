@@ -51,8 +51,8 @@ fun FilteredTag(tag: Tag, onClick: () -> Unit) {
             tag.name, color = color, modifier = Modifier.padding(0.dp)
         )
         if (tag.likeStatus == 2)
-            Icon(Icons.Outlined.ThumbUp, null)
+            Icon(Icons.Outlined.ThumbUp, null, tint = color)
         else if (tag.likeStatus == 0)
-            Icon(Icons.Outlined.Block, null)
+            Icon(Icons.Outlined.Block, null, tint = color)
     }
 }

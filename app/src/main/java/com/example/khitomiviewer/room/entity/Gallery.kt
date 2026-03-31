@@ -24,8 +24,9 @@ data class Gallery(
     /**
      * 0싫어요 1기본 2좋아요
      */
-    val likeStatus: Int,
+    val likeStatus: Int = 1,
+    val likeStatusChangedAt: Long = 0L,
     val typeId: Long,
-    val lastReadAt: Long,
-    val lastReadPage: Int
+    val lastReadAt: Long = 0L,
+    val lastReadPage: Int = 0
 )

@@ -19,6 +19,7 @@ import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.GalleryListBrief
 import com.example.khitomiviewer.ui.GalleryListExtended
 import com.example.khitomiviewer.ui.GalleryListGrid
+import com.example.khitomiviewer.ui.GalleryListUiSelect
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
@@ -72,6 +73,7 @@ fun MyGalleryScreen(
             .fillMaxSize()
             .verticalScroll(verticalScrollState)
     ) {
+        GalleryListUiSelect()
         Pagination(false, page, galleryViewModel.maxPage, onPageMove)
         if (galleryListUi == "Extended")
             GalleryListExtended(navController, isTagDialogOpen, isGalleryDialogOpen)

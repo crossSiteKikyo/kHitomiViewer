@@ -102,6 +102,15 @@ object DatabaseProvider {
         }
     }
 
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. gallery 테이블에 likeStatusChangedAt 컬럼 추가 (기본값 0)
+            db.execSQL("ALTER TABLE `gallery` ADD COLUMN `likeStatusChangedAt` INTEGER NOT NULL DEFAULT 0")
+            // 2. tag 테이블에 likeStatusChangedAt 컬럼 추가 (기본값 0)
+            db.execSQL("ALTER TABLE `tag` ADD COLUMN `likeStatusChangedAt` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     fun getDatabase(context: Context): KHitomiDatabase {
         return INSTANCE ?: synchronized(this) {
             Room.databaseBuilder(
@@ -110,7 +119,7 @@ object DatabaseProvider {
                 "khitomi-db"
             )
                 .createFromAsset("database/khitomi-db-260329")
-                .addMigrations(MIGRATION_2_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_2_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .build().also { INSTANCE = it }
         }
     }

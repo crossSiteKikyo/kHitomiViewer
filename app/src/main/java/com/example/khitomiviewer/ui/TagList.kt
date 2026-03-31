@@ -134,9 +134,9 @@ fun TagList(
                             .padding(horizontal = 2.dp)
                     )
                     if (t.likeStatus == 2)
-                        Icon(Icons.Outlined.ThumbUp, null)
+                        Icon(Icons.Outlined.ThumbUp, null, tint = textColor)
                     else if (t.likeStatus == 0)
-                        Icon(Icons.Outlined.Block, null)
+                        Icon(Icons.Outlined.Block, null, tint = textColor)
                 }
                 Box(
                     modifier = Modifier

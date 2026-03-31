@@ -24,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
@@ -59,6 +61,15 @@ fun GalleryListGrid(
     val hitomiViewModel: HitomiViewModel = viewModel(activity)
     val galleryViewModel: GalleryViewModel = viewModel(activity)
     val dialogViewModel: DialogViewModel = viewModel(activity)
+    val appViewModel: AppViewModel = viewModel(activity)
+
+    val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
+    val chunkSize = when (galleryListUi) {
+        "Grid5" -> 5
+        "Grid4" -> 4
+        "Grid3" -> 3
+        else -> 2
+    }
 
     val galleries by remember { derivedStateOf { galleryViewModel.galleries } }
 
@@ -96,10 +107,10 @@ fun GalleryListGrid(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            galleries.chunked(2).forEach { rowItems ->
+            galleries.chunked(chunkSize).forEach { rowItems ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(1.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     for (g in rowItems) {
@@ -124,7 +135,6 @@ fun GalleryListGrid(
                                 error = painterResource(R.drawable.errorimg),
                                 onError = { e -> Log.i("섬네일 에러", e.toString()) },
                                 contentScale = ContentScale.FillWidth,
-//                                alignment = Alignment.Center,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .combinedClickable(
@@ -140,8 +150,9 @@ fun GalleryListGrid(
                             )
                         }
                     }
-                    if (rowItems.size < 2) {
-                        Spacer(modifier = Modifier.weight(1f))
+                    if (rowItems.size < chunkSize) {
+                        for (i in 1..chunkSize - rowItems.size)
+                            Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

@@ -60,7 +60,7 @@ fun DatabaseExportImportSettingScreen() {
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            dataExportImportViewModel.importFromJsonFile(context, uri)
+            dataExportImportViewModel.importFromJsonFileKHitomiViewer(context, uri)
         }
     }
     val pupilImportLauncher = rememberLauncherForActivityResult(
@@ -159,6 +159,5 @@ fun DatabaseExportImportSettingScreen() {
 
             Text(dataExportImportViewModel.statusString.value, color = Color.Gray)
         }
-
     }
 }

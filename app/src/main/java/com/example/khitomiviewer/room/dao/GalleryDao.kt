@@ -5,7 +5,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.RawQuery
-import androidx.room.Update
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.example.khitomiviewer.room.entity.Gallery
 
@@ -14,11 +13,11 @@ interface GalleryDao {
     @Insert
     suspend fun insert(gallery: Gallery)
 
-//    @Update
-//    suspend fun update(gallery: Gallery)
+    @Query("update gallery set title = :title where gId = :gId")
+    fun updateGalleryTitle(gId: Long, title: String)
 
-    @Query("update gallery set likeStatus = :likeStatus where gId = :gId")
-    fun updateGalleryLike(gId: Long, likeStatus: Int)
+    @Query("update gallery set likeStatus = :likeStatus, likeStatusChangedAt = :likeStatusChangedAt where gId = :gId")
+    fun updateGalleryLike(gId: Long, likeStatus: Int, likeStatusChangedAt: Long)
 
     @Query("update gallery set lastReadAt = :timestamp where gId = :gId")
     fun updateLastReadAt(gId: Long, timestamp: Long = System.currentTimeMillis())
@@ -66,15 +65,18 @@ interface GalleryDao {
     fun findAllGId(): List<Long>
 
     @Query("select * from gallery where likeStatus != 1 order by likeStatus desc")
-    fun findNotNone(): List<Gallery>
+    fun findLikeOrDislike(): List<Gallery>
 
-    @Query("select * from gallery where likeStatus = 2 order by gId desc limit :limit offset :offset")
+    @Query("select * from gallery where lastReadAt != 0")
+    fun findGalleryRecords(): List<Gallery>
+
+    @Query("select * from gallery where likeStatus = 2 order by likeStatusChangedAt desc limit :limit offset :offset")
     fun findLike(limit: Int, offset: Long): List<Gallery>
 
     @Query("select count(gId) from gallery where likeStatus = 2")
     fun countLikeGalleries(): Long
 
-    @Query("select * from gallery where likeStatus = 0 order by gId desc limit :limit offset :offset")
+    @Query("select * from gallery where likeStatus = 0 order by likeStatusChangedAt desc limit :limit offset :offset")
     fun findDislike(limit: Int, offset: Long): List<Gallery>
 
     @Query("select count(gId) from gallery where likeStatus = 0")

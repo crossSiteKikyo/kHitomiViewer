@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -25,6 +26,8 @@ import androidx.navigation.NavController
 import coil3.network.NetworkHeaders
 import com.example.khitomiviewer.ui.ScrollMangaView
 import com.example.khitomiviewer.ui.SwipeMangaView
+import com.example.khitomiviewer.ui.SwipeVerticalMangaView
+import com.example.khitomiviewer.ui.UISelectDialog
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
@@ -41,6 +44,7 @@ fun ViewMangaScreen(
     val appViewModel: AppViewModel = viewModel(activity)
 
     val viewMethod by viewMangaViewModel.viewMethod.collectAsState("swipe")
+    val isUISelectDialogOpen = remember { mutableStateOf(false) }
 
     val hitomiHeaders = NetworkHeaders.Builder()
         .set("Referer", "https://hitomi.la/")
@@ -102,9 +106,18 @@ fun ViewMangaScreen(
             Text("이미지 결과가 0개입니다")
         }
     } else {
-        if (viewMethod == "swipe")
-            SwipeMangaView(gId, hitomiHeaders, hashToImageUrl, imageHashes)
+        if (viewMethod == "scroll")
+            ScrollMangaView(gId, hitomiHeaders, hashToImageUrl, imageHashes, isUISelectDialogOpen)
+        else if (viewMethod == "swipe")
+            SwipeMangaView(gId, hitomiHeaders, hashToImageUrl, imageHashes, isUISelectDialogOpen)
         else
-            ScrollMangaView(gId, hitomiHeaders, hashToImageUrl, imageHashes)
+            SwipeVerticalMangaView(
+                gId,
+                hitomiHeaders,
+                hashToImageUrl,
+                imageHashes,
+                isUISelectDialogOpen
+            )
+        UISelectDialog(isUISelectDialogOpen, gId)
     }
 }

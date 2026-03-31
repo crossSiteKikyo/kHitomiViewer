@@ -71,6 +71,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             prefManager.typeIdList.first()
             prefManager.pageSize.first()
+            delay(50)
             setGalleryList(1L, null, null)
             setMaxPage(null, null)
         }
