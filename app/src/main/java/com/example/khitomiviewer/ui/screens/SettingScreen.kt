@@ -51,91 +51,107 @@ import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 
 @Composable
 fun SettingScreen(
-    verticalScrollState: ScrollState
+  verticalScrollState: ScrollState
 ) {
-    // 전역 viewModel들
-    val activity = LocalActivity.current as ComponentActivity
-    val appViewModel: AppViewModel = viewModel(activity)
+  // 전역 viewModel들
+  val activity = LocalActivity.current as ComponentActivity
+  val appViewModel: AppViewModel = viewModel(activity)
 
-    val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
-    val pageSize by appViewModel.pageSize.collectAsState(20)
+  val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
+  val pageSize by appViewModel.pageSize.collectAsState(20)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
 
-    // 볼륨 키 가로채기 비활성화
-    LaunchedEffect(Unit) {
-        appViewModel.isPaginationActive.value = false
-    }
+  // 볼륨 키 가로채기 비활성화
+  LaunchedEffect(Unit) {
+    appViewModel.isPaginationActive.value = false
+  }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .verticalScroll(verticalScrollState),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+  Column(
+    modifier = Modifier
+      .fillMaxSize()
+      .padding(horizontal = 16.dp)
+      .verticalScroll(verticalScrollState),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally
+  ) {
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(56.dp)
+        .clickable { appViewModel.toggleVolumeKeyPaging(!isVolumePaging) },
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .clickable { appViewModel.toggleVolumeKeyPaging(!isVolumePaging) },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("볼륨키로 페이지 이동")
-            Switch(
-                checked = isVolumePaging,
-                onCheckedChange = { appViewModel.toggleVolumeKeyPaging(it) }
-            )
-        }
-
-        var pageSizeDDExpanded by remember { mutableStateOf(false) }
-
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clickable { pageSizeDDExpanded = !pageSizeDDExpanded },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("한번에 로드할 갤러리 수")
-                Text("$pageSize 개", color = Color.Gray)
-            }
-            DropdownMenu(
-                expanded = pageSizeDDExpanded,
-                onDismissRequest = { pageSizeDDExpanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("12") },
-                    onClick = { appViewModel.setPageSize(12); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("14") },
-                    onClick = { appViewModel.setPageSize(14); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("16") },
-                    onClick = { appViewModel.setPageSize(16); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("18") },
-                    onClick = { appViewModel.setPageSize(18); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("20") },
-                    onClick = { appViewModel.setPageSize(20); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("24") },
-                    onClick = { appViewModel.setPageSize(24); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("30") },
-                    onClick = { appViewModel.setPageSize(30); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("40") },
-                    onClick = { appViewModel.setPageSize(40); pageSizeDDExpanded = false })
-                DropdownMenuItem(
-                    text = { Text("50") },
-                    onClick = { appViewModel.setPageSize(50); pageSizeDDExpanded = false })
-            }
-        }
+      Text("볼륨키로 페이지 이동")
+      Switch(
+        checked = isVolumePaging,
+        onCheckedChange = { appViewModel.toggleVolumeKeyPaging(it) }
+      )
     }
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(56.dp)
+        .clickable { appViewModel.setAvifFormat(!isAvifFormat) },
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+      Text("이미지 avif포맷으로 요청")
+      Switch(
+        checked = isAvifFormat,
+        onCheckedChange = { appViewModel.setAvifFormat(it) }
+      )
+    }
+
+    var pageSizeDDExpanded by remember { mutableStateOf(false) }
+
+    Box(
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(56.dp)
+          .clickable { pageSizeDDExpanded = !pageSizeDDExpanded },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+      ) {
+        Text("한번에 로드할 갤러리 수")
+        Text("$pageSize 개", color = Color.Gray)
+      }
+      DropdownMenu(
+        expanded = pageSizeDDExpanded,
+        onDismissRequest = { pageSizeDDExpanded = false }
+      ) {
+        DropdownMenuItem(
+          text = { Text("12") },
+          onClick = { appViewModel.setPageSize(12); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("14") },
+          onClick = { appViewModel.setPageSize(14); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("16") },
+          onClick = { appViewModel.setPageSize(16); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("18") },
+          onClick = { appViewModel.setPageSize(18); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("20") },
+          onClick = { appViewModel.setPageSize(20); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("24") },
+          onClick = { appViewModel.setPageSize(24); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("30") },
+          onClick = { appViewModel.setPageSize(30); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("40") },
+          onClick = { appViewModel.setPageSize(40); pageSizeDDExpanded = false })
+        DropdownMenuItem(
+          text = { Text("50") },
+          onClick = { appViewModel.setPageSize(50); pageSizeDDExpanded = false })
+      }
+    }
+  }
 }

@@ -46,6 +46,8 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.util.decodeThumbnail
+import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
@@ -53,109 +55,103 @@ import com.example.khitomiviewer.viewmodel.HitomiViewModel
 
 @Composable
 fun GalleryListGrid(
-    isGalleryDialogOpen: MutableState<Boolean>,
-    isGalleryDetailDialogOpen: MutableState<Boolean>
+  isGalleryDialogOpen: MutableState<Boolean>,
+  isGalleryDetailDialogOpen: MutableState<Boolean>
 ) {
-    // 전역 viewModel들
-    val activity = LocalActivity.current as ComponentActivity
-    val hitomiViewModel: HitomiViewModel = viewModel(activity)
-    val galleryViewModel: GalleryViewModel = viewModel(activity)
-    val dialogViewModel: DialogViewModel = viewModel(activity)
-    val appViewModel: AppViewModel = viewModel(activity)
+  // 전역 viewModel들
+  val activity = LocalActivity.current as ComponentActivity
+  val hitomiViewModel: HitomiViewModel = viewModel(activity)
+  val galleryViewModel: GalleryViewModel = viewModel(activity)
+  val dialogViewModel: DialogViewModel = viewModel(activity)
+  val appViewModel: AppViewModel = viewModel(activity)
 
-    val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
-    val chunkSize = when (galleryListUi) {
-        "Grid5" -> 5
-        "Grid4" -> 4
-        "Grid3" -> 3
-        else -> 2
-    }
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
+  val chunkSize = when (galleryListUi) {
+    "Grid5" -> 5
+    "Grid4" -> 4
+    "Grid3" -> 3
+    else -> 2
+  }
 
-    val galleries by remember { derivedStateOf { galleryViewModel.galleries } }
+  val galleries by remember { derivedStateOf { galleryViewModel.galleries } }
 
-    val typeColor: Map<String, Long> = remember {
-        mapOf<String, Long>(
-            "doujinshi" to 0xFFCC9999,  // c99
-            "manga" to 0xFFCC99CC,      // c9c
-            "artistcg" to 0xFF99CCCC,  // 9cc
-            "gamecg" to 0xFF9999CC,    // 99c
-            "imageset" to 0xFF999999,  // 999
-            // CC보다 크면 안되고 66보다 작으면 안된다.
-        )
-    }
-    // th.hitomi.la는 가짜 url이다. 진짜 url로 바꾼다.
-    val realHitomiThumbnailUrl: (String) -> String = { url ->
-        val hash = """[0-9a-z]{40,}""".toRegex().find(url)?.value
-        if (hash == null) {
-            url
-        } else {
-            val s =
-                "${hash[hash.length - 1]}${hash[hash.length - 3]}${hash[hash.length - 2]}".toInt(16)
-                    .toString(10)
-            val ch =
-                if (s in hitomiViewModel.mList) hitomiViewModel.thumbChar2.value else hitomiViewModel.thumbChar1.value
-            url.replace("tn.hitomi.la", "${ch}tn.gold-usergeneratedcontent.net")
-        }
-    }
-    val context = LocalContext.current
-    val hitomiHeaders = NetworkHeaders.Builder().set("Referer", "https://hitomi.la/").build()
+  val typeColor: Map<String, Long> = remember {
+    mapOf<String, Long>(
+      "doujinshi" to 0xFFCC9999,  // c99
+      "manga" to 0xFFCC99CC,      // c9c
+      "artistcg" to 0xFF99CCCC,  // 9cc
+      "gamecg" to 0xFF9999CC,    // 99c
+      "imageset" to 0xFF999999,  // 999
+      // CC보다 크면 안되고 66보다 작으면 안된다.
+    )
+  }
+  val context = LocalContext.current
 
-    if (galleries.isEmpty())
-        Text("결과가 없습니다", style = TextStyle(fontSize = 50.sp))
-    else {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+  if (galleries.isEmpty())
+    Text("결과가 없습니다", style = TextStyle(fontSize = 50.sp))
+  else {
+    Column(
+      modifier = Modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+      galleries.chunked(chunkSize).forEach { rowItems ->
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(1.dp),
+          verticalAlignment = Alignment.CenterVertically
         ) {
-            galleries.chunked(chunkSize).forEach { rowItems ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(1.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    for (g in rowItems) {
-                        val cardBorderColor: Color = when (g.likeStatus) {
-                            0 -> Color.Gray
-                            2 -> Color(0xFFCC00CC)
-                            else -> Color.Black
-                        }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .border(1.dp, cardBorderColor),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(realHitomiThumbnailUrl(g.thumb1))
-                                    .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
-                                    .build(),
-                                contentDescription = "thumbnail",
-                                placeholder = painterResource(R.drawable.loading),
-                                error = painterResource(R.drawable.errorimg),
-                                onError = { e -> Log.i("섬네일 에러", e.toString()) },
-                                contentScale = ContentScale.FillWidth,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            dialogViewModel.setGalleryDetail(g)
-                                            isGalleryDetailDialogOpen.value = true
-                                        },
-                                        onLongClick = {
-                                            dialogViewModel.setGallery(g.gId)
-                                            isGalleryDialogOpen.value = true
-                                        }
-                                    ),
-                            )
-                        }
-                    }
-                    if (rowItems.size < chunkSize) {
-                        for (i in 1..chunkSize - rowItems.size)
-                            Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
+          for (g in rowItems) {
+            val cardBorderColor: Color = when (g.likeStatus) {
+              0 -> Color.Gray
+              2 -> Color(0xFFCC00CC)
+              else -> Color.Black
             }
+            Box(
+              modifier = Modifier
+                .weight(1f)
+                .border(1.dp, cardBorderColor),
+              contentAlignment = Alignment.Center
+            ) {
+              AsyncImage(
+                model = ImageRequest.Builder(context)
+                  .data(
+                    decodeThumbnail(
+                      g.thumb1,
+                      hitomiViewModel.mList,
+                      hitomiViewModel.thumbChar2.value,
+                      hitomiViewModel.thumbChar1.value,
+                      isAvifFormat
+                    )
+                  )
+                  .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
+                  .build(),
+                contentDescription = "thumbnail",
+                placeholder = painterResource(R.drawable.loading),
+                error = painterResource(R.drawable.errorimg),
+                onError = { e -> Log.i("섬네일 에러", e.toString()) },
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .combinedClickable(
+                    onClick = {
+                      dialogViewModel.setGalleryDetail(g)
+                      isGalleryDetailDialogOpen.value = true
+                    },
+                    onLongClick = {
+                      dialogViewModel.setGallery(g.gId)
+                      isGalleryDialogOpen.value = true
+                    }
+                  ),
+              )
+            }
+          }
+          if (rowItems.size < chunkSize) {
+            for (i in 1..chunkSize - rowItems.size)
+              Spacer(modifier = Modifier.weight(1f))
+          }
         }
+      }
     }
+  }
 }

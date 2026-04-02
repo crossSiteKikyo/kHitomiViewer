@@ -40,7 +40,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -62,11 +64,12 @@ fun Search(
 
   var gIdSearch by remember { mutableStateOf("") }
   var titleSearchKeyword by remember { mutableStateOf("") }
-  var tagSearchKeyword by remember { mutableStateOf("") }
+//  var tagSearchKeyword by remember { mutableStateOf("") }
+  var tagSearchKeyword by remember { mutableStateOf(TextFieldValue("")) }
   var isTagSearchFocused by remember { mutableStateOf(false) }
 
-  LaunchedEffect(tagSearchKeyword) {
-    searchViewModel.filterTagsByKeyword(tagSearchKeyword)
+  LaunchedEffect(tagSearchKeyword.text) {
+    searchViewModel.filterTagsByKeyword(tagSearchKeyword.text)
   }
 
   LaunchedEffect(titleKeyword) {
@@ -83,8 +86,8 @@ fun Search(
   ) {
     Surface(
       modifier = Modifier
-          .fillMaxWidth()
-          .fillMaxHeight(),
+        .fillMaxWidth()
+        .fillMaxHeight(),
       tonalElevation = 8.dp,
       shadowElevation = 8.dp
     ) {
@@ -92,8 +95,8 @@ fun Search(
         SelectType()
         Row(
           modifier = Modifier
-              .fillMaxWidth()
-              .height(IntrinsicSize.Min),
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
           verticalAlignment = Alignment.CenterVertically
         ) {
           Column(modifier = Modifier.weight(1f)) {
@@ -113,8 +116,8 @@ fun Search(
               Row(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier
-                    .padding(1.dp)
-                    .horizontalScroll(rememberScrollState())
+                  .padding(1.dp)
+                  .horizontalScroll(rememberScrollState())
               ) {
                 searchViewModel.selectedTags.forEach { tag ->
                   SelectedTag(tag) {
@@ -141,9 +144,9 @@ fun Search(
             shape = RoundedCornerShape(4.dp),
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier
-                .width(40.dp)
-                .fillMaxHeight()
-                .padding(0.dp)
+              .width(40.dp)
+              .fillMaxHeight()
+              .padding(0.dp)
           ) { Icon(Icons.Filled.Search, "search") }
         }
 
@@ -156,21 +159,21 @@ fun Search(
           maxLines = 1,
           singleLine = true,
           modifier = Modifier
-              .fillMaxWidth()
-              .onFocusChanged { isTagSearchFocused = it.isFocused },
+            .fillMaxWidth()
+            .onFocusChanged { isTagSearchFocused = it.isFocused },
           contentPadding = PaddingValues(horizontal = 7.dp, vertical = 2.dp)
         )
         // 포커스되어있다면 추천 접두사를 보여주거나 필터된 태그들을 보여준다.
         if (isTagSearchFocused) {
           if (searchViewModel.filteredTags.isEmpty()) {
             SearchRecommendedList { prefix ->
-              tagSearchKeyword = prefix
+              tagSearchKeyword = TextFieldValue(text = prefix, selection = TextRange(prefix.length))
             }
           } else {
             searchViewModel.filteredTags.forEach { tag ->
               FilteredTag(tag) {
                 searchViewModel.selectedTags.add(tag)
-                tagSearchKeyword = ""
+                tagSearchKeyword = TextFieldValue("")
               }
             }
           }
@@ -180,8 +183,8 @@ fun Search(
 
         Row(
           modifier = Modifier
-              .fillMaxWidth()
-              .height(IntrinsicSize.Min),
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
           verticalAlignment = Alignment.CenterVertically
         ) {
           CustomTextField(
@@ -207,15 +210,15 @@ fun Search(
             shape = RoundedCornerShape(4.dp),
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier
-                .width(40.dp)
-                .padding(0.dp)
+              .width(40.dp)
+              .padding(0.dp)
           ) { Icon(Icons.Filled.Search, "search") }
         }
 
         Button(
           modifier = Modifier
-              .fillMaxWidth()
-              .padding(top = 15.dp),
+            .fillMaxWidth()
+            .padding(top = 15.dp),
           onClick = { isSearchSheetVisible.value = false }
         ) {
           Icon(Icons.Filled.ExpandLess, null)

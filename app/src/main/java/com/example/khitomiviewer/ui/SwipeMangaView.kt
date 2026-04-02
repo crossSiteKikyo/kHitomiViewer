@@ -82,6 +82,7 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
@@ -94,7 +95,6 @@ import kotlin.math.abs
 @Composable
 fun SwipeMangaView(
   gId: Long,
-  hitomiHeaders: NetworkHeaders,
   hashToImageUrl: (String) -> String,
   imageHashes: SnapshotStateList<String>,
   isUISelectDialogOpen: MutableState<Boolean>

@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +69,9 @@ import com.example.khitomiviewer.R
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.tag.MainTag
 import com.example.khitomiviewer.ui.tag.SubTag
+import com.example.khitomiviewer.util.decodeThumbnail
+import com.example.khitomiviewer.util.hitomiHeaders
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
@@ -88,6 +92,9 @@ fun GalleryDetailDialog(
   val galleryViewModel: GalleryViewModel = viewModel(activity)
   val dialogViewModel: DialogViewModel = viewModel(activity)
   val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
+  val appViewModel: AppViewModel = viewModel(activity)
+
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
 
   val galleryDetail by dialogViewModel.selectedGalleryDetail
 
@@ -101,22 +108,7 @@ fun GalleryDetailDialog(
       // CC보다 크면 안되고 66보다 작으면 안된다.
     )
   }
-  // th.hitomi.la는 가짜 url이다. 진짜 url로 바꾼다.
-  val realHitomiThumbnailUrl: (String) -> String = { url ->
-    val hash = """[0-9a-z]{40,}""".toRegex().find(url)?.value
-    if (hash == null) {
-      url
-    } else {
-      val s =
-        "${hash[hash.length - 1]}${hash[hash.length - 3]}${hash[hash.length - 2]}".toInt(16)
-          .toString(10)
-      val ch =
-        if (s in hitomiViewModel.mList) hitomiViewModel.thumbChar2.value else hitomiViewModel.thumbChar1.value
-      url.replace("tn.hitomi.la", "${ch}tn.gold-usergeneratedcontent.net")
-    }
-  }
   val context = LocalContext.current
-  val hitomiHeaders = NetworkHeaders.Builder().set("Referer", "https://hitomi.la/").build()
 
   // 다이얼로그
   if (isGalleryDetailDialogOpen.value) {
@@ -421,9 +413,16 @@ fun GalleryDetailDialog(
                     ),
                 ) {
                   AsyncImage(
-//                                    model = "https://tn.gold-usergeneratedcontent.net/webpbigtn/6/67/9a7943d3898b3f275ef4d5f6c9f012ee806e043f3c52fdc292caffbb9b988676.webp",
                     model = ImageRequest.Builder(context)
-                      .data(realHitomiThumbnailUrl(g.thumb1))
+                      .data(
+                        decodeThumbnail(
+                          g.thumb1,
+                          hitomiViewModel.mList,
+                          hitomiViewModel.thumbChar2.value,
+                          hitomiViewModel.thumbChar1.value,
+                          isAvifFormat
+                        )
+                      )
                       .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
                       .build(),
                     contentDescription = "thumbnail",
@@ -438,7 +437,15 @@ fun GalleryDetailDialog(
                   )
                   AsyncImage(
                     model = ImageRequest.Builder(context)
-                      .data(realHitomiThumbnailUrl(g.thumb2))
+                      .data(
+                        decodeThumbnail(
+                          g.thumb2,
+                          hitomiViewModel.mList,
+                          hitomiViewModel.thumbChar2.value,
+                          hitomiViewModel.thumbChar1.value,
+                          isAvifFormat
+                        )
+                      )
                       .diskCacheKey(g.thumb2).httpHeaders(hitomiHeaders)
                       .build(),
                     contentDescription = "thumbnail",
