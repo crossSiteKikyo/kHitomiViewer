@@ -177,7 +177,7 @@ fun ScrollMangaView(
     ) {
       items(
         imageHashes.size,
-        key = { idx -> imageHashes[idx] }
+//        key = { idx -> imageHashes[idx] } // 중복되는 hash값이 있다면 오류가 난다.
       ) { page ->
         val hash = imageHashes[page]
 

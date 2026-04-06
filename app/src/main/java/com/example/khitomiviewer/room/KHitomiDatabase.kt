@@ -12,12 +12,12 @@ import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.room.entity.Type
 
 @Database(
-    entities = [Type::class, Gallery::class, Tag::class, GalleryTag::class],
-    version = 7, exportSchema = false
+  entities = [Type::class, Gallery::class, Tag::class, GalleryTag::class],
+  version = 8, exportSchema = false
 )
 abstract class KHitomiDatabase : RoomDatabase() {
-    abstract fun typeDao(): TypeDao
-    abstract fun tagDao(): TagDao
-    abstract fun galleryDao(): GalleryDao
-    abstract fun galleryTagDao(): GalleryTagDao
+  abstract fun typeDao(): TypeDao
+  abstract fun tagDao(): TagDao
+  abstract fun galleryDao(): GalleryDao
+  abstract fun galleryTagDao(): GalleryTagDao
 }

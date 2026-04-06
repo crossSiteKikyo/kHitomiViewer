@@ -14,9 +14,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 
 // "UI 관련 전역 상태"만 관리하는 viewModel
 class AppViewModel(application: Application) : AndroidViewModel(application) {
+  private val tagDao = DatabaseProvider.getDatabase(application).tagDao()
   private val prefManager = PreferenceManager(application)
 
   // Application Context를 안전하게 가져오기
@@ -62,10 +66,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
   val isVolumeKeyPagingEnabled = prefManager.isVolumeKeyPaging
     .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-  fun toggleVolumeKeyPaging(enabled: Boolean) {
-    viewModelScope.launch {
-      prefManager.setVolumeKeyPaging(enabled)
-    }
+  fun toggleVolumeKeyPaging(enabled: Boolean) = viewModelScope.launch {
+    prefManager.setVolumeKeyPaging(enabled)
+  }
+
+  // 태그 한글화
+  val tagKorean = prefManager.tagKorean
+  fun setTagKorean(enabled: Boolean) = viewModelScope.launch {
+    prefManager.setTagKorean(enabled)
   }
 
   var isPaginationActive = mutableStateOf(false)  // 현재 화면에 Pagination 컴포저블이 활성화되어 있는지 여부
@@ -75,6 +83,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
   val volumeKeyEvent = _volumeKeyEvent.asSharedFlow()
   fun onVolumeKeyPressed(event: VolumeKeyEvent) {
     viewModelScope.launch { _volumeKeyEvent.emit(event) }
+  }
+
+  init {
+    Log.i("dsf", "asdf")
+    makeKoreanTag()
+  }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  fun makeKoreanTag() = viewModelScope.launch(Dispatchers.IO) {
+    val inputStream = context.assets.open("tags_ko.json")
+    val translationMap = Json.decodeFromStream<Map<String, String>>(inputStream)
+
+    val targetTags = tagDao.getTagsWithNoKoreanName()
+    // 번역 가능한 태그들 필터링
+    val updatedTags = targetTags.mapNotNull { tag ->
+      val translated = translationMap[tag.name]
+      if (translated != null) tag.copy(koreanName = translated)
+      else null
+    }
+    // DB에 일괄 반영 (Transaction 처리됨)
+    if (updatedTags.isNotEmpty())
+      tagDao.updateTags(updatedTags)
+    Log.i("태그 번역 개수", "${updatedTags.size}")
   }
 
   // 최신 버전인지 체크

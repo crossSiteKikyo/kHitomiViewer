@@ -12,7 +12,7 @@ interface TagDao {
   fun insert(tag: Tag)
 
   @Update
-  fun update(tag: Tag)
+  fun updateTags(tags: List<Tag>)
 
   @Query("update tag set likeStatus = :likeStatus, likeStatusChangedAt = :likeStatusChangedAt where tag.tagId = :tagId ")
   fun updateTagLike(tagId: Long, likeStatus: Int, likeStatusChangedAt: Long)
@@ -65,6 +65,9 @@ interface TagDao {
   @Query("select count(tagId) from tag where likeStatus = 0")
   fun countDislikeTags(): Long
 
-  @Query("select * from tag where name like :keyword and tagId not in (:tagIds) limit 15")
+  @Query("select * from tag where name like :keyword or koreanName like :keyword and tagId not in (:tagIds) limit 15")
   fun findByKeyword(keyword: String, tagIds: List<Long>): List<Tag>
+
+  @Query("select * from tag where name not like 'artist:%' and name not like 'group:%' and name not like 'parody:%' and name not like 'character:%' and koreanName is null")
+  fun getTagsWithNoKoreanName(): List<Tag>
 }

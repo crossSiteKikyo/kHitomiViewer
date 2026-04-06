@@ -28,6 +28,7 @@ class PreferenceManager(private val context: Context) {
     val AUTO_PLAY_PERIOD = intPreferencesKey("auto_play_period")
     val TYPE_ID_LIST = stringPreferencesKey("showTypeIdList")
     val IS_VOLUME_KEY_PAGING = booleanPreferencesKey("is_volume_key_paging")
+    val TAG_KOREAN = booleanPreferencesKey("tag_korean")
     val GALLERY_LIST_UI = stringPreferencesKey("gallery_list_ui")
     val PAGE_SIZE = intPreferencesKey("page_size")
     val VIEW_METHOD = stringPreferencesKey("view_method")
@@ -85,6 +86,10 @@ class PreferenceManager(private val context: Context) {
   val isVolumeKeyPaging: Flow<Boolean> = getPreference(Keys.IS_VOLUME_KEY_PAGING, false)
   suspend fun setVolumeKeyPaging(enabled: Boolean) =
     setPreference(Keys.IS_VOLUME_KEY_PAGING, enabled)
+
+  // 태그 한글화
+  val tagKorean: Flow<Boolean> = getPreference(Keys.TAG_KOREAN, true)
+  suspend fun setTagKorean(enabled: Boolean) = setPreference(Keys.TAG_KOREAN, enabled)
 
   // 갤러리 리스트 ui
   val galleryListUi: Flow<String> = getPreference(Keys.GALLERY_LIST_UI, "Extended")

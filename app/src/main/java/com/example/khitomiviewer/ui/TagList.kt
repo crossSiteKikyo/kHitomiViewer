@@ -109,7 +109,7 @@ fun TagList(
               )
             },
             onLongClick = {
-              dialogViewModel.setTag(Tag(t.tagId, t.name, t.likeStatus))
+              dialogViewModel.setTag(Tag(t.tagId, t.name, null, t.likeStatus))
               isTagDialogOpen.value = true
             }
           ),

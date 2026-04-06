@@ -60,6 +60,7 @@ fun SettingScreen(
   val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
   val pageSize by appViewModel.pageSize.collectAsState(20)
   val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val tagKorean by appViewModel.tagKorean.collectAsState(true)
 
   // 볼륨 키 가로채기 비활성화
   LaunchedEffect(Unit) {
@@ -101,6 +102,21 @@ fun SettingScreen(
       Switch(
         checked = isAvifFormat,
         onCheckedChange = { appViewModel.setAvifFormat(it) }
+      )
+    }
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(56.dp)
+        .clickable { appViewModel.setTagKorean(!tagKorean) },
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+      Text("태그 한글화")
+      Switch(
+        checked = tagKorean,
+        onCheckedChange = { appViewModel.setTagKorean(it) }
       )
     }
 

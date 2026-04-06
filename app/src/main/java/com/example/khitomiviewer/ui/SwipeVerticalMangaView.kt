@@ -177,8 +177,8 @@ fun SwipeVerticalMangaView(
     }
     VerticalPager(
       state = pagerState,
-      beyondViewportPageCount = 12,
-      key = { idx -> imageHashes[idx] },
+      beyondViewportPageCount = 10,
+//      key = { idx -> imageHashes[idx] }, // 중복되는 hash값이 있다면 오류가 난다.
       modifier = Modifier.fillMaxSize()
     )
     { page ->
