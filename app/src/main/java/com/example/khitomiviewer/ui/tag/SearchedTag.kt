@@ -62,14 +62,14 @@ fun SearchedTag(
 
   Row(
     modifier = Modifier
-        .background(bgColor)
-        .combinedClickable(
-            onClick = { tagClick() },
-            onLongClick = {
-                dialogViewModel.setTag(tag)
-                isTagDialogOpen.value = true
-            }
-        )
+      .background(bgColor)
+      .combinedClickable(
+        onClick = { tagClick() },
+        onLongClick = {
+          dialogViewModel.setTag(tag)
+          isTagDialogOpen.value = true
+        }
+      )
   ) {
     Text(
       name,
@@ -77,5 +77,9 @@ fun SearchedTag(
       modifier = Modifier
         .padding(horizontal = 2.dp)
     )
+    if (tag.likeStatus == 2)
+      Icon(Icons.Outlined.ThumbUp, null, tint = textColor)
+    else if (tag.likeStatus == 0)
+      Icon(Icons.Outlined.Block, null, tint = textColor)
   }
 }

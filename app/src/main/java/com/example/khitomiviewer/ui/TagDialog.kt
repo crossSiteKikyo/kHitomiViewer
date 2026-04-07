@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.SearchViewModel
 import com.example.khitomiviewer.viewmodel.TagViewModel
 
 @Composable
@@ -35,9 +36,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
   val dialogViewModel: DialogViewModel = viewModel(activity)
   val galleryViewModel: GalleryViewModel = viewModel(activity)
   val tagViewModel: TagViewModel = viewModel(activity)
-//  val appViewModel: AppViewModel = viewModel(activity)
-//
-//  val tagKorean by appViewModel.tagKorean.collectAsState(true)
+  val searchViewModel: SearchViewModel = viewModel(activity)
 
   // 다이얼로그
   if (isTagDialogOpen.value) {
@@ -72,6 +71,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
               galleryViewModel.galleryReLoading() // 갤러리 재로딩
               tagViewModel.tagReLoading() // 태그 재로딩
               dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
+              searchViewModel.currentSearchTagsReLoading() //태그 검색 결과 재로딩
             }
           ) {
             Row {
@@ -87,6 +87,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
               galleryViewModel.galleryReLoading() // 갤러리 재로딩
               tagViewModel.tagReLoading() // 태그 재로딩
               dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
+              searchViewModel.currentSearchTagsReLoading() //태그 검색 결과 재로딩
             }
           ) {
             Row {
@@ -101,6 +102,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
               galleryViewModel.galleryReLoading() // 갤러리 재로딩
               tagViewModel.tagReLoading() // 태그 재로딩
               dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
+              searchViewModel.currentSearchTagsReLoading() //태그 검색 결과 재로딩
             }
           ) {
             Row {

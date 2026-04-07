@@ -3,6 +3,7 @@ package com.example.khitomiviewer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
@@ -55,7 +56,7 @@ sealed class Screen(
   }
 
   data object DislikeGallery :
-    Screen("DislikeGalleryScreen?page={page}", "싫어요한 갤러리들", Icons.Outlined.ThumbDown) {
+    Screen("DislikeGalleryScreen?page={page}", "싫어요한 갤러리들", Icons.Outlined.Block) {
     fun createRoute(page: Long = 1L): String {
       return "DislikeGalleryScreen?page=${page}"
     }
@@ -69,7 +70,7 @@ sealed class Screen(
   }
 
   data object DislikeTag :
-    Screen("DislikeTagScreen?page={page}", "싫어요한 태그들", Icons.Outlined.ThumbDown) {
+    Screen("DislikeTagScreen?page={page}", "싫어요한 태그들", Icons.Outlined.Block) {
     fun createRoute(page: Long = 1L): String {
       return "DislikeTagScreen?page=${page}"
     }
