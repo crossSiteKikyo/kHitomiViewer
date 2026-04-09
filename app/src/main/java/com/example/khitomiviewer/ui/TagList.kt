@@ -68,6 +68,8 @@ fun TagList(
   val dialogViewModel: DialogViewModel = viewModel(activity)
   val appViewModel: AppViewModel = viewModel(activity)
 
+  val tagKorean by appViewModel.tagKorean.collectAsState(true)
+
   val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
   val context = LocalContext.current
 
@@ -94,6 +96,9 @@ fun TagList(
         bgColor = Color(0xFF0080FF)
       else if (t.name.startsWith("female:"))
         bgColor = Color(0xFFFF66B2)
+      var name = t.name
+      if (tagKorean && t.koreanName != null)
+        name = t.koreanName
       Card(
         shape = RoundedCornerShape(5.dp),
         modifier = Modifier
@@ -122,7 +127,7 @@ fun TagList(
             .background(color = bgColor)
         ) {
           Text(
-            t.name, color = textColor, modifier = Modifier
+            name, color = textColor, modifier = Modifier
               .padding(horizontal = 2.dp)
           )
           if (t.likeStatus == 2)

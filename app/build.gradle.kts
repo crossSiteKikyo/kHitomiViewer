@@ -30,8 +30,8 @@ android {
     targetSdk = 35
     // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
     // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15, 2.5.0 - 17, 2.6.0 - 18, 2.7.0 - 20, 2.8.0 - 30
-    versionName = "2.8.1"
-    versionCode = 31
+    versionName = "2.8.2"
+    versionCode = 32
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

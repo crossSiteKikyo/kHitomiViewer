@@ -65,9 +65,10 @@ interface TagDao {
   @Query("select count(tagId) from tag where likeStatus = 0")
   fun countDislikeTags(): Long
 
-  @Query("select * from tag where name like :keyword or koreanName like :keyword and tagId not in (:tagIds) limit 15")
-  fun findByKeyword(keyword: String, tagIds: List<Long>): List<Tag>
+  @Query("select * from tag where name like :keyword or koreanName like :keyword and tagId not in (:tagIds) limit :limit")
+  fun findByKeyword(keyword: String, tagIds: List<Long>, limit: Int): List<Tag>
 
-  @Query("select * from tag where name not like 'artist:%' and name not like 'group:%' and name not like 'parody:%' and name not like 'character:%' and koreanName is null")
+  // 번역 가능한 태그들 목록을 불러온다. artist, group, character는 번역하지 않고, parody, female, male, 그 외의 것들은 번역한다.
+  @Query("select * from tag where name not like 'artist:%' and name not like 'group:%' and name not like 'character:%' and koreanName is null")
   fun getTagsWithNoKoreanName(): List<Tag>
 }

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Search
@@ -91,7 +92,9 @@ fun Search(
       tonalElevation = 8.dp,
       shadowElevation = 8.dp
     ) {
-      Column {
+      Column(
+        modifier = Modifier.verticalScroll(rememberScrollState())
+      ) {
         SelectType()
         Row(
           modifier = Modifier

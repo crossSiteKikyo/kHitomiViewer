@@ -92,8 +92,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
   @OptIn(ExperimentalSerializationApi::class)
   fun makeKoreanTag() = viewModelScope.launch(Dispatchers.IO) {
-    val inputStream = context.assets.open("tags_ko.json")
-    val translationMap = Json.decodeFromStream<Map<String, String>>(inputStream)
+//    val inputStream = context.assets.open("tags_ko.json")
+//    val inputStream2 = context.assets.open("tags_parody_ko.json")
+    val translationMap = context.assets.open("tags_ko.json").use { s1 ->
+      Json.decodeFromStream<Map<String, String>>(s1)
+    } + context.assets.open("tags_parody_ko.json").use { s2 ->
+      Json.decodeFromStream<Map<String, String>>(s2)
+    }
 
     val targetTags = tagDao.getTagsWithNoKoreanName()
     // 번역 가능한 태그들 필터링
@@ -104,7 +109,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     // DB에 일괄 반영 (Transaction 처리됨)
     if (updatedTags.isNotEmpty())
-      tagDao.updateTags(updatedTags)
+    // 너무 많을 경우를 대비해 500개씩 작업한다.
+      updatedTags.chunked(500).forEach { tagDao.updateTags(it) }
     Log.i("태그 번역 개수", "${updatedTags.size}")
   }
 

@@ -1,5 +1,7 @@
 package com.example.khitomiviewer.ui.tag
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -11,60 +13,71 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.room.entity.Tag
+import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
 
 @Composable
 fun MainTag(
-    tag: Tag,
-    textColor: Color,
-    dialogViewModel: DialogViewModel,
-    isTagDialogOpen: MutableState<Boolean>,
-    navController: NavHostController,
-    isGalleryDetailDialogOpen: MutableState<Boolean>? = null
+  tag: Tag,
+  textColor: Color,
+  dialogViewModel: DialogViewModel,
+  isTagDialogOpen: MutableState<Boolean>,
+  navController: NavHostController,
+  isGalleryDetailDialogOpen: MutableState<Boolean>? = null
 ) {
-    fun tagClick() {
-        navController.navigate(Screen.List.createRoute(1L, longArrayOf(tag.tagId)))
-        if (isGalleryDetailDialogOpen != null)
-            isGalleryDetailDialogOpen.value = false
-    }
+  val activity = LocalActivity.current as ComponentActivity
+  val appViewModel: AppViewModel = viewModel(activity)
+  val tagKorean by appViewModel.tagKorean.collectAsState(true)
 
-    var name = tag.name
-    if (name.startsWith("parody:")) {
-        name = name.replace("parody:", "")
-    } else if (name.startsWith("character:")) {
-        name = name.replace("character:", "")
-    } else if (name.startsWith("group:")) {
-        name = name.replace("group:", "")
-    } else if (name.startsWith("artist:")) {
-        name = name.replace("artist:", "")
-    }
+  fun tagClick() {
+    navController.navigate(Screen.List.createRoute(1L, longArrayOf(tag.tagId)))
+    if (isGalleryDetailDialogOpen != null)
+      isGalleryDetailDialogOpen.value = false
+  }
 
-    Row(
-        modifier = Modifier
-            .combinedClickable(
-                onClick = { tagClick() },
-                onLongClick = {
-                    dialogViewModel.setTag(tag)
-                    isTagDialogOpen.value = true
-                }
-            )
-    ) {
-        Text(
-            name,
-            color = textColor,
-            modifier = Modifier
-                .padding(horizontal = 2.dp)
-        )
-        if (tag.likeStatus == 2)
-            Icon(Icons.Outlined.ThumbUp, null, tint = textColor)
-        else if (tag.likeStatus == 0)
-            Icon(Icons.Outlined.Block, null, tint = textColor)
-    }
+  var name = tag.name
+  if (name.startsWith("parody:")) {
+    if (tagKorean && tag.koreanName != null)
+      name = tag.koreanName.replace("패러디:", "")
+    else
+      name = name.replace("parody:", "")
+  } else if (name.startsWith("character:")) {
+    name = name.replace("character:", "")
+  } else if (name.startsWith("group:")) {
+    name = name.replace("group:", "")
+  } else if (name.startsWith("artist:")) {
+    name = name.replace("artist:", "")
+  }
+
+  Row(
+    modifier = Modifier
+      .combinedClickable(
+        onClick = { tagClick() },
+        onLongClick = {
+          dialogViewModel.setTag(tag)
+          isTagDialogOpen.value = true
+        }
+      )
+  ) {
+    Text(
+      name,
+      color = textColor,
+      modifier = Modifier
+        .padding(horizontal = 2.dp)
+    )
+    if (tag.likeStatus == 2)
+      Icon(Icons.Outlined.ThumbUp, null, tint = textColor)
+    else if (tag.likeStatus == 0)
+      Icon(Icons.Outlined.Block, null, tint = textColor)
+  }
 }

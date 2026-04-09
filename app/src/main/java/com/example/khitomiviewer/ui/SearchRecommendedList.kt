@@ -20,68 +20,75 @@ fun SearchRecommendedList(onClick: (prefix: String) -> Unit) {
   val appViewModel: AppViewModel = viewModel(activity)
   val tagKorean by appViewModel.tagKorean.collectAsState(true)
 
+  if (tagKorean) {
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .combinedClickable(onClick = { onClick("패러디:") })
+    ) {
+      Text("패러디:")
+    }
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .combinedClickable(onClick = { onClick("남성:") })
+    ) {
+      Text("남성:")
+    }
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .combinedClickable(onClick = { onClick("여성:") })
+    ) {
+      Text("여성:")
+    }
+  }
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .combinedClickable(onClick = { onClick("artist:") })
+      .fillMaxWidth()
+      .combinedClickable(onClick = { onClick("artist:") })
   ) {
     Text("artist:")
     Text("작가", color = Color.Gray)
   }
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .combinedClickable(onClick = { onClick("group:") })
+      .fillMaxWidth()
+      .combinedClickable(onClick = { onClick("group:") })
   ) {
     Text("group:")
     Text("그룹", color = Color.Gray)
   }
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .combinedClickable(onClick = { onClick("parody:") })
+      .fillMaxWidth()
+      .combinedClickable(onClick = { onClick("parody:") })
   ) {
     Text("parody:")
     Text("시리즈", color = Color.Gray)
   }
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .combinedClickable(onClick = { onClick("character:") })
+      .fillMaxWidth()
+      .combinedClickable(onClick = { onClick("character:") })
   ) {
     Text("character:")
     Text("캐릭터", color = Color.Gray)
   }
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .combinedClickable(onClick = { onClick("male:") })
+      .fillMaxWidth()
+      .combinedClickable(onClick = { onClick("male:") })
   ) {
     Text("male:")
     Text("남성", color = Color.Gray)
   }
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .combinedClickable(onClick = { onClick("female:") })
+      .fillMaxWidth()
+      .combinedClickable(onClick = { onClick("female:") })
   ) {
     Text("female:")
     Text("여성", color = Color.Gray)
-  }
-  if (tagKorean) {
-    Row(
-      modifier = Modifier
-          .fillMaxWidth()
-          .combinedClickable(onClick = { onClick("남성:") })
-    ) {
-      Text("남성:")
-    }
-    Row(
-      modifier = Modifier
-          .fillMaxWidth()
-          .combinedClickable(onClick = { onClick("여성:") })
-    ) {
-      Text("여성:")
-    }
   }
 }

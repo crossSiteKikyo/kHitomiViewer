@@ -42,12 +42,32 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
   val filteredTags = mutableStateListOf<Tag>() // 이름으로 필터링된 추천 태그들
   val selectedTags = mutableStateListOf<Tag>() // 선택된 태그들. 검색에 사용할 태그들
 
+  val searchLimit = 15
+
   fun filterTagsByKeyword(keyword: String) = viewModelScope.launch(Dispatchers.IO) {
-    filteredTags.clear()
+    // 한글이 있는지 검사하고, 있다면 15까지 검색 후 가져온다.
+    // 따로 변수에 저장해서 검색한다.
+    // db에 잘못 번역한 것을 저장하면 어떡하나? 그러니 따로 변수에 저장하는게 맞는 것 같다.
     if (keyword.isNotBlank()) {
-      filteredTags.addAll(
-        tagDao.findByKeyword("%${keyword}%", selectedTags.map { tag -> tag.tagId })
-      )
+      var elements = listOf<Tag>();
+      if (hasKorean(keyword)) {
+        elements =
+          tagDao.findByKeyword("%${keyword}%", selectedTags.map { tag -> tag.tagId }, searchLimit)
+      } else {
+        elements =
+          tagDao.findByKeyword("%${keyword}%", selectedTags.map { tag -> tag.tagId }, searchLimit)
+      }
+      filteredTags.run {
+        clear()
+        addAll(elements)
+      }
+    } else {
+      filteredTags.clear()
     }
   }
+}
+
+fun hasKorean(text: String): Boolean {
+  val regex = "[ㄱ-ㅎㅏ-ㅣ가-힣]".toRegex()
+  return regex.containsMatchIn(text)
 }

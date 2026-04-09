@@ -125,7 +125,7 @@ object DatabaseProvider {
         KHitomiDatabase::class.java,
         "khitomi-db"
       )
-        .createFromAsset("database/khitomi-db-260329")
+        .createFromAsset("database/khitomi-db-260409")
         .addMigrations(MIGRATION_2_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
         .build().also { INSTANCE = it }
     }

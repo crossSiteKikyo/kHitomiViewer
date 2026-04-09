@@ -35,7 +35,7 @@ class TagViewModel(application: Application) : AndroidViewModel(application) {
 
     tagDtoList = tagList.map { t ->
       TagFullDto(
-        tagId = t.tagId, name = t.name, likeStatus = t.likeStatus,
+        tagId = t.tagId, name = t.name, koreanName = t.koreanName, likeStatus = t.likeStatus,
         galleries = galleryTagDao.findByTagIdLimit(t.tagId)
           .map { gt -> galleryDao.findById(gt.gId) }
       )
