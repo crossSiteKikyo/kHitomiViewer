@@ -30,6 +30,7 @@ class PreferenceManager(private val context: Context) {
     val IS_VOLUME_KEY_PAGING = booleanPreferencesKey("is_volume_key_paging")
     val TAG_KOREAN = booleanPreferencesKey("tag_korean")
     val GALLERY_LIST_UI = stringPreferencesKey("gallery_list_ui")
+    val GALLERY_HIDE_MODE = stringPreferencesKey("gallery_hide_mode")
     val PAGE_SIZE = intPreferencesKey("page_size")
     val VIEW_METHOD = stringPreferencesKey("view_method")
     val GALLERY_LIKE_STATUS_ORDER = stringPreferencesKey("gallery_like_status_order")
@@ -94,6 +95,10 @@ class PreferenceManager(private val context: Context) {
   // 갤러리 리스트 ui
   val galleryListUi: Flow<String> = getPreference(Keys.GALLERY_LIST_UI, "Extended")
   suspend fun setGalleryListUi(v: String) = setPreference(Keys.GALLERY_LIST_UI, v)
+
+  // 갤러리 숨기기 모드
+  val galleryHideMode: Flow<String> = getPreference(Keys.GALLERY_HIDE_MODE, "hardHide")
+  suspend fun setGalleryHideMode(v: String) = setPreference(Keys.GALLERY_HIDE_MODE, v)
 
   // 한번에 로드할 갤러리 개수
   val pageSize: Flow<Int> = getPreference(Keys.PAGE_SIZE, 20)

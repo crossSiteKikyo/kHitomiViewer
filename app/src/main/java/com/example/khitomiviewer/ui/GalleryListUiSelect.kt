@@ -24,84 +24,84 @@ import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
 
 @Composable
 fun GalleryListUiSelect() {
-    // 전역 viewModel들
-    val activity = LocalActivity.current as ComponentActivity
-    val appViewModel: AppViewModel = viewModel(activity)
+  // 전역 viewModel들
+  val activity = LocalActivity.current as ComponentActivity
+  val appViewModel: AppViewModel = viewModel(activity)
 
-    val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
+  val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
+  Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(56.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(5.dp)
+  ) {
+    Button(
+      onClick = {
+        appViewModel.setGalleryListUi("Extended")
+      },
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      enabled = galleryListUi != "Extended",
+      contentPadding = PaddingValues(2.dp)
     ) {
-        Button(
-            onClick = {
-                appViewModel.setGalleryListUi("Extended")
-            },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
-            enabled = galleryListUi != "Extended",
-            contentPadding = PaddingValues(2.dp)
-        ) {
-            Text("확장")
-        }
-        Button(
-            onClick = {
-                appViewModel.setGalleryListUi("Brief")
-            },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
-            enabled = galleryListUi != "Brief",
-            contentPadding = PaddingValues(2.dp)
-        ) {
-            Text("간략히")
-        }
-        Button(
-            onClick = {
-                appViewModel.setGalleryListUi("Grid")
-            },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
-            enabled = galleryListUi != "Grid",
-            contentPadding = PaddingValues(2.dp)
-        ) {
-            Text("그리드2")
-        }
-        Button(
-            onClick = {
-                appViewModel.setGalleryListUi("Grid3")
-            },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
-            enabled = galleryListUi != "Grid3",
-            contentPadding = PaddingValues(2.dp)
-        ) {
-            Text("그리드3")
-        }
-        Button(
-            onClick = {
-                appViewModel.setGalleryListUi("Grid4")
-            },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
-            enabled = galleryListUi != "Grid4",
-            contentPadding = PaddingValues(2.dp)
-        ) {
-            Text("그리드4")
-        }
-        Button(
-            onClick = {
-                appViewModel.setGalleryListUi("Grid5")
-            },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp),
-            enabled = galleryListUi != "Grid5",
-            contentPadding = PaddingValues(2.dp)
-        ) {
-            Text("그리드5")
-        }
+      Text("확장")
     }
+    Button(
+      onClick = {
+        appViewModel.setGalleryListUi("Brief")
+      },
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      enabled = galleryListUi != "Brief",
+      contentPadding = PaddingValues(2.dp)
+    ) {
+      Text("간략히")
+    }
+    Button(
+      onClick = {
+        appViewModel.setGalleryListUi("Grid")
+      },
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      enabled = galleryListUi != "Grid",
+      contentPadding = PaddingValues(2.dp)
+    ) {
+      Text("그리드2")
+    }
+    Button(
+      onClick = {
+        appViewModel.setGalleryListUi("Grid3")
+      },
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      enabled = galleryListUi != "Grid3",
+      contentPadding = PaddingValues(2.dp)
+    ) {
+      Text("그리드3")
+    }
+    Button(
+      onClick = {
+        appViewModel.setGalleryListUi("Grid4")
+      },
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      enabled = galleryListUi != "Grid4",
+      contentPadding = PaddingValues(2.dp)
+    ) {
+      Text("그리드4")
+    }
+    Button(
+      onClick = {
+        appViewModel.setGalleryListUi("Grid5")
+      },
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      enabled = galleryListUi != "Grid5",
+      contentPadding = PaddingValues(2.dp)
+    ) {
+      Text("그리드5")
+    }
+  }
 }

@@ -6,6 +6,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,16 +19,22 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -102,6 +109,8 @@ fun GalleryListGrid(
           verticalAlignment = Alignment.CenterVertically
         ) {
           for (g in rowItems) {
+            val isDislike = g.likeStatus == 0 || g.tags.any { it.likeStatus == 0 }
+            var isHide by remember { mutableStateOf(true) }
             val cardBorderColor: Color = when (g.likeStatus) {
               0 -> Color.Gray
               2 -> Color(0xFFCC00CC)
@@ -113,37 +122,47 @@ fun GalleryListGrid(
                 .border(1.dp, cardBorderColor),
               contentAlignment = Alignment.Center
             ) {
-              AsyncImage(
-                model = ImageRequest.Builder(context)
-                  .data(
-                    decodeThumbnail(
-                      g.thumb1,
-                      hitomiViewModel.mList,
-                      hitomiViewModel.thumbChar2.value,
-                      hitomiViewModel.thumbChar1.value,
-                      isAvifFormat
+              if (isDislike && isHide) {
+                Icon(
+                  Icons.Outlined.VisibilityOff,
+                  null,
+                  Modifier
+                    .size(40.dp)
+                    .clickable(onClick = { isHide = false })
+                )
+              } else {
+                AsyncImage(
+                  model = ImageRequest.Builder(context)
+                    .data(
+                      decodeThumbnail(
+                        g.thumb1,
+                        hitomiViewModel.mList,
+                        hitomiViewModel.thumbChar2.value,
+                        hitomiViewModel.thumbChar1.value,
+                        isAvifFormat
+                      )
                     )
-                  )
-                  .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
-                  .build(),
-                contentDescription = "thumbnail",
-                placeholder = painterResource(R.drawable.loading),
-                error = painterResource(R.drawable.errorimg),
-                onError = { e -> Log.i("섬네일 에러", e.toString()) },
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .combinedClickable(
-                    onClick = {
-                      dialogViewModel.setGalleryDetail(g)
-                      isGalleryDetailDialogOpen.value = true
-                    },
-                    onLongClick = {
-                      dialogViewModel.setGallery(g.gId)
-                      isGalleryDialogOpen.value = true
-                    }
-                  ),
-              )
+                    .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
+                    .build(),
+                  contentDescription = "thumbnail",
+                  placeholder = painterResource(R.drawable.loading),
+                  error = painterResource(R.drawable.errorimg),
+                  onError = { e -> Log.i("섬네일 에러", e.toString()) },
+                  contentScale = ContentScale.FillWidth,
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                      onClick = {
+                        dialogViewModel.setGalleryDetail(g)
+                        isGalleryDetailDialogOpen.value = true
+                      },
+                      onLongClick = {
+                        dialogViewModel.setGallery(g.gId)
+                        isGalleryDialogOpen.value = true
+                      }
+                    ),
+                )
+              }
             }
           }
           if (rowItems.size < chunkSize) {

@@ -49,6 +49,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     prefManager.setGalleryListUi(v)
   }
 
+  // 갤러리 숨기기 모드
+  val galleryHideMode = prefManager.galleryHideMode
+  fun setGalleryhideMode(v: String) = viewModelScope.launch {
+    prefManager.setGalleryHideMode(v)
+  }
+
   // 갤러리 좋아요 상태 정렬 기준
   val galleryLikeStatusOrder = prefManager.galleryLikeStatusOrder
   fun setGalleryLikeStatusOrder(order: String) = viewModelScope.launch {
