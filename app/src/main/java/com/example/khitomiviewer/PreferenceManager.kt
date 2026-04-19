@@ -72,7 +72,7 @@ class PreferenceManager(private val context: Context) {
   suspend fun setRtl(isRtl: Boolean) = setPreference(Keys.IS_RTL_MODE, isRtl)
 
   // 이미지 avif포맷으로 요청하는지
-  val isAvifFormat: Flow<Boolean> = getPreference(Keys.IS_AVIF_FORMAT, true)
+  val isAvifFormat: Flow<Boolean> = getPreference(Keys.IS_AVIF_FORMAT, false)
   suspend fun setAvifFormat(flag: Boolean) = setPreference(Keys.IS_AVIF_FORMAT, flag)
 
   // 만화 자동 넘기기 관련

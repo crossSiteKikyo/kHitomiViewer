@@ -78,7 +78,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.gif.GifDecoder
 import coil3.network.HttpException
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
@@ -111,8 +113,10 @@ fun SwipeVerticalMangaView(
   var isUiVisible by remember { mutableStateOf(false) }
 
   val coroutineScope = rememberCoroutineScope()
-
   val context = LocalContext.current
+  val imageLoader = ImageLoader.Builder(context).components {
+    add(GifDecoder.Factory())
+  }.build()
 
   // 사용자의 설정을 저장하는 변수 (예: true면 일본식 RTL)
   val isRtl by viewMangaViewModel.isRtlMode.collectAsState(initial = false)
@@ -315,6 +319,7 @@ fun SwipeVerticalMangaView(
             .memoryCacheKey(hash).diskCacheKey(hash)
             .build(),
           contentDescription = "img",
+          imageLoader = imageLoader,
           contentScale = ContentScale.Fit,
           placeholder = null,
           error = if (showImage) painterResource(R.drawable.errorimg) else null,

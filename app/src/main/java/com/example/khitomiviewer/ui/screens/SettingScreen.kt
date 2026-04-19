@@ -43,7 +43,7 @@ fun SettingScreen(
 
   val isVolumePaging by appViewModel.isVolumeKeyPagingEnabled.collectAsState()
   val pageSize by appViewModel.pageSize.collectAsState(20)
-  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
   val galleryHideMode by appViewModel.galleryHideMode.collectAsState("hardHide")
   val tagKorean by appViewModel.tagKorean.collectAsState(true)
 

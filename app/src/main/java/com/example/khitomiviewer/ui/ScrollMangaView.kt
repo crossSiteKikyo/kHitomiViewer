@@ -74,7 +74,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.gif.GifDecoder
 import coil3.network.HttpException
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
@@ -109,6 +111,10 @@ fun ScrollMangaView(
   val listState = rememberLazyListState()
   val currentPage by remember { derivedStateOf { listState.firstVisibleItemIndex } }
   val coroutineScope = rememberCoroutineScope()
+
+  val imageLoader = ImageLoader.Builder(context).components {
+    add(GifDecoder.Factory())
+  }.build()
 
   // 마지막 본 페이지 업데이트 로직
   LaunchedEffect(currentPage) {
@@ -292,6 +298,7 @@ fun ScrollMangaView(
               .memoryCacheKey(hash).diskCacheKey(hash)
               .build(),
             contentDescription = "img",
+            imageLoader = imageLoader,
             contentScale = ContentScale.FillWidth,
             placeholder = null,
             error = if (isLoaded) painterResource(R.drawable.errorimg) else null,

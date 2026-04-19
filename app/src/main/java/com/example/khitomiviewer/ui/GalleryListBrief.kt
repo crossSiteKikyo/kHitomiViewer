@@ -90,7 +90,7 @@ fun GalleryListBrief(
   val appViewModel: AppViewModel = viewModel(activity)
 
   val galleryHideMode by appViewModel.galleryHideMode.collectAsState("hardHide")
-  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
 
   val galleries by remember { derivedStateOf { galleryViewModel.galleries } }
 

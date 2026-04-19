@@ -72,7 +72,7 @@ fun GalleryListGrid(
   val dialogViewModel: DialogViewModel = viewModel(activity)
   val appViewModel: AppViewModel = viewModel(activity)
 
-  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
   val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
   val chunkSize = when (galleryListUi) {
     "Grid5" -> 5

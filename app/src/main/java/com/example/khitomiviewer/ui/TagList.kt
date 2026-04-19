@@ -75,7 +75,7 @@ fun TagList(
 
   val tagKorean by appViewModel.tagKorean.collectAsState(true)
 
-  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
   val context = LocalContext.current
 
   val tagDtoList by remember { derivedStateOf { tagViewModel.tagDtoList } }

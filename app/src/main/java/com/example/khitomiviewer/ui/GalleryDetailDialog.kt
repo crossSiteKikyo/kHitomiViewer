@@ -94,7 +94,7 @@ fun GalleryDetailDialog(
   val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
   val appViewModel: AppViewModel = viewModel(activity)
 
-  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
 
   val galleryDetail by dialogViewModel.selectedGalleryDetail
 

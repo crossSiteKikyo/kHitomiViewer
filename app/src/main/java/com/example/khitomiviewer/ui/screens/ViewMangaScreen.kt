@@ -43,7 +43,7 @@ fun ViewMangaScreen(
   val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
   val appViewModel: AppViewModel = viewModel(activity)
 
-  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(true)
+  val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
 
   val viewMethod by viewMangaViewModel.viewMethod.collectAsState("swipe")
   val isUISelectDialogOpen = remember { mutableStateOf(false) }

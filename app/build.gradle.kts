@@ -30,8 +30,8 @@ android {
     targetSdk = 35
     // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
     // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15, 2.5.0 - 17, 2.6.0 - 18, 2.7.0 - 20, 2.8.0 - 30
-    versionName = "2.8.3"
-    versionCode = 33
+    versionName = "2.8.4"
+    versionCode = 34
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -79,6 +79,7 @@ dependencies {
   // 인터넷 이미지 로드를 위함.
   implementation("io.coil-kt.coil3:coil-compose:3.2.0")
   implementation("io.coil-kt.coil3:coil-network-okhttp:3.2.0")
+  implementation("io.coil-kt.coil3:coil-gif:3.2.0") // 움짤 표시
   // 네비게이션 사용
   implementation("androidx.navigation:navigation-compose:2.9.0")
   // ktor http client
