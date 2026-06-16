@@ -22,9 +22,9 @@
 
 - 데이터는 히토미에서 크롤링 합니다
 
-### 설치 & 사용법
+### 설치
 
-[위키](https://github.com/crossSiteKikyo/kHitomiViewer/wiki)를 클릭해 자세히 알아보세요
+[최신 release](https://github.com/crossSiteKikyo/kHitomiViewer/releases/latest) 에서 apk를 다운로드해 설치하세요.
 
 ### 에러 or 문의사항
 
