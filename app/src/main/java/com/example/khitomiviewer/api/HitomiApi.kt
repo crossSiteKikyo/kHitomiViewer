@@ -6,18 +6,17 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class HitomiApi {
     val hitomiClient = HttpClient(CIO) {
         defaultRequest {
             headers {
                 append("Referer", "https://hitomi.la/")
-//                append("Origin", "https://hitomi.la/")
-//                append("Range", "bytes=0-99")
             }
         }
     }
@@ -55,18 +54,32 @@ class HitomiApi {
         return response.bodyAsText()
     }
 
-    suspend fun getPopular(page: Long, period: String, pageSize: Int): HttpResponse {
+    suspend fun getPopular(page: Long, period: String, pageSize: Int): PopularNozomiResponse {
         val startOffset = (page - 1) * pageSize * 4
         val endOffset = page * pageSize * 4 - 1
-        val client = HttpClient(CIO) {
-            defaultRequest {
-                headers {
-                    append("Referer", "https://hitomi.la/")
-                    append("Range", "bytes=$startOffset-$endOffset")
-                }
+        val url = "https://ltn.gold-usergeneratedcontent.net/popular/$period-korean.nozomi"
+        val response = hitomiClient.get(url) {
+            headers {
+                append("Range", "bytes=$startOffset-$endOffset")
             }
         }
-        val url = "https://ltn.gold-usergeneratedcontent.net/popular/$period-korean.nozomi"
-        return client.get(url)
+        return PopularNozomiResponse(
+            bytes = response.bodyAsBytes(),
+            contentRange = response.headers["content-range"]
+        )
+    }
+
+    fun parseNozomiIds(bytes: ByteArray): List<Int> {
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
+        val result = mutableListOf<Int>()
+        while (buffer.remaining() >= 4) {
+            result.add(buffer.int)
+        }
+        return result
     }
 }
+
+data class PopularNozomiResponse(
+    val bytes: ByteArray,
+    val contentRange: String?
+)

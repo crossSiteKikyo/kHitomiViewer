@@ -4,5 +4,5 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     //ksp 플러그인
-    id("com.google.devtools.ksp") version "2.0.21-1.0.27" apply false
+    id("com.google.devtools.ksp") version "2.3.6" apply false
 }

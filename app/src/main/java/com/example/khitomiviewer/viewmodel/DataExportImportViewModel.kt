@@ -8,13 +8,12 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.json.GalleryBrief
-import com.example.khitomiviewer.json.GalleryRecordBrief
 import com.example.khitomiviewer.json.PupilBackup
-import com.example.khitomiviewer.json.TagBrief
 import com.example.khitomiviewer.json.TagsAndGalleries
-import com.example.khitomiviewer.room.DatabaseProvider
-import com.example.khitomiviewer.room.MyRepository
+import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.repository.ArticleReadLog
+import com.example.khitomiviewer.repository.GalleryBookmarkInfo
+import com.example.khitomiviewer.repository.TagBookmarkInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
@@ -30,11 +29,7 @@ import java.time.ZoneId
 
 // 원래 크롤링 중에 데이터 export import가 안되게 했는데 해당 로직 삭제함
 class DataExportImportViewModel(application: Application) : AndroidViewModel(application) {
-    private val tagDao = DatabaseProvider.getDatabase(application).tagDao()
-    private val galleryDao = DatabaseProvider.getDatabase(application).galleryDao()
-
-    private val db = DatabaseProvider.getDatabase(application)
-    private val repository = MyRepository(db)
+    private val backupRepository = AppRepositories.get(application).backup
 
     val json = Json {
         isLenient = true    //따옴표가 없는 key나 문자열 허용
@@ -57,14 +52,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
         viewModelScope.launch(Dispatchers.IO) {
             dbExportImportProgress.value = true
             try {
-                val tagsAndGalleries = TagsAndGalleries(
-                    galleries = galleryDao.findLikeOrDislike()
-                        .map { g -> GalleryBrief(g.gId, g.likeStatus, g.likeStatusChangedAt) },
-                    tags = tagDao.findLikeOrDislike()
-                        .map { t -> TagBrief(t.name, t.likeStatus, t.likeStatusChangedAt) },
-                    galleryRecords = galleryDao.findGalleryRecords()
-                        .map { g -> GalleryRecordBrief(g.gId, g.lastReadAt, g.lastReadPage) }
-                )
+                val tagsAndGalleries = backupRepository.exportTagsAndGalleries()
                 context.contentResolver
                     .openOutputStream(fileUri, "w")
                     ?.use { outputStream ->
@@ -87,7 +75,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val tagsAndGalleries = json.decodeFromStream<TagsAndGalleries>(inputStream)
                     // db 에 좋아요/싫어요 정보 넣기
-                    repository.updateLikeDislikeInfo(tagsAndGalleries)
+                    backupRepository.updateLikeDislikeInfo(tagsAndGalleries)
                     Log.i("개수", "${tagsAndGalleries.galleries.size} ${tagsAndGalleries.tags.size}")
                 } ?: throw IOException("InputStream이 null입니다")
                 statusString.value = "불러오기 완료: ${getCurrentFormattedTime()}"
@@ -107,7 +95,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val pupilBackup = json.decodeFromStream<PupilBackup>(inputStream)
                     // db 에 좋아요/싫어요 정보 넣기
-                    repository.importPupilBackupInfo(pupilBackup)
+                    backupRepository.importPupilBackupInfo(pupilBackup)
                 } ?: throw IOException("InputStream이 null입니다")
                 statusString.value = "불러오기 완료: ${getCurrentFormattedTime()}"
             } catch (e: Exception) {
@@ -229,7 +217,7 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
                         }
                 }
                 // db에 저장
-                repository.importVioletBookmarks(
+                backupRepository.importVioletBookmarks(
                     galleryBookmarkInfos,
                     tagBookmarkInfos,
                     articleReadLogs
@@ -272,19 +260,3 @@ class DataExportImportViewModel(application: Application) : AndroidViewModel(app
         }
     }
 }
-
-data class GalleryBookmarkInfo( //violet정보
-    val gId: Long,
-    val time: Long
-)
-
-data class TagBookmarkInfo( //violet정보
-    val name: String,
-    val time: Long
-)
-
-data class ArticleReadLog(
-    val gId: Long,
-    val lastReadAt: Long,
-    val lastReadPage: Int
-)
