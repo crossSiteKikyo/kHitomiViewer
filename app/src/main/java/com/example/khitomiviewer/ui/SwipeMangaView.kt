@@ -112,9 +112,11 @@ fun SwipeMangaView(
 
   val coroutineScope = rememberCoroutineScope()
   val context = LocalContext.current
-  val imageLoader = ImageLoader.Builder(context).components {
-    add(GifDecoder.Factory())
-  }.build()
+  val imageLoader = remember(context) {
+    ImageLoader.Builder(context).components {
+      add(GifDecoder.Factory())
+    }.build()
+  }
 
 
   // 사용자의 설정을 저장하는 변수 (예: true면 일본식 RTL)

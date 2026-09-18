@@ -1,5 +1,6 @@
 package com.example.khitomiviewer.ui
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,6 +58,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -81,6 +84,9 @@ import coil3.network.HttpException
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.size.Precision
+import coil3.size.Size
 import com.example.khitomiviewer.R
 import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.viewmodel.AppViewModel
@@ -111,10 +117,15 @@ fun ScrollMangaView(
   val listState = rememberLazyListState()
   val currentPage by remember { derivedStateOf { listState.firstVisibleItemIndex } }
   val coroutineScope = rememberCoroutineScope()
+  val toggleUi = remember {
+    { isUiVisible = !isUiVisible }
+  }
 
-  val imageLoader = ImageLoader.Builder(context).components {
-    add(GifDecoder.Factory())
-  }.build()
+  val imageLoader = remember(context) {
+    ImageLoader.Builder(context).components {
+      add(GifDecoder.Factory())
+    }.build()
+  }
 
   // 마지막 본 페이지 업데이트 로직
   LaunchedEffect(currentPage) {
@@ -169,160 +180,13 @@ fun ScrollMangaView(
     }
   }
   Box(modifier = Modifier.fillMaxSize()) {
-    LazyColumn(
-      state = listState,
-      modifier = Modifier
-        .fillMaxSize()
-        .clickable(
-          interactionSource = remember { MutableInteractionSource() },
-          indication = null,
-        ) {
-          isUiVisible = !isUiVisible
-        },
-      verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-      items(
-        imageHashes.size,
-//        key = { idx -> imageHashes[idx] } // 중복되는 hash값이 있다면 오류가 난다.
-      ) { page ->
-        val hash = imageHashes[page]
-
-        var retryCount by remember { mutableIntStateOf(0) }
-        var shouldRetry by remember { mutableStateOf(false) }
-
-        // 이미지가 로드되었는지 여부와 비율을 기억합니다.
-        var isLoaded by remember { mutableStateOf(false) }
-        var aspectRatio by remember { mutableFloatStateOf(0f) }
-
-        // 확대/축소 및 이동 상태 변수
-        var scale by remember { mutableFloatStateOf(1f) }
-        var offset by remember { mutableStateOf(Offset.Zero) }
-        Box(
-          modifier = Modifier
-            .fillMaxWidth()
-            //이미 로드된 적이 있다면 비율을 유지하여 스크롤 점프 방지
-            .then(
-              if (aspectRatio > 0f) Modifier.aspectRatio(aspectRatio)
-              else Modifier.heightIn(min = 300.dp)
-            )
-            .clipToBounds()
-            .pointerInput(Unit) {
-              val touchSlop = viewConfiguration.touchSlop
-              // 확대/축소 및 이동 처리
-              awaitEachGesture {  // 화면에 손가락을 대고(Down) 뗄 때까지(Up)의 한세트를 하나의 제스처로 본다.
-                var zoom = 1f
-                var pan = Offset.Zero
-                var pastTouchSlop = false
-                // 첫 번째 터치 대기
-                awaitFirstDown(requireUnconsumed = false)
-                val oldOffset = offset
-                var firstCheck = false
-                do {
-                  val event = awaitPointerEvent()
-                  val canceled = event.changes.any { it.isConsumed }
-                  if (!canceled) {
-                    // 확대/축소/이동 계산
-                    val zoomChange = event.calculateZoom()
-                    val panChange = event.calculatePan()
-                    if (!pastTouchSlop) {
-                      zoom *= zoomChange
-                      pan += panChange
-                      // 사용자가 의도적으로 움직였는지(Touch Slop)확인. 일정거리 이내로 움직이면 터치로 간주하고, 일정거리 이상 움직여야 드래그로 간주한다.
-                      val centroidSize = event.calculateCentroidSize(useCurrent = false)
-                      val zoomMotion = abs(1f - zoom) * centroidSize
-                      val panMotion = pan.getDistance()
-                      if (zoomMotion > touchSlop || panMotion > touchSlop) {
-                        pastTouchSlop = true
-                      }
-                    }
-                    if (pastTouchSlop) {
-                      if (scale > 1f || zoomChange != 1f) {
-                        scale = (scale * zoomChange).coerceIn(1f, 3f)
-                        // 확대 상태일 때만 이벤트를 소비하여 부모 스크롤을 막음
-                        if (scale > 1f) {
-                          val extraWidth = (scale - 1) * size.width
-                          val extraHeight = (scale - 1) * size.height
-                          val xLimit = extraWidth / 2
-                          val yLimit = extraHeight / 2
-                          // 한손가락으로, 맨끝에서 더 움직이는거면 break한다.
-                          if (!firstCheck) {
-                            if (oldOffset.y == yLimit && oldOffset.x == xLimit && panChange.y > 0 && panChange.x > 0
-                              || oldOffset.y == yLimit && oldOffset.x == -xLimit && panChange.y > 0 && panChange.x < 0
-                              || oldOffset.y == -yLimit && oldOffset.x == xLimit && panChange.y < 0 && panChange.x > 0
-                              || oldOffset.y == -yLimit && oldOffset.x == -xLimit && panChange.y < 0 && panChange.x < 0
-                              || oldOffset.y == yLimit && panChange.y > 0 && abs(panChange.y / panChange.x) > 1
-                              || oldOffset.y == -yLimit && panChange.y < 0 && abs(panChange.y / panChange.x) > 1
-                            )
-                              if (event.changes.size == 1)
-                                break
-                            firstCheck = true
-                          }
-                          offset = Offset(
-                            (offset.x + panChange.x).coerceIn(-xLimit, xLimit),
-                            (offset.y + panChange.y).coerceIn(-yLimit, yLimit)
-                          )
-                          // 이벤트를 소비하여 부모에게 전달하지 않음.
-                          event.changes.forEach { it.consume() }
-                        } else
-                          offset = Offset.Zero
-                      }
-                      // scale이 1f이고 확대를 시작하는 상황이 아니라면 이벤트를 소비하지 않음.
-                    }
-                  }
-                } while (!canceled && event.changes.any { it.pressed })
-              }
-            }
-            .graphicsLayer(
-              scaleX = scale, scaleY = scale,
-              translationX = offset.x,
-              translationY = offset.y
-            ),
-          contentAlignment = Alignment.Center
-        ) {
-          if (!isLoaded) {
-            CircularProgressIndicator()
-          }
-
-          LaunchedEffect(shouldRetry) {
-            if (shouldRetry) {
-              delay(50) // 딜레이 추가
-              retryCount++
-              shouldRetry = false
-            }
-          }
-
-          AsyncImage(
-            model = ImageRequest.Builder(context)
-              .data(hashToImageUrl(hash) + "?retry=$retryCount")
-              .httpHeaders(hitomiHeaders)
-              .memoryCacheKey(hash).diskCacheKey(hash)
-              .build(),
-            contentDescription = "img",
-            imageLoader = imageLoader,
-            contentScale = ContentScale.FillWidth,
-            placeholder = null,
-            error = if (isLoaded) painterResource(R.drawable.errorimg) else null,
-            onError = { e ->
-              if ((e.result.throwable as? HttpException)?.response?.code == 503) {
-                shouldRetry = true
-              } else
-                isLoaded = true
-              Log.i("이미지 로드 에러", e.result.throwable.toString())
-            },
-            onSuccess = { result ->
-              isLoaded = true
-              // 이미지의 실제 비율을 계산하여 저장
-              val width = result.painter.intrinsicSize.width
-              val height = result.painter.intrinsicSize.height
-              if (height > 0) {
-                aspectRatio = width / height
-              }
-            },
-            modifier = Modifier.fillMaxWidth()
-          )
-        }
-      }
-    }
+    ScrollMangaImageList(
+      listState = listState,
+      hashToImageUrl = hashToImageUrl,
+      imageHashes = imageHashes,
+      imageLoader = imageLoader,
+      onToggleUi = toggleUi
+    )
     // 상단 ui
     AnimatedVisibility(
       visible = isUiVisible,
@@ -416,5 +280,201 @@ fun ScrollMangaView(
         .padding(bottom = 80.dp) // 하단 UI와 겹치지 않게 조절
     )
     AutoPlayDialog(isAutoPlayDialogOpen)
+  }
+}
+
+@SuppressLint("SuspiciousIndentation")
+@Composable
+private fun ScrollMangaImageList(
+  listState: LazyListState,
+  hashToImageUrl: (String) -> String,
+  imageHashes: SnapshotStateList<String>,
+  imageLoader: ImageLoader,
+  onToggleUi: () -> Unit
+) {
+  val context = LocalContext.current
+  // 화면 밖으로 나가 아이템이 dispose 되어도 비율/로드여부를 유지한다.
+  val loadedPages = remember { mutableStateMapOf<Int, Boolean>() }
+  val aspectRatios = remember { mutableStateMapOf<Int, Float>() }
+  val currentPage by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+  // 근처 페이지를 Coil 캐시에 미리 올려 자동재생/빠른 스크롤 지연을 줄인다.
+  LaunchedEffect(currentPage, imageHashes.size) {
+    val from = (currentPage - 2).coerceAtLeast(0)
+    val to = (currentPage + 10).coerceAtMost(imageHashes.lastIndex)
+    for (i in from..to) {
+      launch {
+        val hash = imageHashes[i]
+        val result = imageLoader.execute(
+          ImageRequest.Builder(context)
+            .data(hashToImageUrl(hash))
+            .httpHeaders(hitomiHeaders)
+            .memoryCacheKey(hash)
+            .diskCacheKey(hash)
+            .precision(Precision.INEXACT)
+            .size(Size.ORIGINAL)
+            .build()
+        )
+        if (result is SuccessResult) {
+          loadedPages[i] = true
+          val height = result.image.height
+          if (height > 0) {
+            aspectRatios[i] = result.image.width.toFloat() / height.toFloat()
+          }
+        }
+      }
+    }
+  }
+  LazyColumn(
+    state = listState,
+    modifier = Modifier
+      .fillMaxSize()
+      .clickable(
+        interactionSource = remember { MutableInteractionSource() },
+        indication = null,
+        onClick = onToggleUi
+      ),
+    verticalArrangement = Arrangement.spacedBy(2.dp)
+  ) {
+    items(
+      imageHashes.size,
+//        key = { idx -> imageHashes[idx] } // 중복되는 hash값이 있다면 오류가 난다. 한 작품에 같은 이미지가 2장이상 들어가있을 수 있다는거다.
+    ) { page ->
+      val hash = imageHashes[page]
+
+      var retryCount by remember { mutableIntStateOf(0) }
+      var shouldRetry by remember { mutableStateOf(false) }
+
+      val isLoaded = loadedPages[page] == true
+      val aspectRatio = aspectRatios[page] ?: 0f
+
+      // 확대/축소 및 이동 상태 변수
+      var scale by remember { mutableFloatStateOf(1f) }
+      var offset by remember { mutableStateOf(Offset.Zero) }
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          //이미 로드된 적이 있다면 비율을 유지하여 스크롤 점프 방지
+          .then(
+            if (aspectRatio > 0f) Modifier.aspectRatio(aspectRatio)
+            else Modifier.heightIn(min = 300.dp)
+          )
+          .clipToBounds()
+          .pointerInput(Unit) {
+            val touchSlop = viewConfiguration.touchSlop
+            // 확대/축소 및 이동 처리
+            awaitEachGesture {  // 화면에 손가락을 대고(Down) 뗄 때까지(Up)의 한세트를 하나의 제스처로 본다.
+              var zoom = 1f
+              var pan = Offset.Zero
+              var pastTouchSlop = false
+              // 첫 번째 터치 대기
+              awaitFirstDown(requireUnconsumed = false)
+              val oldOffset = offset
+              var firstCheck = false
+              do {
+                val event = awaitPointerEvent()
+                val canceled = event.changes.any { it.isConsumed }
+                if (!canceled) {
+                  // 확대/축소/이동 계산
+                  val zoomChange = event.calculateZoom()
+                  val panChange = event.calculatePan()
+                  if (!pastTouchSlop) {
+                    zoom *= zoomChange
+                    pan += panChange
+                    // 사용자가 의도적으로 움직였는지(Touch Slop)확인. 일정거리 이내로 움직이면 터치로 간주하고, 일정거리 이상 움직여야 드래그로 간주한다.
+                    val centroidSize = event.calculateCentroidSize(useCurrent = false)
+                    val zoomMotion = abs(1f - zoom) * centroidSize
+                    val panMotion = pan.getDistance()
+                    if (zoomMotion > touchSlop || panMotion > touchSlop) {
+                      pastTouchSlop = true
+                    }
+                  }
+                  if (pastTouchSlop) {
+                    if (scale > 1f || zoomChange != 1f) {
+                      scale = (scale * zoomChange).coerceIn(1f, 3f)
+                      // 확대 상태일 때만 이벤트를 소비하여 부모 스크롤을 막음
+                      if (scale > 1f) {
+                        val extraWidth = (scale - 1) * size.width
+                        val extraHeight = (scale - 1) * size.height
+                        val xLimit = extraWidth / 2
+                        val yLimit = extraHeight / 2
+                        // 한손가락으로, 맨끝에서 더 움직이는거면 break한다.
+                        if (!firstCheck) {
+                          if (oldOffset.y == yLimit && oldOffset.x == xLimit && panChange.y > 0 && panChange.x > 0
+                            || oldOffset.y == yLimit && oldOffset.x == -xLimit && panChange.y > 0 && panChange.x < 0
+                            || oldOffset.y == -yLimit && oldOffset.x == xLimit && panChange.y < 0 && panChange.x > 0
+                            || oldOffset.y == -yLimit && oldOffset.x == -xLimit && panChange.y < 0 && panChange.x < 0
+                            || oldOffset.y == yLimit && panChange.y > 0 && abs(panChange.y / panChange.x) > 1
+                            || oldOffset.y == -yLimit && panChange.y < 0 && abs(panChange.y / panChange.x) > 1
+                          )
+                            if (event.changes.size == 1)
+                              break
+                          firstCheck = true
+                        }
+                        offset = Offset(
+                          (offset.x + panChange.x).coerceIn(-xLimit, xLimit),
+                          (offset.y + panChange.y).coerceIn(-yLimit, yLimit)
+                        )
+                        // 이벤트를 소비하여 부모에게 전달하지 않음.
+                        event.changes.forEach { it.consume() }
+                      } else
+                        offset = Offset.Zero
+                    }
+                    // scale이 1f이고 확대를 시작하는 상황이 아니라면 이벤트를 소비하지 않음.
+                  }
+                }
+              } while (!canceled && event.changes.any { it.pressed })
+            }
+          }
+          .graphicsLayer(
+            scaleX = scale, scaleY = scale,
+            translationX = offset.x,
+            translationY = offset.y
+          ),
+        contentAlignment = Alignment.Center
+      ) {
+        if (!isLoaded) {
+          CircularProgressIndicator()
+        }
+
+        LaunchedEffect(shouldRetry) {
+          if (shouldRetry) {
+            delay(50) // 딜레이 추가
+            retryCount++
+            shouldRetry = false
+          }
+        }
+
+        AsyncImage(
+          model = ImageRequest.Builder(context)
+            .data(hashToImageUrl(hash) + "?retry=$retryCount")
+            .httpHeaders(hitomiHeaders)
+            .memoryCacheKey(hash).diskCacheKey(hash)
+            .precision(Precision.INEXACT)
+            .build(),
+          contentDescription = "img",
+          imageLoader = imageLoader,
+          contentScale = ContentScale.FillWidth,
+          placeholder = null,
+          error = if (isLoaded) painterResource(R.drawable.errorimg) else null,
+          onError = { e ->
+            if ((e.result.throwable as? HttpException)?.response?.code == 503) {
+              shouldRetry = true
+            } else
+              loadedPages[page] = true
+            Log.i("이미지 로드 에러", e.result.throwable.toString())
+          },
+          onSuccess = { result ->
+            loadedPages[page] = true
+            // 이미지의 실제 비율을 계산하여 저장
+            val width = result.painter.intrinsicSize.width
+            val height = result.painter.intrinsicSize.height
+            if (height > 0) {
+              aspectRatios[page] = width / height
+            }
+          },
+          modifier = Modifier.fillMaxWidth()
+        )
+      }
+    }
   }
 }

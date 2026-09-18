@@ -48,19 +48,22 @@ fun ViewMangaScreen(
   val viewMethod by viewMangaViewModel.viewMethod.collectAsState("swipe")
   val isUISelectDialogOpen = remember { mutableStateOf(false) }
 
-  val hashToImageUrl: (String) -> String = { hash ->
-    val o1 = hitomiViewModel.o1.value
-    val o2 = hitomiViewModel.o2.value
-    val s = "${hash[hash.length - 1]}${hash[hash.length - 3]}${hash[hash.length - 2]}".toInt(16)
-      .toString(10)
-    val subdomainNum = if (o1 == null || o2 == null) 1 else
-      (if (s in hitomiViewModel.mList) o2.toInt() else o1.toInt()) + 1
-    // 구형폰에서는 avif 디코딩을 지원하지 않는거 같다. webp로 하자.어쩔 수 없다.
-    val webpUrl =
-      "https://w${subdomainNum}.gold-usergeneratedcontent.net/${hitomiViewModel.b.value}${s}/${hash}.webp"
-    val avifUrl =
-      "https://a${subdomainNum}.gold-usergeneratedcontent.net/${hitomiViewModel.b.value}${s}/${hash}.avif"
-    if (isAvifFormat) avifUrl else webpUrl
+  val o1 = hitomiViewModel.o1.value
+  val o2 = hitomiViewModel.o2.value
+  val b = hitomiViewModel.b.value
+  val mListSnapshot = hitomiViewModel.mList.toList()
+  val hashToImageUrl: (String) -> String = remember(o1, o2, b, mListSnapshot, isAvifFormat) {
+    { hash ->
+      val s = "${hash[hash.length - 1]}${hash[hash.length - 3]}${hash[hash.length - 2]}".toInt(16)
+        .toString(10)
+      val subdomainNum = if (o1 == null || o2 == null) 1 else
+        (if (s in mListSnapshot) o2.toInt() else o1.toInt()) + 1
+      val webpUrl =
+        "https://w${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.webp"
+      val avifUrl =
+        "https://a${subdomainNum}.gold-usergeneratedcontent.net/${b}${s}/${hash}.avif"
+      if (isAvifFormat) avifUrl else webpUrl
+    }
   }
 
   val imageHashes = viewMangaViewModel.imageHashes
