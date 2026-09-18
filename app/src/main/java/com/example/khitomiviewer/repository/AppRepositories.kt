@@ -18,6 +18,7 @@ class AppRepositories internal constructor(
     val hitomi = HitomiRepository(db, hitomiApi)
     val backup = BackupRepository(db)
     val github = GithubRepository(githubApi)
+    val hitomiSync = HitomiSync(gallery, hitomi, prefs)
 
     companion object {
         @Volatile

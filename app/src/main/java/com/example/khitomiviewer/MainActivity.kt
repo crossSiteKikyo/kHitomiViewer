@@ -58,7 +58,6 @@ import com.example.khitomiviewer.ui.theme.KHitomiViewerTheme
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.AppViewModelFactory
 import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
-import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.LocalGalleryViewModelKey
 import com.example.khitomiviewer.viewmodel.LocalTagViewModelKey
 import com.example.khitomiviewer.viewmodel.TagViewModelKeys
@@ -71,8 +70,6 @@ class MainActivity : ComponentActivity() {
   override val defaultViewModelProviderFactory: ViewModelProvider.Factory
     get() = appViewModelFactory
 
-  // 크롤링을 위해 hitomiViewModel 생성. viewModel(activity)와 같은 인스턴스이다.
-  private val hitomiViewModel: HitomiViewModel by viewModels { appViewModelFactory }
   private val appViewModel: AppViewModel by viewModels { appViewModelFactory }
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
     val isSettingOn = appViewModel.isVolumeKeyPagingEnabled.value

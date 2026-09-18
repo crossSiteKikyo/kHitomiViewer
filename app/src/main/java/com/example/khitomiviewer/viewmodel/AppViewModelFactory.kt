@@ -25,7 +25,7 @@ class AppViewModelFactory(
         GalleryViewModel(repos.gallery, repos.hitomi, repos.prefs)
 
       modelClass.isAssignableFrom(HitomiViewModel::class.java) ->
-        HitomiViewModel(repos.gallery, repos.hitomi, repos.prefs)
+        HitomiViewModel(repos.hitomi)
 
       modelClass.isAssignableFrom(ViewMangaViewModel::class.java) ->
         ViewMangaViewModel(repos.gallery, repos.hitomi, repos.prefs)
