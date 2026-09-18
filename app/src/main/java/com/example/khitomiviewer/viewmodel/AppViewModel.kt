@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.repository.AppRepositories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,7 +20,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
   private val tagRepository = AppRepositories.get(application).tag
   private val galleryRepository = AppRepositories.get(application).gallery
   private val githubRepository = AppRepositories.get(application).github
-  private val prefManager = PreferenceManager(application)
+  private val prefManager = AppRepositories.get(application).prefs
 
   private val context get() = getApplication<Application>().applicationContext
   val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName

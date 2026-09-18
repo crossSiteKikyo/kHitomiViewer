@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.repository.AppRepositories
 import com.example.khitomiviewer.room.GalleryFullDto
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +19,7 @@ import kotlinx.coroutines.launch
 class GalleryViewModel(application: Application) : AndroidViewModel(application) {
   private val galleryRepository = AppRepositories.get(application).gallery
   private val hitomiRepository = AppRepositories.get(application).hitomi
-  private val prefManager = PreferenceManager(application)
+  private val prefManager = AppRepositories.get(application).prefs
 
   val pageSize =
     prefManager.pageSize.stateIn(

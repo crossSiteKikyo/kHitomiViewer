@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.repository.AppRepositories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,7 +25,7 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
 
     val lastPage = mutableIntStateOf(1)
 
-    private val prefManager = PreferenceManager(application)
+    private val prefManager = AppRepositories.get(application).prefs
     val isRtlMode = prefManager.isRtlMode
     fun toggleRtlMode(isRtl: Boolean) = viewModelScope.launch {
         prefManager.setRtl(!isRtl)

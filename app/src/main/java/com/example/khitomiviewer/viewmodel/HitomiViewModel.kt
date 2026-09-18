@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.repository.AppRepositories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,7 +20,7 @@ import java.time.format.DateTimeFormatter
 class HitomiViewModel(application: Application) : AndroidViewModel(application) {
   private val galleryRepository = AppRepositories.get(application).gallery
   private val hitomiRepository = AppRepositories.get(application).hitomi
-  private val prefManager = PreferenceManager(application)
+  private val prefManager = AppRepositories.get(application).prefs
 
   val b = mutableStateOf<String?>("1772697601/")
   val thumbChar1 = mutableStateOf<String>("a")

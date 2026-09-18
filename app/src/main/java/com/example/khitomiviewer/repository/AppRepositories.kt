@@ -1,6 +1,7 @@
 package com.example.khitomiviewer.repository
 
 import android.content.Context
+import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.api.GithubApi
 import com.example.khitomiviewer.api.HitomiApi
 import com.example.khitomiviewer.room.DatabaseProvider
@@ -9,7 +10,8 @@ import com.example.khitomiviewer.room.KHitomiDatabase
 class AppRepositories internal constructor(
     db: KHitomiDatabase,
     hitomiApi: HitomiApi,
-    githubApi: GithubApi
+    githubApi: GithubApi,
+    val prefs: PreferenceManager
 ) {
     val gallery = GalleryRepository(db)
     val tag = TagRepository(db)
@@ -23,10 +25,12 @@ class AppRepositories internal constructor(
 
         fun get(context: Context): AppRepositories {
             return INSTANCE ?: synchronized(this) {
+                val appContext = context.applicationContext
                 INSTANCE ?: AppRepositories(
-                    DatabaseProvider.getDatabase(context.applicationContext),
+                    DatabaseProvider.getDatabase(appContext),
                     HitomiApi(),
-                    GithubApi()
+                    GithubApi(),
+                    PreferenceManager(appContext)
                 ).also { INSTANCE = it }
             }
         }
