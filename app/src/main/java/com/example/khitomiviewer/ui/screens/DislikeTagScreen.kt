@@ -29,8 +29,10 @@ import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.TagList
 import com.example.khitomiviewer.viewmodel.AppViewModel
-import com.example.khitomiviewer.viewmodel.TagViewModel
+import com.example.khitomiviewer.viewmodel.ProvideTagViewModelKey
+import com.example.khitomiviewer.viewmodel.TagViewModelKeys
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
+import com.example.khitomiviewer.viewmodel.activityTagViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,9 +42,10 @@ fun DislikeTagScreen(
   isTagDialogOpen: MutableState<Boolean>,
   page: Long
 ) {
+  ProvideTagViewModelKey(TagViewModelKeys.DISLIKE_TAG) {
   // 전역 viewModel들
   val activity = LocalActivity.current as ComponentActivity
-  val tagViewModel: TagViewModel = viewModel(activity)
+  val tagViewModel = activityTagViewModel(TagViewModelKeys.DISLIKE_TAG)
   val appViewModel: AppViewModel = viewModel(activity)
 
   val tagLikeStatusOrder by appViewModel.tagLikeStatusOrder.collectAsState("statusChangedAt")
@@ -111,5 +114,6 @@ fun DislikeTagScreen(
     Pagination(false, page, tagViewModel.maxPage, onPageMove)
     TagList(navController, isTagDialogOpen)
     Pagination(true, page, tagViewModel.maxPage, onPageMove)
+  }
   }
 }

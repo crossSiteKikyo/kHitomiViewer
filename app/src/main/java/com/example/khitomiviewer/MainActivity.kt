@@ -58,6 +58,8 @@ import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.LocalGalleryViewModelKey
+import com.example.khitomiviewer.viewmodel.LocalTagViewModelKey
+import com.example.khitomiviewer.viewmodel.TagViewModelKeys
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import java.net.URLDecoder
 
@@ -120,8 +122,12 @@ fun MainApp() {
   val isGalleryDialogOpen = remember { mutableStateOf(false) }
   val isGalleryDetailDialogOpen = remember { mutableStateOf(false) }
   val galleryViewModelKey = GalleryViewModelKeys.fromRoute(currentRoute)
+  val tagViewModelKey = TagViewModelKeys.fromRoute(currentRoute)
 
-  CompositionLocalProvider(LocalGalleryViewModelKey provides galleryViewModelKey) {
+  CompositionLocalProvider(
+    LocalGalleryViewModelKey provides galleryViewModelKey,
+    LocalTagViewModelKey provides tagViewModelKey
+  ) {
     Scaffold(
       modifier = Modifier.fillMaxSize(),
       snackbarHost = { SnackbarHost(snackbarHostState) },
