@@ -19,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +55,9 @@ import com.example.khitomiviewer.ui.screens.CrawlingScreen
 import com.example.khitomiviewer.ui.screens.RecordScreen
 import com.example.khitomiviewer.ui.theme.KHitomiViewerTheme
 import com.example.khitomiviewer.viewmodel.AppViewModel
+import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
+import com.example.khitomiviewer.viewmodel.LocalGalleryViewModelKey
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import java.net.URLDecoder
 
@@ -116,249 +119,252 @@ fun MainApp() {
   val isTagDialogOpen = remember { mutableStateOf(false) }
   val isGalleryDialogOpen = remember { mutableStateOf(false) }
   val isGalleryDetailDialogOpen = remember { mutableStateOf(false) }
+  val galleryViewModelKey = GalleryViewModelKeys.fromRoute(currentRoute)
 
-  Scaffold(
-    modifier = Modifier.fillMaxSize(),
-    snackbarHost = { SnackbarHost(snackbarHostState) },
-    floatingActionButton = {
-      if (shouldShowUtils) FloatingActionButton(verticalScrollState)
-    },
-    bottomBar = { if (shouldShowUtils) BottomBar(navController, verticalScrollState) }
-  ) { innerPadding ->
-    Box(
-      modifier = Modifier
+  CompositionLocalProvider(LocalGalleryViewModelKey provides galleryViewModelKey) {
+    Scaffold(
+      modifier = Modifier.fillMaxSize(),
+      snackbarHost = { SnackbarHost(snackbarHostState) },
+      floatingActionButton = {
+        if (shouldShowUtils) FloatingActionButton(verticalScrollState)
+      },
+      bottomBar = { if (shouldShowUtils) BottomBar(navController, verticalScrollState) }
+    ) { innerPadding ->
+      Box(
+        modifier = Modifier
           .padding(innerPadding)
           .fillMaxSize()
-    ) {
-      NavHost(
-        navController = navController, startDestination = "ListScreen",
-        enterTransition = {
-          slideIntoContainer(
-            AnimatedContentTransitionScope.SlideDirection.Left,
-            animationSpec = tween(700)
-          )
-        },
-        exitTransition = {
-          slideOutOfContainer(
-            AnimatedContentTransitionScope.SlideDirection.Left,
-            animationSpec = tween(700)
-          )
-        },
-        popEnterTransition = {
-          slideIntoContainer(
-            AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = tween(700)
-          )
-        },
-        popExitTransition = {
-          slideOutOfContainer(
-            AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = tween(700)
-          )
-        },
       ) {
-        composable(
-          Screen.List.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            },
-            navArgument("tagIdList") {
-              type = NavType.LongArrayType
-              nullable = true
-            },
-            navArgument("titleKeyword") {
-              type = NavType.StringType
-              defaultValue = ""
-            },
-            navArgument("gId") {
-              type = NavType.LongType
-              defaultValue = 0L
-            },
-          )
-        ) { bse ->
-          ListScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            isGalleryDialogOpen,
-            isGalleryDetailDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L,
-            bse.arguments?.getLongArray("tagIdList"),
-            URLDecoder.decode(bse.arguments?.getString("titleKeyword"), "utf-8"),
-            bse.arguments?.getLong("gId")
-          )
-        }
-        composable(
-          Screen.MyGallery.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            })
-        ) { bse ->
-          MyGalleryScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            isGalleryDialogOpen,
-            isGalleryDetailDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L
-          )
-        }
-        composable(
-          Screen.DislikeGallery.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            })
-        ) { bse ->
-          DislikeGalleryScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            isGalleryDialogOpen,
-            isGalleryDetailDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L
-          )
-        }
-        composable(
-          Screen.MyTag.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            })
-        ) { bse ->
-          MyTagScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L
-          )
-        }
-        composable(
-          Screen.DislikeTag.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            })
-        ) { bse ->
-          DislikeTagScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L
-          )
-        }
-        composable(
-          Screen.Subscription.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            })
-        ) { bse ->
-          SubscriptionScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            isGalleryDialogOpen,
-            isGalleryDetailDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L
-          )
-        }
-        composable(
-          Screen.Record.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            })
-        ) { bse ->
-          RecordScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            isGalleryDialogOpen,
-            isGalleryDetailDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L
-          )
-        }
-        composable(
-          Screen.Rank.route,
-          arguments = listOf(
-            navArgument("page") {
-              type = NavType.LongType
-              defaultValue = 1L
-            },
-            navArgument("period") {
-              type = NavType.StringType
-              defaultValue = "week"
-            }
-          )
-        ) { bse ->
-          RankScreen(
-            navController,
-            verticalScrollState,
-            isTagDialogOpen,
-            isGalleryDialogOpen,
-            isGalleryDetailDialogOpen,
-            bse.arguments?.getLong("page") ?: 1L,
-            bse.arguments?.getString("period") ?: "week",
-          )
-        }
-        composable(
-          Screen.ViewManga.route,
-          arguments = listOf(
-            navArgument("gId") {
-              type = NavType.LongType
-              defaultValue = 3861923L
-            })
-        ) { bse ->
-          ViewMangaScreen(
-            navController,
-            bse.arguments?.getLong("gId") ?: 3861923L
-          )
-        }
-        composable(Screen.Menu.route) {
-          MenuScreen(
-            navController,
-            verticalScrollState
-          )
-        }
-        composable(Screen.Setting.route) {
-          SettingScreen(
-            verticalScrollState
-          )
-        }
-        composable(Screen.Crawling.route) {
-          CrawlingScreen(
-            verticalScrollState
-          )
-        }
-        composable(Screen.Help.route) {
-          HelpScreen(
-            verticalScrollState
-          )
-        }
-        composable(Screen.DatabaseExportImport.route) {
-          DatabaseExportImportSettingScreen()
+        NavHost(
+          navController = navController, startDestination = "ListScreen",
+          enterTransition = {
+            slideIntoContainer(
+              AnimatedContentTransitionScope.SlideDirection.Left,
+              animationSpec = tween(700)
+            )
+          },
+          exitTransition = {
+            slideOutOfContainer(
+              AnimatedContentTransitionScope.SlideDirection.Left,
+              animationSpec = tween(700)
+            )
+          },
+          popEnterTransition = {
+            slideIntoContainer(
+              AnimatedContentTransitionScope.SlideDirection.Right,
+              animationSpec = tween(700)
+            )
+          },
+          popExitTransition = {
+            slideOutOfContainer(
+              AnimatedContentTransitionScope.SlideDirection.Right,
+              animationSpec = tween(700)
+            )
+          },
+        ) {
+          composable(
+            Screen.List.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              },
+              navArgument("tagIdList") {
+                type = NavType.LongArrayType
+                nullable = true
+              },
+              navArgument("titleKeyword") {
+                type = NavType.StringType
+                defaultValue = ""
+              },
+              navArgument("gId") {
+                type = NavType.LongType
+                defaultValue = 0L
+              },
+            )
+          ) { bse ->
+            ListScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              isGalleryDialogOpen,
+              isGalleryDetailDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L,
+              bse.arguments?.getLongArray("tagIdList"),
+              URLDecoder.decode(bse.arguments?.getString("titleKeyword"), "utf-8"),
+              bse.arguments?.getLong("gId")
+            )
+          }
+          composable(
+            Screen.MyGallery.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              })
+          ) { bse ->
+            MyGalleryScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              isGalleryDialogOpen,
+              isGalleryDetailDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L
+            )
+          }
+          composable(
+            Screen.DislikeGallery.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              })
+          ) { bse ->
+            DislikeGalleryScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              isGalleryDialogOpen,
+              isGalleryDetailDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L
+            )
+          }
+          composable(
+            Screen.MyTag.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              })
+          ) { bse ->
+            MyTagScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L
+            )
+          }
+          composable(
+            Screen.DislikeTag.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              })
+          ) { bse ->
+            DislikeTagScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L
+            )
+          }
+          composable(
+            Screen.Subscription.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              })
+          ) { bse ->
+            SubscriptionScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              isGalleryDialogOpen,
+              isGalleryDetailDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L
+            )
+          }
+          composable(
+            Screen.Record.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              })
+          ) { bse ->
+            RecordScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              isGalleryDialogOpen,
+              isGalleryDetailDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L
+            )
+          }
+          composable(
+            Screen.Rank.route,
+            arguments = listOf(
+              navArgument("page") {
+                type = NavType.LongType
+                defaultValue = 1L
+              },
+              navArgument("period") {
+                type = NavType.StringType
+                defaultValue = "week"
+              }
+            )
+          ) { bse ->
+            RankScreen(
+              navController,
+              verticalScrollState,
+              isTagDialogOpen,
+              isGalleryDialogOpen,
+              isGalleryDetailDialogOpen,
+              bse.arguments?.getLong("page") ?: 1L,
+              bse.arguments?.getString("period") ?: "week",
+            )
+          }
+          composable(
+            Screen.ViewManga.route,
+            arguments = listOf(
+              navArgument("gId") {
+                type = NavType.LongType
+                defaultValue = 3861923L
+              })
+          ) { bse ->
+            ViewMangaScreen(
+              navController,
+              bse.arguments?.getLong("gId") ?: 3861923L
+            )
+          }
+          composable(Screen.Menu.route) {
+            MenuScreen(
+              navController,
+              verticalScrollState
+            )
+          }
+          composable(Screen.Setting.route) {
+            SettingScreen(
+              verticalScrollState
+            )
+          }
+          composable(Screen.Crawling.route) {
+            CrawlingScreen(
+              verticalScrollState
+            )
+          }
+          composable(Screen.Help.route) {
+            HelpScreen(
+              verticalScrollState
+            )
+          }
+          composable(Screen.DatabaseExportImport.route) {
+            DatabaseExportImportSettingScreen()
+          }
         }
       }
+      VerticalScrollBar(innerPadding, verticalScrollState)
+      TagDialog(isTagDialogOpen)
+      GalleryDialog(isGalleryDialogOpen)
+      GalleryDetailDialog(
+        navController,
+        isTagDialogOpen,
+        isGalleryDialogOpen,
+        isGalleryDetailDialogOpen
+      )
+      UIEventHandler(snackbarHostState)
     }
-    VerticalScrollBar(innerPadding, verticalScrollState)
-    TagDialog(isTagDialogOpen)
-    GalleryDialog(isGalleryDialogOpen)
-    GalleryDetailDialog(
-      navController,
-      isTagDialogOpen,
-      isGalleryDialogOpen,
-      isGalleryDetailDialogOpen
-    )
-    UIEventHandler(snackbarHostState)
   }
 }

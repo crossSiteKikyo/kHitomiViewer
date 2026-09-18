@@ -22,14 +22,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.viewmodel.DialogViewModel
-import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.activityGalleryViewModelOrNull
 
 @Composable
 fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
     // 전역 viewModel
     val activity = LocalActivity.current as ComponentActivity
     val dialogViewModel: DialogViewModel = viewModel(activity)
-    val galleryViewModel: GalleryViewModel = viewModel(activity)
+    val galleryViewModel = activityGalleryViewModelOrNull()
 
     // 다이얼로그
     if (isGalleryDialogOpen.value) {
@@ -60,7 +60,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                         onClick = {
                             dialogViewModel.changeGalleryLike(0)    // db에 상태 변경
                             isGalleryDialogOpen.value = false   // 다이얼로그 닫기
-                            galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                            galleryViewModel?.galleryReLoading() // 갤러리 재로딩
                             dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
@@ -74,7 +74,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                         onClick = {
                             dialogViewModel.changeGalleryLike(1)    // db에 상태 변경
                             isGalleryDialogOpen.value = false   // 다이얼로그 닫기
-                            galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                            galleryViewModel?.galleryReLoading() // 갤러리 재로딩
                             dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {
@@ -87,7 +87,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
                         onClick = {
                             dialogViewModel.changeGalleryLike(2)    // db에 상태 변경
                             isGalleryDialogOpen.value = false   // 다이얼로그 닫기
-                            galleryViewModel.galleryReLoading() // 갤러리 재로딩
+                            galleryViewModel?.galleryReLoading() // 갤러리 재로딩
                             dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
                         }
                     ) {

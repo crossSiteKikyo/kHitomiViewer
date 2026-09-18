@@ -51,9 +51,11 @@ import com.example.khitomiviewer.ui.Search
 import com.example.khitomiviewer.ui.tag.SearchedTag
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
-import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.SearchViewModel
+import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
+import com.example.khitomiviewer.viewmodel.ProvideGalleryViewModelKey
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
+import com.example.khitomiviewer.viewmodel.activityGalleryViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -65,9 +67,10 @@ fun ListScreen(
   isGalleryDetailDialogOpen: MutableState<Boolean>,
   page: Long, tagIdList: LongArray?, titleKeyword: String?, gId: Long?
 ) {
+  ProvideGalleryViewModelKey(GalleryViewModelKeys.LIST) {
   // 전역 viewModel들
   val activity = LocalActivity.current as ComponentActivity
-  val galleryViewModel: GalleryViewModel = viewModel(activity)
+  val galleryViewModel = activityGalleryViewModel(GalleryViewModelKeys.LIST)
   val searchViewModel: SearchViewModel = viewModel(activity)
   val dialogViewModel: DialogViewModel = viewModel(activity)
   val appViewModel: AppViewModel = viewModel(activity)
@@ -206,5 +209,6 @@ fun ListScreen(
       Pagination(true, page, galleryViewModel.maxPage, onPageMove)
     }
     Search(navController, isSearchSheetVisible, titleKeyword)
+  }
   }
 }

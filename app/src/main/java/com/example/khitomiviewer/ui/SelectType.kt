@@ -1,7 +1,5 @@
 package com.example.khitomiviewer.ui
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,13 +15,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.activityGalleryViewModel
 
 @Composable
 fun SelectType() {
-    val activity = LocalActivity.current as ComponentActivity
-    val galleryViewModel: GalleryViewModel = viewModel(activity)
+    val galleryViewModel = activityGalleryViewModel()
 
     val typeOnOff = galleryViewModel::typeOnOff
     // 타입 선택 관련 변수들

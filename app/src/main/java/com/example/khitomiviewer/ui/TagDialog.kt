@@ -25,16 +25,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
-import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.SearchViewModel
 import com.example.khitomiviewer.viewmodel.TagViewModel
+import com.example.khitomiviewer.viewmodel.activityGalleryViewModelOrNull
 
 @Composable
 fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
   // 전역 viewModel
   val activity = LocalActivity.current as ComponentActivity
   val dialogViewModel: DialogViewModel = viewModel(activity)
-  val galleryViewModel: GalleryViewModel = viewModel(activity)
+  val galleryViewModel = activityGalleryViewModelOrNull()
   val tagViewModel: TagViewModel = viewModel(activity)
   val searchViewModel: SearchViewModel = viewModel(activity)
 
@@ -68,7 +68,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
             onClick = {
               dialogViewModel.changeTagLike(0)    // db에 상태 변경
               isTagDialogOpen.value = false   // 다이얼로그 닫기
-              galleryViewModel.galleryReLoading() // 갤러리 재로딩
+              galleryViewModel?.galleryReLoading() // 갤러리 재로딩
               tagViewModel.tagReLoading() // 태그 재로딩
               dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
               searchViewModel.currentSearchTagsReLoading() //태그 검색 결과 재로딩
@@ -84,7 +84,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
             onClick = {
               dialogViewModel.changeTagLike(1)    // db에 상태 변경
               isTagDialogOpen.value = false   // 다이얼로그 닫기
-              galleryViewModel.galleryReLoading() // 갤러리 재로딩
+              galleryViewModel?.galleryReLoading() // 갤러리 재로딩
               tagViewModel.tagReLoading() // 태그 재로딩
               dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
               searchViewModel.currentSearchTagsReLoading() //태그 검색 결과 재로딩
@@ -99,7 +99,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
             onClick = {
               dialogViewModel.changeTagLike(2)    // db에 상태 변경
               isTagDialogOpen.value = false   // 다이얼로그 닫기
-              galleryViewModel.galleryReLoading() // 갤러리 재로딩
+              galleryViewModel?.galleryReLoading() // 갤러리 재로딩
               tagViewModel.tagReLoading() // 태그 재로딩
               dialogViewModel.galleryDetailReloading() //갤러리 디테일 재로딩
               searchViewModel.currentSearchTagsReLoading() //태그 검색 결과 재로딩

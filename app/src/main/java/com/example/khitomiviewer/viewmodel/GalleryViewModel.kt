@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -40,16 +39,6 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
     started = SharingStarted.Eagerly,
     initialValue = listOf(1L, 2L, 3L, 4L, 5L)
   )
-
-  init {
-    viewModelScope.launch {
-      prefManager.typeIdList.first()
-      prefManager.pageSize.first()
-      delay(50)
-      setGalleryList(1L, null, null)
-      setMaxPage(null, null)
-    }
-  }
 
   fun resetGalleryRecord(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
     galleryRepository.resetGalleryRecord(gId)

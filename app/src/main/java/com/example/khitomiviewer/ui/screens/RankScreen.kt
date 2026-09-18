@@ -27,8 +27,10 @@ import com.example.khitomiviewer.ui.GalleryListGrid
 import com.example.khitomiviewer.ui.GalleryListUiSelect
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.viewmodel.AppViewModel
-import com.example.khitomiviewer.viewmodel.GalleryViewModel
+import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
+import com.example.khitomiviewer.viewmodel.ProvideGalleryViewModelKey
 import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
+import com.example.khitomiviewer.viewmodel.activityGalleryViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -41,9 +43,10 @@ fun RankScreen(
     page: Long,
     period: String
 ) {
+    ProvideGalleryViewModelKey(GalleryViewModelKeys.RANK) {
     // 전역 viewModel들
     val activity = LocalActivity.current as ComponentActivity
-    val galleryViewModel: GalleryViewModel = viewModel(activity)
+    val galleryViewModel = activityGalleryViewModel(GalleryViewModelKeys.RANK)
     val appViewModel: AppViewModel = viewModel(activity)
 
     val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
@@ -98,6 +101,7 @@ fun RankScreen(
         else
             GalleryListGrid(isGalleryDialogOpen, isGalleryDetailDialogOpen)
         Pagination(true, page, galleryViewModel.maxPage, onPageMove)
+    }
     }
 }
 

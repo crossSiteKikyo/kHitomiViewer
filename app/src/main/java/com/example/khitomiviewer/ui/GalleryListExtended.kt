@@ -70,9 +70,9 @@ import com.example.khitomiviewer.util.decodeThumbnail
 import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
-import com.example.khitomiviewer.viewmodel.GalleryViewModel
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.ViewMangaViewModel
+import com.example.khitomiviewer.viewmodel.activityGalleryViewModel
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -90,7 +90,7 @@ fun GalleryListExtended(
   // 전역 viewModel들
   val activity = LocalActivity.current as ComponentActivity
   val hitomiViewModel: HitomiViewModel = viewModel(activity)
-  val galleryViewModel: GalleryViewModel = viewModel(activity)
+  val galleryViewModel = activityGalleryViewModel()
   val dialogViewModel: DialogViewModel = viewModel(activity)
   val viewMangaViewModel: ViewMangaViewModel = viewModel(activity)
   val appViewModel: AppViewModel = viewModel(activity)
