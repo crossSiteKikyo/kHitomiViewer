@@ -31,7 +31,11 @@ fun ProvideTagViewModelKey(key: String, content: @Composable () -> Unit) {
 @Composable
 fun activityTagViewModel(key: String): TagViewModel {
   val activity = LocalActivity.current as ComponentActivity
-  return viewModel(viewModelStoreOwner = activity, key = key)
+  return viewModel(
+    viewModelStoreOwner = activity,
+    key = key,
+    factory = activity.defaultViewModelProviderFactory
+  )
 }
 
 @Composable

@@ -1,12 +1,12 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.repository.GalleryRepository
+import com.example.khitomiviewer.repository.TagRepository
 import com.example.khitomiviewer.room.GalleryFullDto
 import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.Tag
@@ -14,9 +14,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class DialogViewModel(application: Application) : AndroidViewModel(application) {
-    private val galleryRepository = AppRepositories.get(application).gallery
-    private val tagRepository = AppRepositories.get(application).tag
+class DialogViewModel(
+    private val galleryRepository: GalleryRepository,
+    private val tagRepository: TagRepository
+) : ViewModel() {
 
     var selectedTag by mutableStateOf<Tag?>(null)
     var selectedGallery by mutableStateOf<Gallery?>(null)

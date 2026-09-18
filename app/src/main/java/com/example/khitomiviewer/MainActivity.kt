@@ -7,6 +7,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
@@ -55,6 +56,7 @@ import com.example.khitomiviewer.ui.screens.CrawlingScreen
 import com.example.khitomiviewer.ui.screens.RecordScreen
 import com.example.khitomiviewer.ui.theme.KHitomiViewerTheme
 import com.example.khitomiviewer.viewmodel.AppViewModel
+import com.example.khitomiviewer.viewmodel.AppViewModelFactory
 import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
 import com.example.khitomiviewer.viewmodel.HitomiViewModel
 import com.example.khitomiviewer.viewmodel.LocalGalleryViewModelKey
@@ -64,9 +66,14 @@ import com.example.khitomiviewer.viewmodel.VolumeKeyEvent
 import java.net.URLDecoder
 
 class MainActivity : ComponentActivity() {
+  private val appViewModelFactory by lazy { AppViewModelFactory(application) }
+
+  override val defaultViewModelProviderFactory: ViewModelProvider.Factory
+    get() = appViewModelFactory
+
   // 크롤링을 위해 hitomiViewModel 생성. viewModel(activity)와 같은 인스턴스이다.
-  private val hitomiViewModel: HitomiViewModel by viewModels()
-  private val appViewModel: AppViewModel by viewModels()
+  private val hitomiViewModel: HitomiViewModel by viewModels { appViewModelFactory }
+  private val appViewModel: AppViewModel by viewModels { appViewModelFactory }
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
     val isSettingOn = appViewModel.isVolumeKeyPagingEnabled.value
     val isPaginationVisible = appViewModel.isPaginationActive.value

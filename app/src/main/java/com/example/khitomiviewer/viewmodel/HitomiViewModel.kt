@@ -1,12 +1,13 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.PreferenceManager
+import com.example.khitomiviewer.repository.GalleryRepository
+import com.example.khitomiviewer.repository.HitomiRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -17,10 +18,11 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class HitomiViewModel(application: Application) : AndroidViewModel(application) {
-  private val galleryRepository = AppRepositories.get(application).gallery
-  private val hitomiRepository = AppRepositories.get(application).hitomi
-  private val prefManager = AppRepositories.get(application).prefs
+class HitomiViewModel(
+  private val galleryRepository: GalleryRepository,
+  private val hitomiRepository: HitomiRepository,
+  private val prefManager: PreferenceManager
+) : ViewModel() {
 
   val b = mutableStateOf<String?>("1772697601/")
   val thumbChar1 = mutableStateOf<String>("a")

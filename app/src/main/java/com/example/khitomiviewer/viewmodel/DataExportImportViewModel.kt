@@ -1,16 +1,15 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.json.PupilBackup
 import com.example.khitomiviewer.json.TagsAndGalleries
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.repository.BackupRepository
 import com.example.khitomiviewer.repository.ArticleReadLog
 import com.example.khitomiviewer.repository.GalleryBookmarkInfo
 import com.example.khitomiviewer.repository.TagBookmarkInfo
@@ -28,8 +27,9 @@ import java.time.ZoneId
 
 
 // 원래 크롤링 중에 데이터 export import가 안되게 했는데 해당 로직 삭제함
-class DataExportImportViewModel(application: Application) : AndroidViewModel(application) {
-    private val backupRepository = AppRepositories.get(application).backup
+class DataExportImportViewModel(
+    private val backupRepository: BackupRepository
+) : ViewModel() {
 
     val json = Json {
         isLenient = true    //따옴표가 없는 key나 문자열 허용

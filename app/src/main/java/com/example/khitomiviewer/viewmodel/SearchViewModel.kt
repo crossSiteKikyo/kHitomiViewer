@@ -1,17 +1,17 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.repository.TagRepository
 import com.example.khitomiviewer.room.entity.Tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SearchViewModel(application: Application) : AndroidViewModel(application) {
-  private val tagRepository = AppRepositories.get(application).tag
+class SearchViewModel(
+  private val tagRepository: TagRepository
+) : ViewModel() {
 
   val currentSearchTags = mutableStateListOf<Tag>()
   fun setCurrentSearchTags(tagIdList: LongArray?) = viewModelScope.launch(Dispatchers.IO) {

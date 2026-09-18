@@ -1,20 +1,20 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.repository.TagRepository
 import com.example.khitomiviewer.room.TagFullDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class TagViewModel(application: Application) : AndroidViewModel(application) {
-  private val tagRepository = AppRepositories.get(application).tag
+class TagViewModel(
+  private val tagRepository: TagRepository
+) : ViewModel() {
 
   var maxPage by mutableLongStateOf(1)
   val pageSize = 15

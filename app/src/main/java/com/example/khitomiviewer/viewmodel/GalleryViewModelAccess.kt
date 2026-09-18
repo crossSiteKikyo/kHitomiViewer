@@ -39,7 +39,11 @@ fun ProvideGalleryViewModelKey(key: String, content: @Composable () -> Unit) {
 @Composable
 fun activityGalleryViewModel(key: String): GalleryViewModel {
   val activity = LocalActivity.current as ComponentActivity
-  return viewModel(viewModelStoreOwner = activity, key = key)
+  return viewModel(
+    viewModelStoreOwner = activity,
+    key = key,
+    factory = activity.defaultViewModelProviderFactory
+  )
 }
 
 @Composable

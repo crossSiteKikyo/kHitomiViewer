@@ -1,13 +1,14 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.PreferenceManager
+import com.example.khitomiviewer.repository.GalleryRepository
+import com.example.khitomiviewer.repository.HitomiRepository
 import com.example.khitomiviewer.room.GalleryFullDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -16,10 +17,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class GalleryViewModel(application: Application) : AndroidViewModel(application) {
-  private val galleryRepository = AppRepositories.get(application).gallery
-  private val hitomiRepository = AppRepositories.get(application).hitomi
-  private val prefManager = AppRepositories.get(application).prefs
+class GalleryViewModel(
+  private val galleryRepository: GalleryRepository,
+  private val hitomiRepository: HitomiRepository,
+  private val prefManager: PreferenceManager
+) : ViewModel() {
 
   val pageSize =
     prefManager.pageSize.stateIn(

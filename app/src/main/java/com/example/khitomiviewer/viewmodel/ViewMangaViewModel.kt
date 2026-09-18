@@ -1,21 +1,24 @@
 package com.example.khitomiviewer.viewmodel
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.khitomiviewer.repository.AppRepositories
+import com.example.khitomiviewer.PreferenceManager
+import com.example.khitomiviewer.repository.GalleryRepository
+import com.example.khitomiviewer.repository.HitomiRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class ViewMangaViewModel(application: Application) : AndroidViewModel(application) {
-    private val galleryRepository = AppRepositories.get(application).gallery
-    private val hitomiRepository = AppRepositories.get(application).hitomi
+class ViewMangaViewModel(
+    private val galleryRepository: GalleryRepository,
+    private val hitomiRepository: HitomiRepository,
+    private val prefManager: PreferenceManager
+) : ViewModel() {
 
     private var lastGid: Long? = null
     var imageHashes = mutableStateListOf<String>()
@@ -25,7 +28,6 @@ class ViewMangaViewModel(application: Application) : AndroidViewModel(applicatio
 
     val lastPage = mutableIntStateOf(1)
 
-    private val prefManager = AppRepositories.get(application).prefs
     val isRtlMode = prefManager.isRtlMode
     fun toggleRtlMode(isRtl: Boolean) = viewModelScope.launch {
         prefManager.setRtl(!isRtl)
