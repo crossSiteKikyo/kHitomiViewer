@@ -99,6 +99,24 @@ class GalleryRepository(private val db: KHitomiDatabase) {
         }
     }
 
+    fun findGidsByCondition(
+        showTypeIdList: List<Long>,
+        tagIdList: LongArray?,
+        titleKeyword: String?
+    ): Set<Long> {
+        val gIds = if (tagIdList == null) {
+            if (titleKeyword.isNullOrBlank())
+                galleryDao.findGidsByCondition(showTypeIdList)
+            else
+                galleryDao.findGidsByConditionTitleKeyword(showTypeIdList, "%${titleKeyword}%")
+        } else {
+            galleryDao.findGidsByConditionQuery(
+                buildFindGidsByConditionQuery(showTypeIdList, tagIdList, titleKeyword)
+            )
+        }
+        return gIds.toHashSet()
+    }
+
     suspend fun findFullDtoById(gId: Long): GalleryFullDto {
         return toFullDto(galleryDao.findById(gId))
     }
@@ -152,50 +170,12 @@ class GalleryRepository(private val db: KHitomiDatabase) {
         tagIdList: LongArray,
         titleKeyword: String?
     ): SupportSQLiteQuery {
-        val limit = pageSize
-        val offset = (page - 1) * pageSize
         val args = mutableListOf<Any>()
-
-        val queryBuilder = StringBuilder(
-            """
-                select * from gallery g
-                where g.likeStatus != 0
-                and g.typeId in (${showTypeIdList.joinToString(",") { "?" }})
-            """.trimIndent()
-        )
-        args.addAll(showTypeIdList)
-
-        if (titleKeyword != null && titleKeyword.isNotEmpty()) {
-            queryBuilder.append(""" and g.title like ? """)
-            args.add("%${titleKeyword}%")
-        }
-
-        queryBuilder.append(
-            """
-                and not exists (
-                    select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
-                    where gt.gId = g.gId and t.likeStatus = 0
-                )
-            """.trimIndent()
-        )
-
-        if (tagIdList.isNotEmpty()) {
-            queryBuilder.append(
-                """
-                and (
-                    select count(gt.tagId) from gallery_tag gt join tag t on gt.tagId = t.tagId
-                    where gt.gId = g.gId and t.tagId in (${tagIdList.joinToString(",") { "?" }}) 
-                ) = ?
-                """.trimIndent()
-            )
-            args.addAll(tagIdList.toList())
-            args.add(tagIdList.size)
-        }
-
+        val queryBuilder = StringBuilder("select * from gallery g ")
+        appendConditionWhere(queryBuilder, args, showTypeIdList, tagIdList, titleKeyword)
         queryBuilder.append(""" order by gId desc limit ? offset ? """)
-        args.add(limit)
-        args.add(offset)
-
+        args.add(pageSize)
+        args.add((page - 1) * pageSize)
         return SimpleSQLiteQuery(queryBuilder.toString(), args.toTypedArray())
     }
 
@@ -205,18 +185,39 @@ class GalleryRepository(private val db: KHitomiDatabase) {
         titleKeyword: String?
     ): SupportSQLiteQuery {
         val args = mutableListOf<Any>()
+        val queryBuilder = StringBuilder("select count(*) from (select g.gId from gallery g ")
+        appendConditionWhere(queryBuilder, args, showTypeIdList, tagIdList, titleKeyword)
+        queryBuilder.append(" )")
+        return SimpleSQLiteQuery(queryBuilder.toString(), args.toTypedArray())
+    }
 
-        val queryBuilder = StringBuilder(
+    private fun buildFindGidsByConditionQuery(
+        showTypeIdList: List<Long>,
+        tagIdList: LongArray,
+        titleKeyword: String?
+    ): SupportSQLiteQuery {
+        val args = mutableListOf<Any>()
+        val queryBuilder = StringBuilder("select g.gId from gallery g ")
+        appendConditionWhere(queryBuilder, args, showTypeIdList, tagIdList, titleKeyword)
+        return SimpleSQLiteQuery(queryBuilder.toString(), args.toTypedArray())
+    }
+
+    private fun appendConditionWhere(
+        queryBuilder: StringBuilder,
+        args: MutableList<Any>,
+        showTypeIdList: List<Long>,
+        tagIdList: LongArray,
+        titleKeyword: String?
+    ) {
+        queryBuilder.append(
             """
-            select count(*) from (
-                select g.gId from gallery g
                 where g.likeStatus != 0
                 and g.typeId in (${showTypeIdList.joinToString(",") { "?" }})
             """.trimIndent()
         )
         args.addAll(showTypeIdList)
 
-        titleKeyword?.let {
+        if (!titleKeyword.isNullOrEmpty()) {
             queryBuilder.append(""" and g.title like ? """)
             args.add("%${titleKeyword}%")
         }
@@ -242,9 +243,5 @@ class GalleryRepository(private val db: KHitomiDatabase) {
             args.addAll(tagIdList.toList())
             args.add(tagIdList.size)
         }
-
-        queryBuilder.append(""" ) """)
-
-        return SimpleSQLiteQuery(queryBuilder.toString(), args.toTypedArray())
     }
 }

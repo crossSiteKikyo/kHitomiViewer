@@ -141,6 +141,9 @@ interface GalleryDao {
   @RawQuery
   fun countByConditionQuery(query: SupportSQLiteQuery): Long
 
+  @RawQuery
+  fun findGidsByConditionQuery(query: SupportSQLiteQuery): List<Long>
+
   @Query(
     """
         select * from gallery g
@@ -212,4 +215,36 @@ interface GalleryDao {
     showTypeIdList: List<Long>,
     titleKeyword: String
   ): Long
+
+  @Query(
+    """
+        select g.gId from gallery g
+        where g.likeStatus != 0
+        and g.typeId in (:showTypeIdList)
+        and not exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus = 0
+        )
+    """
+  )
+  fun findGidsByCondition(
+    showTypeIdList: List<Long>
+  ): List<Long>
+
+  @Query(
+    """
+        select g.gId from gallery g
+        where g.likeStatus != 0
+        and g.typeId in (:showTypeIdList)
+        and g.title like :titleKeyword
+        and not exists (
+            select 1 from gallery_tag gt join tag t on gt.tagId = t.tagId
+            where gt.gId = g.gId and t.likeStatus = 0
+        )
+    """
+  )
+  fun findGidsByConditionTitleKeyword(
+    showTypeIdList: List<Long>,
+    titleKeyword: String
+  ): List<Long>
 }

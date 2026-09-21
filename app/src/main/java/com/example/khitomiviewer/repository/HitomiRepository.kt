@@ -9,6 +9,8 @@ import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.GalleryTag
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.room.entity.Type
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jsoup.Jsoup
 
 class HitomiRepository(
@@ -19,6 +21,8 @@ class HitomiRepository(
     private val tagDao = db.tagDao()
     private val galleryDao = db.galleryDao()
     private val galleryTagDao = db.galleryTagDao()
+    private val popularGidsCache = mutableMapOf<String, List<Long>>()
+    private val popularGidsCacheMutex = Mutex()
 
     suspend fun initType() {
         val types = listOf("doujinshi", "manga", "artistcg", "gamecg", "imageset")
@@ -78,6 +82,15 @@ class HitomiRepository(
             ?.div(4)
         val gIds = hitomiApi.parseNozomiIds(response.bytes).map { it.toLong() }
         return PopularGidPage(gIds = gIds, totalCount = totalCount)
+    }
+
+    suspend fun getAllPopularGids(period: String): List<Long> {
+        popularGidsCacheMutex.withLock {
+            popularGidsCache[period]?.let { return it }
+            val gIds = hitomiApi.parseNozomiIds(hitomiApi.getPopularAll(period)).map { it.toLong() }
+            popularGidsCache[period] = gIds
+            return gIds
+        }
     }
 
     @Transaction

@@ -69,6 +69,12 @@ class HitomiApi {
         )
     }
 
+    suspend fun getPopularAll(period: String): ByteArray {
+        val url = "https://ltn.gold-usergeneratedcontent.net/popular/$period-korean.nozomi"
+        val response = hitomiClient.get(url)
+        return response.bodyAsBytes()
+    }
+
     fun parseNozomiIds(bytes: ByteArray): List<Int> {
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
         val result = mutableListOf<Int>()
