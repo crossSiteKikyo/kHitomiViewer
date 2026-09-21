@@ -30,6 +30,7 @@ import com.example.khitomiviewer.ui.GalleryListUiSelect
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.Search
 import com.example.khitomiviewer.ui.SearchResultBar
+import com.example.khitomiviewer.ui.SearchSortBar
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
 import com.example.khitomiviewer.viewmodel.ProvideGalleryViewModelKey
@@ -113,6 +114,17 @@ fun RankScreen(
             titleKeyword,
             gId
         )
+        if (gId == null || gId == 0L) {
+            SearchSortBar(
+                isPopular = true,
+                onNewest = {
+                    navController.navigate(
+                        Screen.List.createRoute(1L, tagIdList, titleKeyword)
+                    )
+                },
+                onPopular = {}
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround

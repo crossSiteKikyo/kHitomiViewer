@@ -28,6 +28,7 @@ import com.example.khitomiviewer.ui.GalleryListUiSelect
 import com.example.khitomiviewer.ui.Pagination
 import com.example.khitomiviewer.ui.Search
 import com.example.khitomiviewer.ui.SearchResultBar
+import com.example.khitomiviewer.ui.SearchSortBar
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.SearchViewModel
 import com.example.khitomiviewer.viewmodel.GalleryViewModelKeys
@@ -113,6 +114,17 @@ fun ListScreen(
         titleKeyword,
         gId
       )
+      if (gId == null || gId == 0L) {
+        SearchSortBar(
+          isPopular = false,
+          onNewest = {},
+          onPopular = {
+            navController.navigate(
+              Screen.Rank.createRoute(1L, "week", tagIdList, titleKeyword)
+            )
+          }
+        )
+      }
       GalleryListUiSelect()
       Pagination(false, page, galleryViewModel.maxPage, onPageMove)
       if (galleryListUi == "Extended")

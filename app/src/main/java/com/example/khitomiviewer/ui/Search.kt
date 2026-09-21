@@ -326,3 +326,30 @@ fun SearchResultBar(
     ) { Icon(Icons.Filled.Search, "search") }
   }
 }
+
+@Composable
+fun SearchSortBar(
+  isPopular: Boolean,
+  onNewest: () -> Unit,
+  onPopular: () -> Unit
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(5.dp)
+  ) {
+    Button(
+      onClick = onNewest,
+      enabled = isPopular,
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      contentPadding = PaddingValues(2.dp)
+    ) { Text("최신순") }
+    Button(
+      onClick = onPopular,
+      enabled = !isPopular,
+      modifier = Modifier.weight(1f),
+      shape = RoundedCornerShape(12.dp),
+      contentPadding = PaddingValues(2.dp)
+    ) { Text("인기순") }
+  }
+}
