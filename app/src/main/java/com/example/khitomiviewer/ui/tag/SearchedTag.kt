@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.viewmodel.AppViewModel
 import com.example.khitomiviewer.viewmodel.DialogViewModel
@@ -41,7 +40,7 @@ fun SearchedTag(
   val tagKorean by appViewModel.tagKorean.collectAsState(true)
 
   fun tagClick() {
-    navController.navigate(Screen.List.createRoute(1L, longArrayOf(tag.tagId)))
+    navigateToTagSearch(navController, tag.tagId)
   }
 
   var name = tag.name
