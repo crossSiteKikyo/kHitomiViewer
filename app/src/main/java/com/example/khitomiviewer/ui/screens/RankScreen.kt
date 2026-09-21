@@ -75,10 +75,8 @@ fun RankScreen(
     LaunchedEffect(page, period, tagIdList?.joinToString(","), titleKeyword, gId) {
         if (gId != null && gId != 0L)
             galleryViewModel.findByGalleryIds(listOf(gId))
-        else if (!titleKeyword.isNullOrBlank() || tagIdList?.isNotEmpty() == true)
-            galleryViewModel.getPopularFilteredFromHitomi(page, period, tagIdList, titleKeyword)
         else
-            galleryViewModel.getPopularFromHitomi(page, period)
+            galleryViewModel.getPopularFilteredFromHitomi(page, period, tagIdList, titleKeyword)
     }
 
     LaunchedEffect(tagIdList?.joinToString(","), titleKeyword, gId) {
