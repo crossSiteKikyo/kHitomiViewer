@@ -56,6 +56,25 @@ class GalleryViewModel(
     findByGalleryIds(popular.gIds)
   }
 
+  fun getPopularFilteredFromHitomi(
+    page: Long,
+    period: String,
+    tagIdList: LongArray?,
+    titleKeyword: String?
+  ) = viewModelScope.launch(Dispatchers.IO) {
+    val popularGids = hitomiRepository.getAllPopularGids(period)
+    val result = galleryRepository.findPopularFilteredPage(
+      popularGids,
+      page,
+      pageSize.value,
+      showTypeIdList.value,
+      tagIdList,
+      titleKeyword
+    )
+    updateMaxPage(result.totalCount)
+    galleries = result.galleries
+  }
+
   fun getLikeGalleries(page: Long, galleryLikeStatusOrder: String) =
     viewModelScope.launch(Dispatchers.IO) {
       galleries = galleryRepository.findLikeGalleries(page, pageSize.value, galleryLikeStatusOrder)

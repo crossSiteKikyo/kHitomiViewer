@@ -117,6 +117,24 @@ class GalleryRepository(private val db: KHitomiDatabase) {
         return gIds.toHashSet()
     }
 
+    suspend fun findPopularFilteredPage(
+        popularGids: List<Long>,
+        page: Long,
+        pageSize: Int,
+        showTypeIdList: List<Long>,
+        tagIdList: LongArray?,
+        titleKeyword: String?
+    ): PopularFilteredPage {
+        val matchSet = findGidsByCondition(showTypeIdList, tagIdList, titleKeyword)
+        val ranked = popularGids.filter { it in matchSet }
+        val offset = ((page - 1) * pageSize).toInt().coerceAtLeast(0)
+        val pageGids = ranked.drop(offset).take(pageSize)
+        return PopularFilteredPage(
+            galleries = findFullDtosByIds(pageGids),
+            totalCount = ranked.size.toLong()
+        )
+    }
+
     suspend fun findFullDtoById(gId: Long): GalleryFullDto {
         return toFullDto(galleryDao.findById(gId))
     }
@@ -245,3 +263,8 @@ class GalleryRepository(private val db: KHitomiDatabase) {
         }
     }
 }
+
+data class PopularFilteredPage(
+    val galleries: List<GalleryFullDto>,
+    val totalCount: Long
+)
