@@ -11,6 +11,9 @@ class GalleryRepository(private val db: KHitomiDatabase) {
     private val tagDao = db.tagDao()
     private val galleryTagDao = db.galleryTagDao()
     private val typeDao = db.typeDao()
+    private val matchSetLock = Any()
+    private var matchSetCacheKey: MatchSetCacheKey? = null
+    private var matchSetCache: MutableSet<Long>? = null
 
     suspend fun findFullDtosByIds(gIdList: List<Long>): List<GalleryFullDto> {
         val galleryList = galleryDao.findByGIdList(gIdList).sortedBy { gallery ->
@@ -125,7 +128,7 @@ class GalleryRepository(private val db: KHitomiDatabase) {
         tagIdList: LongArray?,
         titleKeyword: String?
     ): PopularFilteredPage {
-        val matchSet = findGidsByCondition(showTypeIdList, tagIdList, titleKeyword)
+        val matchSet = cachedOrLoadMatchSet(showTypeIdList, tagIdList, titleKeyword)
         val ranked = popularGids.filter { it in matchSet }
         val offset = ((page - 1) * pageSize).toInt().coerceAtLeast(0)
         val pageGids = ranked.drop(offset).take(pageSize)
@@ -133,6 +136,13 @@ class GalleryRepository(private val db: KHitomiDatabase) {
             galleries = findFullDtosByIds(pageGids),
             totalCount = ranked.size.toLong()
         )
+    }
+
+    fun clearMatchSetCache() {
+        synchronized(matchSetLock) {
+            matchSetCacheKey = null
+            matchSetCache = null
+        }
     }
 
     suspend fun findFullDtoById(gId: Long): GalleryFullDto {
@@ -143,8 +153,16 @@ class GalleryRepository(private val db: KHitomiDatabase) {
 
     fun resetGalleryRecord(gId: Long) = galleryDao.resetGalleryRecord(gId)
 
-    fun updateGalleryLike(gId: Long, likeStatus: Int, likeStatusChangedAt: Long) =
+    fun updateGalleryLike(gId: Long, likeStatus: Int, likeStatusChangedAt: Long) {
         galleryDao.updateGalleryLike(gId, likeStatus, likeStatusChangedAt)
+        synchronized(matchSetLock) {
+            if (likeStatus == 0) matchSetCache?.remove(gId)
+            else {
+                matchSetCacheKey = null
+                matchSetCache = null
+            }
+        }
+    }
 
     fun updateLastReadAt(gId: Long) = galleryDao.updateLastReadAt(gId)
 
@@ -158,6 +176,28 @@ class GalleryRepository(private val db: KHitomiDatabase) {
 
     fun vacuum() {
         db.openHelper.writableDatabase.execSQL("VACUUM")
+    }
+
+    private fun cachedOrLoadMatchSet(
+        showTypeIdList: List<Long>,
+        tagIdList: LongArray?,
+        titleKeyword: String?
+    ): Set<Long> {
+        val key = MatchSetCacheKey(
+            typeIds = showTypeIdList.sorted(),
+            tagIds = tagIdList?.sorted() ?: emptyList(),
+            titleKeyword = titleKeyword?.takeIf { it.isNotBlank() } ?: ""
+        )
+        synchronized(matchSetLock) {
+            val cached = matchSetCache
+            if (cached != null && matchSetCacheKey == key) return cached
+        }
+        val loaded = findGidsByCondition(showTypeIdList, tagIdList, titleKeyword).toMutableSet()
+        synchronized(matchSetLock) {
+            matchSetCacheKey = key
+            matchSetCache = loaded
+        }
+        return loaded
     }
 
     private suspend fun toFullDtos(galleryList: List<Gallery>): List<GalleryFullDto> {
@@ -267,4 +307,10 @@ class GalleryRepository(private val db: KHitomiDatabase) {
 data class PopularFilteredPage(
     val galleries: List<GalleryFullDto>,
     val totalCount: Long
+)
+
+private data class MatchSetCacheKey(
+    val typeIds: List<Long>,
+    val tagIds: List<Long>,
+    val titleKeyword: String
 )

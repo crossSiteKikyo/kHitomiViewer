@@ -60,6 +60,7 @@ fun RankScreen(
     val appViewModel: AppViewModel = viewModel(activity)
 
     val galleryListUi by appViewModel.galleryListUi.collectAsState("Extended")
+    val showTypeIdList by galleryViewModel.showTypeIdList.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -72,7 +73,7 @@ fun RankScreen(
         coroutineScope.launch { verticalScrollState.scrollTo(0) }
     }
 
-    LaunchedEffect(page, period, tagIdList?.joinToString(","), titleKeyword, gId) {
+    LaunchedEffect(page, period, tagIdList?.joinToString(","), titleKeyword, gId, showTypeIdList.joinToString(",")) {
         if (gId != null && gId != 0L)
             galleryViewModel.findByGalleryIds(listOf(gId))
         else

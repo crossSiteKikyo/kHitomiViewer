@@ -142,12 +142,14 @@ class GalleryViewModel(
         val newList = showTypeIdList.value.toMutableList()
         newList.add(typeId)
         prefManager.setTypeIdList(newList)
+        galleryRepository.clearMatchSetCache()
       }
     } else {
       if (typeId in showTypeIdList.value) {
         val newList = showTypeIdList.value.toMutableList()
         newList.remove(typeId)
         prefManager.setTypeIdList(newList)
+        galleryRepository.clearMatchSetCache()
       }
     }
   }

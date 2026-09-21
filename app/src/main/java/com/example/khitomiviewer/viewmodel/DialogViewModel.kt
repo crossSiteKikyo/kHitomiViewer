@@ -46,11 +46,13 @@ class DialogViewModel(
 
     fun changeTagLike(like: Int) = viewModelScope.launch(Dispatchers.IO) {
         val tagId = selectedTag?.tagId
-        if (tagId != null)
+        if (tagId != null) {
             if (like == 1)
                 tagRepository.updateTagLike(tagId, like, 0L)
             else
                 tagRepository.updateTagLike(tagId, like, System.currentTimeMillis())
+            galleryRepository.clearMatchSetCache()
+        }
     }
 
     fun changeGalleryLike(like: Int) = viewModelScope.launch(Dispatchers.IO) {
