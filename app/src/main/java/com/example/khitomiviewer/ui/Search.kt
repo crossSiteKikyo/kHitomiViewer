@@ -7,8 +7,10 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,7 +43,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -50,7 +54,9 @@ import androidx.navigation.NavHostController
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.common.CustomTextField
 import com.example.khitomiviewer.ui.tag.FilteredTag
+import com.example.khitomiviewer.ui.tag.SearchedTag
 import com.example.khitomiviewer.ui.tag.SelectedTag
+import com.example.khitomiviewer.viewmodel.DialogViewModel
 import com.example.khitomiviewer.viewmodel.SearchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +64,9 @@ import com.example.khitomiviewer.viewmodel.SearchViewModel
 fun Search(
   navController: NavHostController,
   isSearchSheetVisible: MutableState<Boolean>,
-  titleKeyword: String?
+  titleKeyword: String?,
+  onTitleTagSearch: ((tagIdList: LongArray, titleKeyword: String) -> Unit)? = null,
+  onGIdSearch: ((gId: Long) -> Unit)? = null
 ) {
   val activity = LocalActivity.current as ComponentActivity
   val searchViewModel: SearchViewModel = viewModel(activity)
@@ -135,14 +143,19 @@ fun Search(
               val tagIdList =
                 searchViewModel.selectedTags.map { tag -> tag.tagId }.toLongArray()
               // 아무 것도 안치면 검색하지 않는다.
-              if (tagIdList.isNotEmpty() || titleSearchKeyword.isNotBlank())
-                navController.navigate(
-                  Screen.List.createRoute(
-                    1L,
-                    tagIdList,
-                    titleSearchKeyword
+              if (tagIdList.isNotEmpty() || titleSearchKeyword.isNotBlank()) {
+                val search = onTitleTagSearch
+                if (search != null)
+                  search(tagIdList, titleSearchKeyword)
+                else
+                  navController.navigate(
+                    Screen.List.createRoute(
+                      1L,
+                      tagIdList,
+                      titleSearchKeyword
+                    )
                   )
-                )
+              }
             },
             shape = RoundedCornerShape(4.dp),
             contentPadding = PaddingValues(0.dp),
@@ -206,9 +219,12 @@ fun Search(
           )
           Button(
             onClick = {
-              navController.navigate(
-                Screen.List.createRoute(gId = gIdSearch.toLong())
-              )
+              val gId = gIdSearch.toLong()
+              val search = onGIdSearch
+              if (search != null)
+                search(gId)
+              else
+                navController.navigate(Screen.List.createRoute(gId = gId))
             },
             shape = RoundedCornerShape(4.dp),
             contentPadding = PaddingValues(0.dp),
@@ -228,5 +244,85 @@ fun Search(
         }
       }
     }
+  }
+}
+
+@Composable
+fun SearchResultBar(
+  navController: NavHostController,
+  isTagDialogOpen: MutableState<Boolean>,
+  isSearchSheetVisible: MutableState<Boolean>,
+  titleKeyword: String?,
+  gId: Long?
+) {
+  val activity = LocalActivity.current as ComponentActivity
+  val searchViewModel: SearchViewModel = viewModel(activity)
+  val dialogViewModel: DialogViewModel = viewModel(activity)
+
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .height(IntrinsicSize.Min),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Column(
+      modifier = Modifier
+        .weight(1f)
+        .border(
+          width = 1.dp,
+          color = Color.Gray,
+          shape = RoundedCornerShape(2.dp)
+        )
+    ) {
+      if (gId != null && gId != 0L) {
+        Text(
+          "id검색 - $gId",
+          fontWeight = FontWeight.Bold,
+        )
+      } else {
+        if (!titleKeyword.isNullOrBlank()) {
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .horizontalScroll(rememberScrollState())
+          ) {
+            Text(
+              "제목검색 - $titleKeyword",
+              fontWeight = FontWeight.Bold,
+            )
+          }
+        }
+        if (searchViewModel.currentSearchTags.isNotEmpty()) {
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+          ) {
+            Text(
+              "태그검색 - ",
+              fontWeight = FontWeight.Bold,
+            )
+            searchViewModel.currentSearchTags.map { tag ->
+              SearchedTag(
+                tag,
+                dialogViewModel,
+                isTagDialogOpen,
+                navController
+              )
+            }
+          }
+        }
+      }
+    }
+    Button(
+      onClick = { isSearchSheetVisible.value = true },
+      shape = RoundedCornerShape(4.dp),
+      contentPadding = PaddingValues(0.dp),
+      modifier = Modifier
+        .width(40.dp)
+        .fillMaxHeight()
+        .padding(0.dp)
+    ) { Icon(Icons.Filled.Search, "search") }
   }
 }

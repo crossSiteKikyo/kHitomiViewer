@@ -42,7 +42,7 @@ sealed class Screen(
       if (!titleKeyword.isNullOrBlank())
 //        queryBuilder.append("&titleKeyword=${titleKeyword}")
         queryBuilder.append("&titleKeyword=${URLEncoder.encode(titleKeyword, "utf-8")}")
-      if (gId != null)
+      if (gId != null && gId != 0L)
         queryBuilder.append("&gId=$gId")
       return queryBuilder.toString()
     }
@@ -88,9 +88,25 @@ sealed class Screen(
   }
 
   data object Rank :
-    Screen("RankScreen?page={page}&period={period}", "랭킹", Icons.Outlined.Leaderboard) {
-    fun createRoute(page: Long = 1L, period: String = "week"): String {
-      return "RankScreen?page=${page}&period=$period"
+    Screen(
+      "RankScreen?page={page}&period={period}&tagIdList={tagIdList}&titleKeyword={titleKeyword}&gId={gId}",
+      "랭킹",
+      Icons.Outlined.Leaderboard
+    ) {
+    fun createRoute(
+      page: Long = 1L,
+      period: String = "week",
+      tagIdList: LongArray? = null,
+      titleKeyword: String? = "",
+      gId: Long? = null
+    ): String {
+      val queryBuilder = StringBuilder("RankScreen?page=$page&period=$period")
+      tagIdList?.forEach { id -> queryBuilder.append("&tagIdList=$id") }
+      if (!titleKeyword.isNullOrBlank())
+        queryBuilder.append("&titleKeyword=${URLEncoder.encode(titleKeyword, "utf-8")}")
+      if (gId != null && gId != 0L)
+        queryBuilder.append("&gId=$gId")
+      return queryBuilder.toString()
     }
   }
 

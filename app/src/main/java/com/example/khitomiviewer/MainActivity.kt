@@ -313,7 +313,19 @@ fun MainApp() {
               navArgument("period") {
                 type = NavType.StringType
                 defaultValue = "week"
-              }
+              },
+              navArgument("tagIdList") {
+                type = NavType.LongArrayType
+                nullable = true
+              },
+              navArgument("titleKeyword") {
+                type = NavType.StringType
+                defaultValue = ""
+              },
+              navArgument("gId") {
+                type = NavType.LongType
+                defaultValue = 0L
+              },
             )
           ) { bse ->
             RankScreen(
@@ -324,6 +336,9 @@ fun MainApp() {
               isGalleryDetailDialogOpen,
               bse.arguments?.getLong("page") ?: 1L,
               bse.arguments?.getString("period") ?: "week",
+              bse.arguments?.getLongArray("tagIdList"),
+              URLDecoder.decode(bse.arguments?.getString("titleKeyword"), "utf-8"),
+              bse.arguments?.getLong("gId")
             )
           }
           composable(
