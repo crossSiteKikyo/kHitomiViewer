@@ -6,6 +6,8 @@ import com.example.khitomiviewer.repository.AppRepositories
 class KHitomiViewerApp : Application() {
   override fun onCreate() {
     super.onCreate()
-    AppRepositories.get(this).hitomiSync.start()
+    val repos = AppRepositories.get(this)
+    repos.hitomiSync.start()
+    repos.hitomi.prefetchPopularGids()
   }
 }

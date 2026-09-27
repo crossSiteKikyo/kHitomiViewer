@@ -1,5 +1,6 @@
 package com.example.khitomiviewer.repository
 
+import android.util.Log
 import androidx.room.Transaction
 import com.example.khitomiviewer.api.HitomiApi
 import com.example.khitomiviewer.api.PopularNozomiResponse
@@ -9,9 +10,14 @@ import com.example.khitomiviewer.room.entity.Gallery
 import com.example.khitomiviewer.room.entity.GalleryTag
 import com.example.khitomiviewer.room.entity.Tag
 import com.example.khitomiviewer.room.entity.Type
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jsoup.Jsoup
+import java.util.concurrent.atomic.AtomicBoolean
 
 class HitomiRepository(
     private val db: KHitomiDatabase,
@@ -23,6 +29,8 @@ class HitomiRepository(
     private val galleryTagDao = db.galleryTagDao()
     private val popularGidsCache = mutableMapOf<String, List<Long>>()
     private val popularGidsCacheMutex = Mutex()
+    private val prefetchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val popularPrefetchStarted = AtomicBoolean(false)
 
     suspend fun initType() {
         val types = listOf("doujinshi", "manga", "artistcg", "gamecg", "imageset")
@@ -87,9 +95,24 @@ class HitomiRepository(
     suspend fun getAllPopularGids(period: String): List<Long> {
         popularGidsCacheMutex.withLock {
             popularGidsCache[period]?.let { return it }
-            val gIds = hitomiApi.parseNozomiIds(hitomiApi.getPopularAll(period)).map { it.toLong() }
+        }
+        val gIds = hitomiApi.parseNozomiIds(hitomiApi.getPopularAll(period)).map { it.toLong() }
+        popularGidsCacheMutex.withLock {
             popularGidsCache[period] = gIds
-            return gIds
+        }
+        return gIds
+    }
+
+    fun prefetchPopularGids() {
+        if (!popularPrefetchStarted.compareAndSet(false, true)) return
+        prefetchScope.launch {
+            listOf("week", "today", "month", "year").forEach { period ->
+                try {
+                    getAllPopularGids(period)
+                } catch (e: Exception) {
+                    Log.i("인기순 미리 받기 실패", "$period ${e.message}")
+                }
+            }
         }
     }
 
