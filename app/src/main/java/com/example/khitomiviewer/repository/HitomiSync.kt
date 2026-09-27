@@ -203,6 +203,7 @@ class HitomiSync(
         idsToDelete.forEach { gId ->
             hitomiRepository.removeGalleryInfo(gId)
         }
+        dbAllGId.removeAll(idsToDelete)
         prefManager.updateLastDeleteDeletedGallery(now)
         log(SyncLogKind.Done, "삭제된 갤러리 ${idsToDelete.size}개 정리 완료")
         setPhase("삭제된 갤러리 정리 완료")
