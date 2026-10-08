@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
 enum class SyncLogKind { Info, Done, Error, Skipped }
@@ -33,7 +33,7 @@ class HitomiSync(
     private val prefManager: PreferenceManager
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val started = AtomicBoolean(false)
+    private val runMutex = Mutex()
 
     private val crawlAmount = 40
     private val maxLogs = 300
@@ -54,26 +54,35 @@ class HitomiSync(
     val logs: StateFlow<List<SyncLogEntry>> = _logs.asStateFlow()
 
     fun start() {
-        if (!started.compareAndSet(false, true)) return
-        scope.launch {
-            setPhase("동기화 시작")
-            log(SyncLogKind.Info, "동기화 시작")
-            hitomiRepository.initType()
-            hitomiRepository.initTag()
-            getGIdsAndFilterGids()
-            crawlNewGalleries(phaseLabel = "신규 갤러리")
-            crawlMissedGalleries()
-            deleteDeletedGalleries()
-            syncGalleryTag1000()
-            syncGalleryTag2000()
-            syncGalleryTag3000()
-            syncGalleryTag4000()
-            syncGalleryTag5000()
-            syncGalleryTag6000()
-            syncGalleryTag7000()
-            syncGalleryTag8000()
-            setPhase("모든 동기화 작업 완료")
-            log(SyncLogKind.Done, "모든 동기화 작업 완료")
+        scope.launch { run() }
+    }
+
+    suspend fun run(): Boolean {
+        if (!runMutex.tryLock()) return false
+        try {
+            withContext(Dispatchers.IO) {
+                setPhase("동기화 시작")
+                log(SyncLogKind.Info, "동기화 시작")
+                hitomiRepository.initType()
+                hitomiRepository.initTag()
+                getGIdsAndFilterGids()
+                crawlNewGalleries(phaseLabel = "신규 갤러리")
+                crawlMissedGalleries()
+                deleteDeletedGalleries()
+                syncGalleryTag1000()
+                syncGalleryTag2000()
+                syncGalleryTag3000()
+                syncGalleryTag4000()
+                syncGalleryTag5000()
+                syncGalleryTag6000()
+                syncGalleryTag7000()
+                syncGalleryTag8000()
+                setPhase("모든 동기화 작업 완료")
+                log(SyncLogKind.Done, "모든 동기화 작업 완료")
+            }
+            return true
+        } finally {
+            runMutex.unlock()
         }
     }
 

@@ -9,6 +9,7 @@ import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.repository.GalleryRepository
 import com.example.khitomiviewer.repository.GithubRepository
 import com.example.khitomiviewer.repository.TagRepository
+import com.example.khitomiviewer.work.CrawlScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,6 +73,25 @@ class AppViewModel(
   val tagKorean = prefManager.tagKorean
   fun setTagKorean(enabled: Boolean) = viewModelScope.launch {
     prefManager.setTagKorean(enabled)
+  }
+
+  val backgroundCrawlEnabled = prefManager.backgroundCrawlEnabled
+  fun setBackgroundCrawlEnabled(enabled: Boolean) = viewModelScope.launch {
+    prefManager.setBackgroundCrawlEnabled(enabled)
+    CrawlScheduler.applyFromPrefs(context, prefManager)
+  }
+
+  val backgroundCrawlWifiOnly = prefManager.backgroundCrawlWifiOnly
+  fun setBackgroundCrawlWifiOnly(wifiOnly: Boolean) = viewModelScope.launch {
+    prefManager.setBackgroundCrawlWifiOnly(wifiOnly)
+    CrawlScheduler.applyFromPrefs(context, prefManager)
+  }
+
+  val backgroundCrawlIntervalHours = prefManager.backgroundCrawlIntervalHours
+  fun setBackgroundCrawlIntervalHours(hours: Int) = viewModelScope.launch {
+    if (hours !in CrawlScheduler.allowedHours) return@launch
+    prefManager.setBackgroundCrawlIntervalHours(hours)
+    CrawlScheduler.applyFromPrefs(context, prefManager)
   }
 
   var isPaginationActive = mutableStateOf(false)

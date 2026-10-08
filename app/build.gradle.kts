@@ -29,9 +29,9 @@ android {
     minSdk = 26
     targetSdk = 35
     // db를 asset에서 불러오는 방식으로 2.0.0이 된다.
-    // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15, 2.5.0 - 17, 2.6.0 - 18, 2.7.0 - 20, 2.8.0 - 30, 2.9.0 - 35, 2.10.0 - 36
-    versionName = "2.10.2"
-    versionCode = 38
+    // 2.0.0 - 3, 2.1.0 - 7, 2.2.0 - 12, 2.3.0 - 13, 2.4.0 - 15, 2.5.0 - 17, 2.6.0 - 18, 2.7.0 - 20, 2.8.0 - 30, 2.9.0 - 35, 2.10.0 - 36, 2.11.0 - 39
+    versionName = "2.11.0"
+    versionCode = 39
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -101,4 +101,6 @@ dependencies {
   implementation("androidx.compose.material:material-icons-extended")
   // Preferences DataStore
   implementation("androidx.datastore:datastore-preferences:1.2.1")
+  // 백그라운드 크롤링
+  implementation("androidx.work:work-runtime-ktx:2.10.1")
 }

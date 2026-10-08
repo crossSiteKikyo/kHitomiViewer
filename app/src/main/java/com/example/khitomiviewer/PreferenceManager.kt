@@ -35,6 +35,9 @@ class PreferenceManager(private val context: Context) {
     val VIEW_METHOD = stringPreferencesKey("view_method")
     val GALLERY_LIKE_STATUS_ORDER = stringPreferencesKey("gallery_like_status_order")
     val TAG_LIKE_STATUS_ORDER = stringPreferencesKey("tag_like_status_order")
+    val BACKGROUND_CRAWL_ENABLED = booleanPreferencesKey("background_crawl_enabled")
+    val BACKGROUND_CRAWL_WIFI_ONLY = booleanPreferencesKey("background_crawl_wifi_only")
+    val BACKGROUND_CRAWL_INTERVAL_HOURS = intPreferencesKey("background_crawl_interval_hours")
     val LAST_CRAWL_MISSED_GALLERIES = longPreferencesKey("last_crawl_missed_galleries")
     val LAST_DELETE_DELETED_GALLERY = longPreferencesKey("last_delete_deleted_gallery")
     val LAST_SYNC_GALLERY_TAG_1000 = longPreferencesKey("last_sync_gallery_tag_1000")
@@ -121,6 +124,24 @@ class PreferenceManager(private val context: Context) {
 
   suspend fun setTagLikeStatusOrder(order: String) =
     setPreference(Keys.TAG_LIKE_STATUS_ORDER, order)
+
+  val backgroundCrawlEnabled: Flow<Boolean> =
+    getPreference(Keys.BACKGROUND_CRAWL_ENABLED, true)
+
+  suspend fun setBackgroundCrawlEnabled(enabled: Boolean) =
+    setPreference(Keys.BACKGROUND_CRAWL_ENABLED, enabled)
+
+  val backgroundCrawlWifiOnly: Flow<Boolean> =
+    getPreference(Keys.BACKGROUND_CRAWL_WIFI_ONLY, true)
+
+  suspend fun setBackgroundCrawlWifiOnly(wifiOnly: Boolean) =
+    setPreference(Keys.BACKGROUND_CRAWL_WIFI_ONLY, wifiOnly)
+
+  val backgroundCrawlIntervalHours: Flow<Int> =
+    getPreference(Keys.BACKGROUND_CRAWL_INTERVAL_HOURS, 8)
+
+  suspend fun setBackgroundCrawlIntervalHours(hours: Int) =
+    setPreference(Keys.BACKGROUND_CRAWL_INTERVAL_HOURS, hours)
 
   // 미처 크롤링 하지 못한 갤러리 크롤링 관련
   val lastCrawlMissedGalleries: Flow<Long> = getPreference(Keys.LAST_CRAWL_MISSED_GALLERIES, 0L)
