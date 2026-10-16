@@ -64,6 +64,9 @@ interface GalleryDao {
   @Query("select g.gId from gallery g order by gId desc")
   fun findAllGId(): List<Long>
 
+  @Query("select gId from gallery where lastReadAt > 0 or likeStatus = 2")
+  fun findRetainedGIds(): List<Long>
+
   @Query("select * from gallery where likeStatus != 1 order by likeStatus desc")
   fun findLikeOrDislike(): List<Gallery>
 

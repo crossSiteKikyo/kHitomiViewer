@@ -40,6 +40,7 @@ class HitomiSync(
     private val serverGidList = mutableListOf<Int>()
     private val filteredIds = mutableListOf<Int>()
     private val dbAllGId = mutableListOf<Long>()
+    private var tagSyncListPrepared = false
 
     private val _crawlStatus = MutableStateFlow("대기 중")
     val crawlStatus: StateFlow<String> = _crawlStatus.asStateFlow()
@@ -61,6 +62,8 @@ class HitomiSync(
         if (!runMutex.tryLock()) return false
         try {
             withContext(Dispatchers.IO) {
+                dbAllGId.clear()
+                tagSyncListPrepared = false
                 setPhase("동기화 시작")
                 log(SyncLogKind.Info, "동기화 시작")
                 hitomiRepository.initType()
@@ -208,13 +211,20 @@ class HitomiSync(
         setPhase("삭제된 갤러리 정리 중")
         if (dbAllGId.isEmpty())
             dbAllGId.addAll(galleryRepository.findAllGId())
-        val idsToDelete = dbAllGId.toSet() - serverGidList.map { it.toLong() }.toSet()
+        val serverGidSet = serverGidList.map { it.toLong() }.toHashSet()
+        val retainedGids = galleryRepository.findRetainedGIds()
+        val absentGids = dbAllGId.filter { it !in serverGidSet }
+        val idsToDelete = absentGids.filter { it !in retainedGids }
         idsToDelete.forEach { gId ->
             hitomiRepository.removeGalleryInfo(gId)
         }
-        dbAllGId.removeAll(idsToDelete)
+        dbAllGId.removeAll(absentGids.toSet())
         prefManager.updateLastDeleteDeletedGallery(now)
-        log(SyncLogKind.Done, "삭제된 갤러리 ${idsToDelete.size}개 정리 완료")
+        val keptCount = absentGids.size - idsToDelete.size
+        log(
+            SyncLogKind.Done,
+            "삭제된 갤러리 ${idsToDelete.size}개 정리, 좋아요·기록 ${keptCount}개 유지"
+        )
         setPhase("삭제된 갤러리 정리 완료")
     }
 
@@ -303,8 +313,7 @@ class HitomiSync(
             log(SyncLogKind.Skipped, "$label: 아직 주기가 되지 않아 건너뜀")
             return@withContext
         }
-        if (dbAllGId.isEmpty())
-            dbAllGId.addAll(galleryRepository.findAllGId())
+        prepareTagSyncGids()
         if (fromInclusive >= dbAllGId.size) {
             writeLast(now)
             log(SyncLogKind.Done, "$label: 대상 없음, 완료 처리")
@@ -320,6 +329,15 @@ class HitomiSync(
         writeLast(now)
         setPhase("$label 완료")
         log(SyncLogKind.Done, "$label 완료")
+    }
+
+    private fun prepareTagSyncGids() {
+        if (tagSyncListPrepared) return
+        if (dbAllGId.isEmpty())
+            dbAllGId.addAll(galleryRepository.findAllGId())
+        val serverGidSet = serverGidList.map { it.toLong() }.toHashSet()
+        dbAllGId.retainAll(serverGidSet)
+        tagSyncListPrepared = true
     }
 
     private suspend fun syncGalleryTag(gIdList: List<Long>) = withContext(Dispatchers.IO) {

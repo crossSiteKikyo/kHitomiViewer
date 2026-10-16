@@ -174,6 +174,8 @@ class GalleryRepository(private val db: KHitomiDatabase) {
 
     fun findAllGId(): List<Long> = galleryDao.findAllGId()
 
+    fun findRetainedGIds(): Set<Long> = galleryDao.findRetainedGIds().toHashSet()
+
     fun vacuum() {
         db.openHelper.writableDatabase.execSQL("VACUUM")
     }
