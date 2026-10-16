@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -34,6 +35,7 @@ class HitomiSync(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val runMutex = Mutex()
+    private val watermarkMutex = Mutex()
 
     private val crawlAmount = 40
     private val maxLogs = 300
@@ -89,6 +91,20 @@ class HitomiSync(
         }
     }
 
+    suspend fun ensureKoreanCrawlWatermark(): Long = watermarkMutex.withLock {
+        val saved = prefManager.koreanCrawlWatermark.first()
+        if (saved >= 0) return@withLock saved
+        val initial = galleryRepository.findMaxGid()
+        prefManager.updateKoreanCrawlWatermark(initial)
+        initial
+    }
+
+    suspend fun noteKoreanGalleryStored(gId: Long) = watermarkMutex.withLock {
+        val saved = prefManager.koreanCrawlWatermark.first()
+        if (saved < 0 || gId <= saved) return@withLock
+        prefManager.updateKoreanCrawlWatermark(gId)
+    }
+
     private suspend fun getGIdsAndFilterGids() = withContext(Dispatchers.IO) {
         var isSuccess = false
         setPhase("서버 갤러리 목록 받는 중")
@@ -97,7 +113,7 @@ class HitomiSync(
             try {
                 serverGidList.clear()
                 serverGidList.addAll(hitomiRepository.fetchKoreanGids())
-                val targetGid = galleryRepository.findMaxGid().toInt()
+                val targetGid = ensureKoreanCrawlWatermark().toInt()
                 val searchIndex = serverGidList.binarySearch(targetGid, reverseOrder())
                 val limitIndex = if (searchIndex >= 0) {
                     searchIndex
@@ -159,15 +175,21 @@ class HitomiSync(
         val successfulGIds = successfulInfos.map { it.galleryInfo.id.toInt() }
         var insertFail = 0
         for (gFI in successfulInfos) {
+            val gId = gFI.galleryInfo.id.toLong()
             try {
                 hitomiRepository.insertGalleryInfo(gFI.galleryInfo, gFI.thumb1, gFI.thumb2)
+                noteKoreanGalleryStored(gId)
             } catch (e: Exception) {
-                Log.i("썸네일 크롤링 오류", "${e.message}")
-                insertFail++
-                log(
-                    SyncLogKind.Error,
-                    "갤러리 ${gFI.galleryInfo.id} 저장 실패: ${e.message}"
-                )
+                if (galleryRepository.existsById(gId)) {
+                    noteKoreanGalleryStored(gId)
+                } else {
+                    Log.i("썸네일 크롤링 오류", "${e.message}")
+                    insertFail++
+                    log(
+                        SyncLogKind.Error,
+                        "갤러리 ${gFI.galleryInfo.id} 저장 실패: ${e.message}"
+                    )
+                }
             }
         }
         filteredIds.removeAll(successfulGIds.toSet())

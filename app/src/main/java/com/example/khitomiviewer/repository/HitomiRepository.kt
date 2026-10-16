@@ -117,7 +117,12 @@ class HitomiRepository(
     }
 
     @Transaction
-    suspend fun insertGalleryInfo(ginfo: GalleryInfo, thumb1: String, thumb2: String) {
+    suspend fun insertGalleryInfo(
+        ginfo: GalleryInfo,
+        thumb1: String,
+        thumb2: String,
+        likeStatus: Int = 1
+    ) {
         if (ginfo.tags != null) {
             for (tag in ginfo.tags) {
                 if (tagDao.findByNameNullable(tag.toTagString()) == null) {
@@ -153,10 +158,11 @@ class HitomiRepository(
                 }
             }
         }
+        val likeStatusChangedAt = if (likeStatus == 1) 0L else System.currentTimeMillis()
         galleryDao.insert(
             Gallery(
                 ginfo.id.toLong(), ginfo.title, thumb1, thumb2, ginfo.date, ginfo.files.size,
-                1, 0L, typeDao.findByName(ginfo.type).typeId, 0L, 0
+                likeStatus, likeStatusChangedAt, typeDao.findByName(ginfo.type).typeId, 0L, 0
             )
         )
         if (ginfo.artists == null) {

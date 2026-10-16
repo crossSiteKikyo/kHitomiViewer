@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.PreferenceManager
 import com.example.khitomiviewer.repository.GalleryRepository
 import com.example.khitomiviewer.repository.HitomiRepository
+import com.example.khitomiviewer.repository.HitomiSync
 import com.example.khitomiviewer.room.GalleryFullDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -16,11 +17,18 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+data class LikedGalleryImportResult(
+  val saved: Boolean,
+  val message: String
+)
 
 class GalleryViewModel(
   private val galleryRepository: GalleryRepository,
   private val hitomiRepository: HitomiRepository,
-  private val prefManager: PreferenceManager
+  private val prefManager: PreferenceManager,
+  private val hitomiSync: HitomiSync
 ) : ViewModel() {
 
   val pageSize =
@@ -73,6 +81,37 @@ class GalleryViewModel(
     )
     updateMaxPage(result.totalCount)
     galleries = result.galleries
+  }
+
+  suspend fun importMissingGalleryAsLiked(gId: Long): LikedGalleryImportResult {
+    if (gId <= 0L || gId > Int.MAX_VALUE) {
+      return LikedGalleryImportResult(false, "숫자 gid를 입력하세요.")
+    }
+    return withContext(Dispatchers.IO) {
+      try {
+        hitomiSync.ensureKoreanCrawlWatermark()
+        if (galleryRepository.existsById(gId)) {
+          return@withContext LikedGalleryImportResult(
+            false,
+            "이미 목록에 있는 작품입니다. 한국어로 수집된 gid는 추가할 수 없습니다."
+          )
+        }
+        val info = hitomiRepository.fetchGalleryFullInfo(gId.toInt())
+        hitomiRepository.insertGalleryInfo(
+          info.galleryInfo,
+          info.thumb1,
+          info.thumb2,
+          likeStatus = 2
+        )
+        galleryRepository.clearMatchSetCache()
+        LikedGalleryImportResult(true, "좋아요로 저장했습니다.\n${info.galleryInfo.title}")
+      } catch (e: Exception) {
+        LikedGalleryImportResult(
+          false,
+          "가져오지 못했습니다. ${e.message ?: "알 수 없는 오류"}"
+        )
+      }
+    }
   }
 
   fun getLikeGalleries(page: Long, galleryLikeStatusOrder: String) =
