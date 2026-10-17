@@ -33,7 +33,8 @@ fun SubTag(
   dialogViewModel: DialogViewModel,
   isTagDialogOpen: MutableState<Boolean>,
   navController: NavHostController,
-  isGalleryDetailDialogOpen: MutableState<Boolean>? = null
+  isGalleryDetailDialogOpen: MutableState<Boolean>? = null,
+  isGalleryDialogOpen: MutableState<Boolean>? = null
 ) {
   val activity = LocalActivity.current as ComponentActivity
   val appViewModel: AppViewModel = viewModel(activity)
@@ -43,6 +44,8 @@ fun SubTag(
     navigateToTagSearch(navController, tag.tagId)
     if (isGalleryDetailDialogOpen != null)
       isGalleryDetailDialogOpen.value = false
+    if (isGalleryDialogOpen != null)
+      isGalleryDialogOpen.value = false
   }
 
   var name = tag.name

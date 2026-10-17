@@ -31,6 +31,7 @@ class PreferenceManager(private val context: Context) {
     val TAG_KOREAN = booleanPreferencesKey("tag_korean")
     val GALLERY_PREVIEW_ENABLED = booleanPreferencesKey("gallery_preview_enabled")
     val GALLERY_STATUS_CHANGE_ENABLED = booleanPreferencesKey("gallery_status_change_enabled")
+    val GALLERY_RELATED_ENABLED = booleanPreferencesKey("gallery_related_enabled")
     val GALLERY_LIST_UI = stringPreferencesKey("gallery_list_ui")
     val GALLERY_HIDE_MODE = stringPreferencesKey("gallery_hide_mode")
     val PAGE_SIZE = intPreferencesKey("page_size")
@@ -108,6 +109,11 @@ class PreferenceManager(private val context: Context) {
     getPreference(Keys.GALLERY_STATUS_CHANGE_ENABLED, true)
   suspend fun setGalleryStatusChangeEnabled(enabled: Boolean) =
     setPreference(Keys.GALLERY_STATUS_CHANGE_ENABLED, enabled)
+
+  val galleryRelatedEnabled: Flow<Boolean> =
+    getPreference(Keys.GALLERY_RELATED_ENABLED, true)
+  suspend fun setGalleryRelatedEnabled(enabled: Boolean) =
+    setPreference(Keys.GALLERY_RELATED_ENABLED, enabled)
 
   // 갤러리 리스트 ui
   val galleryListUi: Flow<String> = getPreference(Keys.GALLERY_LIST_UI, "Extended")

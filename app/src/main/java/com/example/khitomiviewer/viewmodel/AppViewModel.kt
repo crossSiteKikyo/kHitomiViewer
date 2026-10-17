@@ -85,6 +85,11 @@ class AppViewModel(
     prefManager.setGalleryStatusChangeEnabled(enabled)
   }
 
+  val galleryRelatedEnabled = prefManager.galleryRelatedEnabled
+  fun setGalleryRelatedEnabled(enabled: Boolean) = viewModelScope.launch {
+    prefManager.setGalleryRelatedEnabled(enabled)
+  }
+
   val backgroundCrawlEnabled = prefManager.backgroundCrawlEnabled
   fun setBackgroundCrawlEnabled(enabled: Boolean) = viewModelScope.launch {
     prefManager.setBackgroundCrawlEnabled(enabled)

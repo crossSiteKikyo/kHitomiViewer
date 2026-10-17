@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.network.httpHeaders
@@ -62,7 +63,11 @@ private const val PreviewPageSize = 9
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
+fun GalleryDialog(
+  navController: NavHostController,
+  isTagDialogOpen: MutableState<Boolean>,
+  isGalleryDialogOpen: MutableState<Boolean>
+) {
   // 전역 viewModel
   val activity = LocalActivity.current as ComponentActivity
   val dialogViewModel: DialogViewModel = viewModel(activity)
@@ -72,6 +77,7 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
   val isAvifFormat by appViewModel.isAvifFormat.collectAsState(false)
   val galleryPreviewEnabled by appViewModel.galleryPreviewEnabled.collectAsState(true)
   val galleryStatusChangeEnabled by appViewModel.galleryStatusChangeEnabled.collectAsState(true)
+  val galleryRelatedEnabled by appViewModel.galleryRelatedEnabled.collectAsState(true)
   val mList = hitomiViewModel.mList.toList()
 
   // 다이얼로그
@@ -202,6 +208,63 @@ fun GalleryDialog(isGalleryDialogOpen: MutableState<Boolean>) {
               ) {
                 Text("좋아요")
                 Icon(Icons.Outlined.ThumbUp, null)
+              }
+            }
+          }
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(50.dp)
+              .padding(horizontal = 10.dp)
+              .clickable {
+                appViewModel.setGalleryRelatedEnabled(!galleryRelatedEnabled)
+              },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+          ) {
+            Text("관련된 갤러리", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Switch(
+              checked = galleryRelatedEnabled,
+              onCheckedChange = { appViewModel.setGalleryRelatedEnabled(it) }
+            )
+          }
+          if (galleryRelatedEnabled) {
+            when {
+              dialogViewModel.previewLoading && dialogViewModel.relatedGalleries.isEmpty() -> {
+                CircularProgressIndicator(modifier = Modifier.padding(bottom = 8.dp))
+              }
+
+              dialogViewModel.previewError != null && dialogViewModel.relatedGalleries.isEmpty() -> {
+                Text(
+                  "관련된 갤러리를 가져오지 못했습니다.",
+                  modifier = Modifier.padding(bottom = 8.dp)
+                )
+              }
+
+              dialogViewModel.relatedGalleries.isEmpty() -> {
+                Text(
+                  "관련된 갤러리가 없습니다",
+                  modifier = Modifier.padding(bottom = 8.dp)
+                )
+              }
+
+              else -> {
+                Column(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+                ) {
+                  for (gallery in dialogViewModel.relatedGalleries) {
+                    key(gallery.gId) {
+                      GalleryExtendedCard(
+                        g = gallery,
+                        navController = navController,
+                        isTagDialogOpen = isTagDialogOpen,
+                        isGalleryDialogOpen = isGalleryDialogOpen
+                      )
+                    }
+                  }
+                }
               }
             }
           }

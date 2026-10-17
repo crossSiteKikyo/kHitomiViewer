@@ -34,6 +34,7 @@ class DialogViewModel(
     var previewFiles by mutableStateOf<List<GalleryPreviewFile>>(emptyList())
     var previewLoading by mutableStateOf(false)
     var previewError by mutableStateOf<String?>(null)
+    var relatedGalleries by mutableStateOf<List<GalleryFullDto>>(emptyList())
     private val previewRequest = AtomicInteger(0)
 
     val selectedGalleryDetail = mutableStateOf<GalleryFullDto?>(null)
@@ -54,26 +55,34 @@ class DialogViewModel(
         selectedTag = tag
     }
 
-    fun setGallery(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
+    fun setGallery(gId: Long) {
         val request = previewRequest.incrementAndGet()
         previewFiles = emptyList()
         previewError = null
         previewLoading = true
-        val gallery = galleryRepository.findById(gId)
-        if (request != previewRequest.get()) return@launch
-        selectedGallery = gallery
-        try {
-            val info = hitomiRepository.getGalleryInfo(gId.toInt())
+        relatedGalleries = emptyList()
+        viewModelScope.launch(Dispatchers.IO) {
+            val gallery = galleryRepository.findById(gId)
             if (request != previewRequest.get()) return@launch
-            previewFiles = info.files
-                .filter { it.hash.length >= 3 }
-                .map { GalleryPreviewFile(it.hash, it.hasavif == 1, it.width, it.height) }
-        } catch (e: Exception) {
-            if (request == previewRequest.get()) {
-                previewError = "미리보기를 가져오지 못했습니다."
+            selectedGallery = gallery
+            try {
+                val info = hitomiRepository.getGalleryInfo(gId.toInt())
+                if (request != previewRequest.get()) return@launch
+                previewFiles = info.files
+                    .filter { it.hash.length >= 3 }
+                    .map { GalleryPreviewFile(it.hash, it.hasavif == 1, it.width, it.height) }
+                relatedGalleries = if (info.related.isEmpty()) {
+                    emptyList()
+                } else {
+                    galleryRepository.findFullDtosByIds(info.related)
+                }
+            } catch (e: Exception) {
+                if (request == previewRequest.get()) {
+                    previewError = "미리보기를 가져오지 못했습니다."
+                }
+            } finally {
+                if (request == previewRequest.get()) previewLoading = false
             }
-        } finally {
-            if (request == previewRequest.get()) previewLoading = false
         }
     }
 

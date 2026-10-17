@@ -382,7 +382,7 @@ fun MainApp() {
       }
       VerticalScrollBar(innerPadding, verticalScrollState)
       TagDialog(isTagDialogOpen)
-      GalleryDialog(isGalleryDialogOpen)
+      GalleryDialog(navController, isTagDialogOpen, isGalleryDialogOpen)
       GalleryDetailDialog(
         navController,
         isTagDialogOpen,
