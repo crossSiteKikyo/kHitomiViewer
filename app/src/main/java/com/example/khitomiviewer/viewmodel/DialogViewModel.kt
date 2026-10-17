@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.khitomiviewer.repository.GalleryRepository
+import com.example.khitomiviewer.repository.HitomiRepository
 import com.example.khitomiviewer.repository.TagRepository
 import com.example.khitomiviewer.room.GalleryFullDto
 import com.example.khitomiviewer.room.entity.Gallery
@@ -13,14 +14,25 @@ import com.example.khitomiviewer.room.entity.Tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
+
+data class GalleryPreviewFile(
+    val hash: String,
+    val hasAvif: Boolean
+)
 
 class DialogViewModel(
     private val galleryRepository: GalleryRepository,
-    private val tagRepository: TagRepository
+    private val tagRepository: TagRepository,
+    private val hitomiRepository: HitomiRepository
 ) : ViewModel() {
 
     var selectedTag by mutableStateOf<Tag?>(null)
     var selectedGallery by mutableStateOf<Gallery?>(null)
+    var previewFiles by mutableStateOf<List<GalleryPreviewFile>>(emptyList())
+    var previewLoading by mutableStateOf(false)
+    var previewError by mutableStateOf<String?>(null)
+    private val previewRequest = AtomicInteger(0)
 
     val selectedGalleryDetail = mutableStateOf<GalleryFullDto?>(null)
 
@@ -41,7 +53,26 @@ class DialogViewModel(
     }
 
     fun setGallery(gId: Long) = viewModelScope.launch(Dispatchers.IO) {
-        selectedGallery = galleryRepository.findById(gId)
+        val request = previewRequest.incrementAndGet()
+        previewFiles = emptyList()
+        previewError = null
+        previewLoading = true
+        val gallery = galleryRepository.findById(gId)
+        if (request != previewRequest.get()) return@launch
+        selectedGallery = gallery
+        try {
+            val info = hitomiRepository.getGalleryInfo(gId.toInt())
+            if (request != previewRequest.get()) return@launch
+            previewFiles = info.files
+                .filter { it.hash.length >= 3 }
+                .map { GalleryPreviewFile(it.hash, it.hasavif == 1) }
+        } catch (e: Exception) {
+            if (request == previewRequest.get()) {
+                previewError = "미리보기를 가져오지 못했습니다."
+            }
+        } finally {
+            if (request == previewRequest.get()) previewLoading = false
+        }
     }
 
     fun changeTagLike(like: Int) = viewModelScope.launch(Dispatchers.IO) {

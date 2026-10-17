@@ -24,3 +24,19 @@ fun decodeThumbnail(
     return if (isAvifFormat) webpUrl.replace("webp", "avif") else webpUrl
   }
 }
+
+fun previewThumbnailUrl(
+  hash: String,
+  useAvif: Boolean,
+  mList: List<String>,
+  thumbChar2: String,
+  thumbChar1: String
+): String {
+  val last = hash.last()
+  val pair = hash.substring(hash.length - 3, hash.length - 1)
+  val subdomainKey = "$last${hash[hash.length - 3]}${hash[hash.length - 2]}".toInt(16).toString()
+  val ch = if (subdomainKey in mList) thumbChar2 else thumbChar1
+  val dir = if (useAvif) "avifsmalltn" else "webpsmalltn"
+  val ext = if (useAvif) "avif" else "webp"
+  return "https://${ch}tn.gold-usergeneratedcontent.net/$dir/$last/$pair/$hash.$ext"
+}

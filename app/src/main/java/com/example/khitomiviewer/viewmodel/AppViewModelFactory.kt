@@ -34,7 +34,7 @@ class AppViewModelFactory(
         TagViewModel(repos.tag)
 
       modelClass.isAssignableFrom(DialogViewModel::class.java) ->
-        DialogViewModel(repos.gallery, repos.tag)
+        DialogViewModel(repos.gallery, repos.tag, repos.hitomi)
 
       modelClass.isAssignableFrom(SearchViewModel::class.java) ->
         SearchViewModel(repos.tag)
