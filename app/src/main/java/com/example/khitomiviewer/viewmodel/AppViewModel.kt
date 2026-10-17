@@ -75,6 +75,16 @@ class AppViewModel(
     prefManager.setTagKorean(enabled)
   }
 
+  val galleryPreviewEnabled = prefManager.galleryPreviewEnabled
+  fun setGalleryPreviewEnabled(enabled: Boolean) = viewModelScope.launch {
+    prefManager.setGalleryPreviewEnabled(enabled)
+  }
+
+  val galleryStatusChangeEnabled = prefManager.galleryStatusChangeEnabled
+  fun setGalleryStatusChangeEnabled(enabled: Boolean) = viewModelScope.launch {
+    prefManager.setGalleryStatusChangeEnabled(enabled)
+  }
+
   val backgroundCrawlEnabled = prefManager.backgroundCrawlEnabled
   fun setBackgroundCrawlEnabled(enabled: Boolean) = viewModelScope.launch {
     prefManager.setBackgroundCrawlEnabled(enabled)

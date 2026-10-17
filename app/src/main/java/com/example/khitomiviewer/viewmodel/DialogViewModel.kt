@@ -18,7 +18,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 data class GalleryPreviewFile(
     val hash: String,
-    val hasAvif: Boolean
+    val hasAvif: Boolean,
+    val width: Int,
+    val height: Int
 )
 
 class DialogViewModel(
@@ -65,7 +67,7 @@ class DialogViewModel(
             if (request != previewRequest.get()) return@launch
             previewFiles = info.files
                 .filter { it.hash.length >= 3 }
-                .map { GalleryPreviewFile(it.hash, it.hasavif == 1) }
+                .map { GalleryPreviewFile(it.hash, it.hasavif == 1, it.width, it.height) }
         } catch (e: Exception) {
             if (request == previewRequest.get()) {
                 previewError = "미리보기를 가져오지 못했습니다."

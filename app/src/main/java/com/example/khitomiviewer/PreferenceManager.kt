@@ -29,6 +29,8 @@ class PreferenceManager(private val context: Context) {
     val TYPE_ID_LIST = stringPreferencesKey("showTypeIdList")
     val IS_VOLUME_KEY_PAGING = booleanPreferencesKey("is_volume_key_paging")
     val TAG_KOREAN = booleanPreferencesKey("tag_korean")
+    val GALLERY_PREVIEW_ENABLED = booleanPreferencesKey("gallery_preview_enabled")
+    val GALLERY_STATUS_CHANGE_ENABLED = booleanPreferencesKey("gallery_status_change_enabled")
     val GALLERY_LIST_UI = stringPreferencesKey("gallery_list_ui")
     val GALLERY_HIDE_MODE = stringPreferencesKey("gallery_hide_mode")
     val PAGE_SIZE = intPreferencesKey("page_size")
@@ -95,6 +97,17 @@ class PreferenceManager(private val context: Context) {
   // 태그 한글화
   val tagKorean: Flow<Boolean> = getPreference(Keys.TAG_KOREAN, true)
   suspend fun setTagKorean(enabled: Boolean) = setPreference(Keys.TAG_KOREAN, enabled)
+
+  // 갤러리 상태 창의 미리보기
+  val galleryPreviewEnabled: Flow<Boolean> =
+    getPreference(Keys.GALLERY_PREVIEW_ENABLED, true)
+  suspend fun setGalleryPreviewEnabled(enabled: Boolean) =
+    setPreference(Keys.GALLERY_PREVIEW_ENABLED, enabled)
+
+  val galleryStatusChangeEnabled: Flow<Boolean> =
+    getPreference(Keys.GALLERY_STATUS_CHANGE_ENABLED, true)
+  suspend fun setGalleryStatusChangeEnabled(enabled: Boolean) =
+    setPreference(Keys.GALLERY_STATUS_CHANGE_ENABLED, enabled)
 
   // 갤러리 리스트 ui
   val galleryListUi: Flow<String> = getPreference(Keys.GALLERY_LIST_UI, "Extended")
