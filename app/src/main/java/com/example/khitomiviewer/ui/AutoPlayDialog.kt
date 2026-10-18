@@ -55,7 +55,7 @@ fun AutoPlayDialog(isAutoPlayDialogOpen: MutableState<Boolean>) {
     // 다이얼로그
     if (isAutoPlayDialogOpen.value) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { isAutoPlayDialogOpen.value = false },
             dismissButton = {
                 TextButton(onClick = { isAutoPlayDialogOpen.value = false }) {
                     Text("취소")

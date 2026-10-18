@@ -30,7 +30,7 @@ fun UISelectDialog(isUISelectDialogOpen: MutableState<Boolean>, gId: Long) {
 
     if (isUISelectDialogOpen.value) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { isUISelectDialogOpen.value = false },
             confirmButton = {
                 TextButton(onClick = { isUISelectDialogOpen.value = false }) {
                     Text("닫기")

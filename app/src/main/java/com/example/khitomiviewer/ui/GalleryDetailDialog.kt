@@ -114,7 +114,7 @@ fun GalleryDetailDialog(
   // 다이얼로그
   if (isGalleryDetailDialogOpen.value) {
     BasicAlertDialog(
-      onDismissRequest = {},
+      onDismissRequest = { isGalleryDetailDialogOpen.value = false },
       properties = DialogProperties(usePlatformDefaultWidth = false),
       modifier = Modifier.fillMaxWidth(),
     ) {

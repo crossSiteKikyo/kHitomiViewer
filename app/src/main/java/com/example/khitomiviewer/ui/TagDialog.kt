@@ -41,7 +41,7 @@ fun TagDialog(isTagDialogOpen: MutableState<Boolean>) {
   // 다이얼로그
   if (isTagDialogOpen.value) {
     AlertDialog(
-      onDismissRequest = {},
+      onDismissRequest = { isTagDialogOpen.value = false },
       confirmButton = {
         TextButton(onClick = { isTagDialogOpen.value = false }) {
           Text("닫기")
