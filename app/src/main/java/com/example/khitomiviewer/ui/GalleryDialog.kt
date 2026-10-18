@@ -51,6 +51,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.network.httpHeaders
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.util.animatedImageLoader
 import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.util.previewThumbnailUrl
 import com.example.khitomiviewer.viewmodel.AppViewModel
@@ -416,6 +417,7 @@ private fun PreviewThumbnail(
       .httpHeaders(hitomiHeaders)
       .build(),
     contentDescription = "미리보기",
+    imageLoader = animatedImageLoader(context),
     placeholder = painterResource(R.drawable.loading),
     error = painterResource(R.drawable.errorimg),
     contentScale = ContentScale.FillWidth,

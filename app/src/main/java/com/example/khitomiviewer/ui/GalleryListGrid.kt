@@ -53,6 +53,7 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.example.khitomiviewer.R
+import com.example.khitomiviewer.util.animatedImageLoader
 import com.example.khitomiviewer.util.decodeThumbnail
 import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.viewmodel.AppViewModel
@@ -145,6 +146,7 @@ fun GalleryListGrid(
                     .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
                     .build(),
                   contentDescription = "thumbnail",
+                  imageLoader = animatedImageLoader(context),
                   placeholder = painterResource(R.drawable.loading),
                   error = painterResource(R.drawable.errorimg),
                   onError = { e -> Log.i("섬네일 에러", e.toString()) },

@@ -1,10 +1,29 @@
 package com.example.khitomiviewer.util
 
+import android.content.Context
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import coil3.ImageLoader
+import coil3.gif.GifDecoder
 import coil3.network.NetworkHeaders
+import kotlin.concurrent.Volatile
 import kotlin.text.toInt
 
 val hitomiHeaders = NetworkHeaders.Builder().set("Referer", "https://hitomi.la/").build()
+
+private val animatedImageLoaderLock = Any()
+
+@Volatile
+private var animatedImageLoader: ImageLoader? = null
+
+fun animatedImageLoader(context: Context): ImageLoader {
+  animatedImageLoader?.let { return it }
+  return synchronized(animatedImageLoaderLock) {
+    animatedImageLoader ?: ImageLoader.Builder(context.applicationContext)
+      .components { add(GifDecoder.Factory()) }
+      .build()
+      .also { animatedImageLoader = it }
+  }
+}
 
 fun decodeThumbnail(
   url: String,

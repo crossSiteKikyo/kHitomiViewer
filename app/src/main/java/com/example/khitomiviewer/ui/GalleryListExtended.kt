@@ -67,6 +67,7 @@ import com.example.khitomiviewer.room.GalleryFullDto
 import com.example.khitomiviewer.Screen
 import com.example.khitomiviewer.ui.tag.MainTag
 import com.example.khitomiviewer.ui.tag.SubTag
+import com.example.khitomiviewer.util.animatedImageLoader
 import com.example.khitomiviewer.util.decodeThumbnail
 import com.example.khitomiviewer.util.hitomiHeaders
 import com.example.khitomiviewer.viewmodel.AppViewModel
@@ -127,6 +128,7 @@ fun GalleryExtendedCard(
     )
   }
   val context = LocalContext.current
+  val imageLoader = animatedImageLoader(context)
 
   val isDislike = g.likeStatus == 0 || g.tags.any { it.likeStatus == 0 }
   var isHide by remember { mutableStateOf(true) }
@@ -451,6 +453,7 @@ fun GalleryExtendedCard(
                 .diskCacheKey(g.thumb1).httpHeaders(hitomiHeaders)
                 .build(),
               contentDescription = "thumbnail",
+              imageLoader = imageLoader,
               placeholder = painterResource(R.drawable.loading),
               error = painterResource(R.drawable.errorimg),
               onError = { e -> Log.i("섬네일 에러", e.toString()) },
@@ -474,6 +477,7 @@ fun GalleryExtendedCard(
                 .diskCacheKey(g.thumb2).httpHeaders(hitomiHeaders)
                 .build(),
               contentDescription = "thumbnail",
+              imageLoader = imageLoader,
               placeholder = painterResource(R.drawable.loading),
               error = painterResource(R.drawable.errorimg),
               onError = { e -> Log.i("섬네일 에러", e.toString()) },
