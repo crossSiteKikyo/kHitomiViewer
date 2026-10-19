@@ -55,12 +55,14 @@ class DialogViewModel(
         selectedTag = tag
     }
 
-    fun setGallery(gId: Long) {
+    fun setGallery(gId: Long, resetPreviewImmediately: Boolean = true) {
         val request = previewRequest.incrementAndGet()
-        previewFiles = emptyList()
+        if (resetPreviewImmediately) {
+            previewFiles = emptyList()
+            relatedGalleries = emptyList()
+        }
         previewError = null
         previewLoading = true
-        relatedGalleries = emptyList()
         viewModelScope.launch(Dispatchers.IO) {
             val gallery = galleryRepository.findById(gId)
             if (request != previewRequest.get()) return@launch
@@ -78,6 +80,8 @@ class DialogViewModel(
                 }
             } catch (e: Exception) {
                 if (request == previewRequest.get()) {
+                    previewFiles = emptyList()
+                    relatedGalleries = emptyList()
                     previewError = "미리보기를 가져오지 못했습니다."
                 }
             } finally {

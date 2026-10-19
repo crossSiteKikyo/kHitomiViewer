@@ -363,7 +363,11 @@ fun GalleryExtendedCard(
                     ).show()
                 },
                 onLongClick = {
-                  dialogViewModel.setGallery(g.gId)
+                  // 열린 창에서 바로 내용을 지우면 누르던 카드가 사라지고, 그 터치가 바깥 터치로 처리되어 창이 닫힌다.
+                  dialogViewModel.setGallery(
+                    g.gId,
+                    resetPreviewImmediately = !isGalleryDialogOpen.value
+                  )
                   isGalleryDialogOpen.value = true
                 }
               )

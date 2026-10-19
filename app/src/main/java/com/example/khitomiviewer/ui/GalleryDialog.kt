@@ -31,7 +31,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.first
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.network.httpHeaders
@@ -92,10 +95,15 @@ fun GalleryDialog(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
       ) {
+        val scrollState = rememberScrollState()
+        LaunchedEffect(dialogViewModel.selectedGallery?.gId) {
+          snapshotFlow { dialogViewModel.previewLoading }.first { !it }
+          scrollState.scrollTo(0)
+        }
         Column(
           modifier = Modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(scrollState),
           horizontalAlignment = Alignment.CenterHorizontally
         ) {
           Row(
